@@ -1,11 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 function App() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+
+  // Tracks the mouse to create the interactive background glow
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const handleContactSubmit = async (e) => {
     e.preventDefault();
-    // This connects to your Node.js backend!
     try {
       await fetch('http://localhost:5000/api/contact', {
         method: 'POST',
@@ -18,99 +28,148 @@ function App() {
     }
   };
 
+  // Animation variants for staggered loading
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.2, delayChildren: 0.3 }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: { y: 0, opacity: 1, transition: { duration: 0.8, ease: "easeOut" } }
+  };
+
   return (
-    <div className="bg-[#0f172a] text-gray-200 antialiased selection:bg-blue-500 selection:text-white min-h-screen">
+    <div className="bg-[#0a0f1c] text-gray-200 antialiased selection:bg-blue-500 selection:text-white min-h-screen relative overflow-hidden font-sans">
       
+      {/* Interactive Cursor Glow */}
+      <div 
+        className="pointer-events-none fixed inset-0 z-30 transition-opacity duration-300"
+        style={{
+          background: `radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(59, 130, 246, 0.08), transparent 80%)`
+        }}
+      />
+
       {/* Hero Section */}
-      <header className="min-h-screen flex flex-col justify-center items-center text-center px-4 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/20 via-[#0f172a] to-[#0f172a] -z-10"></div>
-        <p className="text-blue-400 font-semibold tracking-widest uppercase mb-3">Welcome to my portfolio</p>
-        <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight">
-          I'm <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">Shivang Ayar</span> {/* [cite: 2] */}
-        </h1>
-        <h2 className="text-2xl md:text-4xl font-medium text-gray-400 mb-8">
-          Full-Stack Developer & Data Architect
-        </h2>
-        <p className="max-w-2xl text-gray-400 mb-10">
-          Currently pursuing an Advanced Diploma in Computer Programming and Analysis (CPA). {/* [cite: 4] */}
-        </p>
-        <div className="flex gap-4">
-          <a href="#projects" className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-semibold transition shadow-lg shadow-blue-500/30">Explore Projects</a>
-        </div>
+      <header className="min-h-screen flex flex-col justify-center items-center text-center px-4 relative z-10">
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-900/10 via-[#0a0f1c] to-[#0a0f1c] -z-10"></div>
+        
+        <motion.div 
+          variants={containerVariants} 
+          initial="hidden" 
+          animate="visible"
+          className="flex flex-col items-center"
+        >
+          <motion.p variants={itemVariants} className="text-blue-500 font-bold tracking-[0.2em] uppercase mb-4 text-sm">
+            Welcome to my portfolio
+          </motion.p>
+          
+          <motion.h1 variants={itemVariants} className="text-6xl md:text-8xl font-black text-white mb-6 tracking-tighter">
+            I'm <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-600 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]">Shivang Ayar</span>
+          </motion.h1>
+          
+          <motion.h2 variants={itemVariants} className="text-2xl md:text-4xl font-medium text-gray-400 mb-8">
+            Full-Stack Developer <span className="text-gray-600">&</span> Data Architect
+          </motion.h2>
+          
+          <motion.p variants={itemVariants} className="max-w-2xl text-gray-500 mb-10 text-lg leading-relaxed">
+            Currently pursuing an Advanced Diploma in Computer Programming and Analysis. Architecting scalable backends and immersive frontend experiences.
+          </motion.p>
+          
+          <motion.div variants={itemVariants} className="flex gap-6">
+            <motion.a 
+              whileHover={{ scale: 1.05, boxShadow: "0px 0px 20px rgba(59, 130, 246, 0.4)" }}
+              whileTap={{ scale: 0.95 }}
+              href="#projects" 
+              className="bg-blue-600 text-white px-8 py-4 rounded-full font-bold transition-all"
+            >
+              Explore Projects
+            </motion.a>
+          </motion.div>
+        </motion.div>
       </header>
 
       {/* Showcase Projects Section */}
-      <section id="projects" className="py-20 bg-[#141e33]">
+      <section id="projects" className="py-32 relative z-10 border-t border-gray-800/50 bg-[#0f1423]">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-4xl font-bold text-center text-white mb-16">Featured <span className="text-blue-500">Projects</span></h2>
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-4xl md:text-5xl font-bold text-center text-white mb-20 tracking-tight"
+          >
+            Featured <span className="text-blue-500">Architecture</span>
+          </motion.h2>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
             {/* React AI Project */}
-            <div className="bg-[#0f172a] rounded-2xl p-8 border border-gray-800 hover:border-purple-500 hover:-translate-y-2 transition-all duration-300 shadow-xl group">
-              <h3 className="text-2xl font-bold text-white mb-3">Voice AI Chatbot Front-End</h3> {/* [cite: 11] */}
-              <p className="text-gray-400 mb-6 line-clamp-3">Built during a 24-hour hackathon. Engineered an emotion-aware chatbot integrating Voice APIs with a backend handling asynchronous streams to achieve &lt;200ms latency.</p>
-              <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1 bg-cyan-900/30 text-cyan-400 rounded text-xs font-semibold">React</span> {/* [cite: 11] */}
-                <span className="px-3 py-1 bg-green-900/30 text-green-400 rounded text-xs font-semibold">Node.js</span> {/* [cite: 11] */}
-                <span className="px-3 py-1 bg-yellow-900/30 text-yellow-400 rounded text-xs font-semibold">JavaScript</span> {/* [cite: 11] */}
+            <motion.div 
+              whileHover={{ y: -10 }}
+              className="bg-[#151b2b] rounded-2xl p-8 border border-gray-800/80 hover:border-purple-500/50 transition-all duration-300 shadow-2xl relative overflow-hidden group"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 to-purple-500 transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+              <h3 className="text-2xl font-bold text-white mb-3">Voice AI Chatbot</h3>
+              <p className="text-gray-400 mb-6 line-clamp-3 leading-relaxed">Engineered an emotion-aware chatbot integrating Voice APIs with a backend handling asynchronous streams to achieve &lt;200ms latency.</p>
+              <div className="flex flex-wrap gap-3">
+                <span className="px-4 py-1.5 bg-cyan-500/10 text-cyan-400 rounded-full text-xs font-bold tracking-wide">React</span>
+                <span className="px-4 py-1.5 bg-green-500/10 text-green-400 rounded-full text-xs font-bold tracking-wide">Node.js</span>
               </div>
-            </div>
+            </motion.div>
 
             {/* Data Project */}
-            <div className="bg-[#0f172a] rounded-2xl p-8 border border-gray-800 hover:border-yellow-500 hover:-translate-y-2 transition-all duration-300 shadow-xl group">
-              <h3 className="text-2xl font-bold text-white mb-3">Business Intelligence Dashboard</h3> {/* [cite: 18] */}
-              <p className="text-gray-400 mb-6 line-clamp-3">Applied Star Schema modeling to a 50,000+ record dataset. Optimized query execution by 60% and wrote complex DAX expressions.</p>
-              <div className="flex flex-wrap gap-2">
-                <span className="px-3 py-1 bg-yellow-900/30 text-yellow-400 rounded text-xs font-semibold">Power BI</span> {/* [cite: 18] */}
-                <span className="px-3 py-1 bg-blue-900/30 text-blue-400 rounded text-xs font-semibold">MySQL</span> {/* [cite: 18] */}
-                <span className="px-3 py-1 bg-orange-900/30 text-orange-400 rounded text-xs font-semibold">DAX</span> {/* [cite: 18] */}
+            <motion.div 
+              whileHover={{ y: -10 }}
+              className="bg-[#151b2b] rounded-2xl p-8 border border-gray-800/80 hover:border-blue-500/50 transition-all duration-300 shadow-2xl relative overflow-hidden group"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-blue-500 transform origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
+              <h3 className="text-2xl font-bold text-white mb-3">BI Dashboard</h3>
+              <p className="text-gray-400 mb-6 line-clamp-3 leading-relaxed">Applied Star Schema modeling to a 50,000+ record dataset. Optimized query execution by 60% and wrote complex DAX expressions.</p>
+              <div className="flex flex-wrap gap-3">
+                <span className="px-4 py-1.5 bg-yellow-500/10 text-yellow-400 rounded-full text-xs font-bold tracking-wide">Power BI</span>
+                <span className="px-4 py-1.5 bg-blue-500/10 text-blue-400 rounded-full text-xs font-bold tracking-wide">MySQL</span>
               </div>
-            </div>
-
-            {/* Java OOP Project */}
-            <div className="bg-[#0f172a] rounded-2xl p-8 border border-gray-800 hover:border-red-500 hover:-translate-y-2 transition-all duration-300 shadow-xl group">
-               <h3 className="text-2xl font-bold text-white mb-3">Battery Quality Control Program</h3> {/* [cite: 24] */}
-               <p className="text-gray-400 mb-6 line-clamp-3">Java application achieving 100% accuracy in defect detection. Validated edge cases using robust JUnit testing and optimized algorithms for O(1) time complexity.</p>
-               <div className="flex flex-wrap gap-2">
-                  <span className="px-3 py-1 bg-red-900/30 text-red-400 rounded text-xs font-semibold">Java</span> {/* [cite: 24] */}
-                  <span className="px-3 py-1 bg-gray-700/50 text-gray-300 rounded text-xs font-semibold">Object-Oriented Programming</span> {/* [cite: 24] */}
-               </div>
-            </div>
+            </motion.div>
 
           </div>
         </div>
       </section>
 
       {/* Node.js Contact Form Section */}
-      <section className="py-20 max-w-3xl mx-auto px-4 text-center">
-        <h2 className="text-4xl font-bold text-white mb-8">Let's <span className="text-blue-500">Connect</span></h2>
-        <form onSubmit={handleContactSubmit} className="flex flex-col gap-4 bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-700">
-          <input 
-            type="text" placeholder="Your Name" required
-            onChange={(e) => setFormData({...formData, name: e.target.value})}
-            className="p-3 bg-gray-900 text-white rounded outline-none focus:border-blue-500 border border-transparent transition"
-          />
-          <input 
-            type="email" placeholder="Your Email" required
-            onChange={(e) => setFormData({...formData, email: e.target.value})}
-            className="p-3 bg-gray-900 text-white rounded outline-none focus:border-blue-500 border border-transparent transition"
-          />
-          <textarea 
-            placeholder="Message" rows="4" required
-            onChange={(e) => setFormData({...formData, message: e.target.value})}
-            className="p-3 bg-gray-900 text-white rounded outline-none focus:border-blue-500 border border-transparent transition"
-          ></textarea>
-          <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded transition mt-2">
-            Send to Node.js Backend
-          </button>
-        </form>
+      <section className="py-32 relative z-10 border-t border-gray-800/50">
+        <div className="max-w-2xl mx-auto px-4 text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-white mb-12 tracking-tight">Initiate <span className="text-blue-500">Sequence</span></h2>
+          <form onSubmit={handleContactSubmit} className="flex flex-col gap-6 bg-[#151b2b] p-10 rounded-3xl shadow-2xl border border-gray-800/80">
+            <input 
+              type="text" placeholder="Designation (Name)" required
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              className="p-4 bg-[#0a0f1c] text-white rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border border-gray-800 transition-all"
+            />
+            <input 
+              type="email" placeholder="Comms Channel (Email)" required
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              className="p-4 bg-[#0a0f1c] text-white rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border border-gray-800 transition-all"
+            />
+            <textarea 
+              placeholder="Transmit Payload (Message)" rows="4" required
+              onChange={(e) => setFormData({...formData, message: e.target.value})}
+              className="p-4 bg-[#0a0f1c] text-white rounded-xl outline-none focus:ring-2 focus:ring-blue-500 border border-gray-800 transition-all resize-none"
+            ></textarea>
+            <motion.button 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit" 
+              className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-xl transition-colors mt-4 shadow-[0_0_20px_rgba(37,99,235,0.3)]"
+            >
+              Transmit to Server
+            </motion.button>
+          </form>
+        </div>
       </section>
 
-      <footer className="bg-[#0f172a] py-10 text-center border-t border-gray-800">
-        <a href="mailto:ayarshivang27@gmail.com" className="text-blue-500 hover:text-blue-400 font-semibold mb-8 inline-block">ayarshivang27@gmail.com</a> {/* [cite: 3] */}
-        <p className="text-gray-600 text-sm">© 2026 Shivang Ayar. Powered by React & Node.</p>
-      </footer>
     </div>
   );
 }
