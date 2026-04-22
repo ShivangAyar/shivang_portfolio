@@ -1,135 +1,122 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Float, Stars, MeshDistortMaterial, Environment, ContactShadows } from '@react-three/drei';
 import { motion } from 'framer-motion';
 
-function App() {
+// --- 3D COMPONENTS ---
+const InteractiveShape = () => {
+  const meshRef = useRef();
+  const [hovered, setHover] = useState(false);
+
+  // Rotate the shape smoothly on every frame
+  useFrame((state, delta) => {
+    meshRef.current.rotation.x += delta * 0.2;
+    meshRef.current.rotation.y += delta * 0.3;
+  });
+
+  return (
+    <Float speed={2} rotationIntensity={1.5} floatIntensity={2}>
+      <mesh 
+        ref={meshRef} 
+        onPointerOver={() => setHover(true)}
+        onPointerOut={() => setHover(false)}
+        scale={hovered ? 1.2 : 1}
+      >
+        <icosahedronGeometry args={[2, 4]} />
+        <MeshDistortMaterial 
+          color={hovered ? "#06b6d4" : "#6366f1"} 
+          envMapIntensity={1} 
+          clearcoat={1} 
+          clearcoatRoughness={0.1} 
+          metalness={0.8} 
+          roughness={0.2}
+          distort={hovered ? 0.4 : 0.2} 
+          speed={hovered ? 5 : 2}
+        />
+      </mesh>
+    </Float>
+  );
+};
+
+export default function App() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
 
   const handleContactSubmit = async (e) => {
     e.preventDefault();
-    try {
-      await fetch('http://localhost:5000/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      alert('Message sent successfully!');
-    } catch (err) {
-      console.error('Failed to send message', err);
-    }
+    alert('Message transmission initiated!');
   };
 
   return (
-    <div className="bg-[#040914] text-gray-200 antialiased selection:bg-cyan-500 selection:text-white min-h-screen relative overflow-hidden font-sans">
+    <div className="bg-[#020617] text-gray-200 antialiased selection:bg-cyan-500 selection:text-white min-h-screen relative overflow-hidden font-sans">
       
-      {/* --- FLOATING BACKGROUND OBJECTS --- */}
-      {/* 1. Floating Ring (Torus) */}
-      <motion.div 
-        animate={{ y: [0, -40, 0], rotateX: [0, 20, 0], rotateY: [0, 45, 0] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className="absolute bottom-20 left-[10%] w-48 h-48 border-[24px] border-purple-600/20 rounded-full blur-[2px]"
-      />
-      
-      {/* 2. Floating Diamond/Cube */}
-      <motion.div 
-        animate={{ y: [0, 50, 0], rotate: [45, 90, 45] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-        className="absolute top-32 right-[20%] w-40 h-40 bg-gradient-to-tr from-cyan-500/20 to-blue-600/20 rounded-3xl blur-[2px]"
-      />
+      {/* --- LAYER 1: THE 3D WEBGL CANVAS --- */}
+      <div className="absolute inset-0 z-0">
+        <Canvas camera={{ position: [0, 0, 8], fov: 45 }}>
+          <ambientLight intensity={0.5} />
+          <directionalLight position={[10, 10, 5]} intensity={2} color="#06b6d4" />
+          <directionalLight position={[-10, -10, -5]} intensity={1} color="#8b5cf6" />
+          
+          <Environment preset="city" />
+          <Stars radius={100} depth={50} count={4000} factor={4} saturation={0} fade speed={1} />
+          
+          <InteractiveShape />
+          
+          <ContactShadows position={[0, -2.5, 0]} opacity={0.5} scale={10} blur={2} far={4} />
+        </Canvas>
+      </div>
 
-      {/* 3. Glowing Background Orbs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
-
-
-      {/* --- GLASSMORPHISM NAVBAR --- */}
-      <nav className="fixed top-0 w-full z-50 bg-[#040914]/60 backdrop-blur-md border-b border-white/5">
+      {/* --- LAYER 2: HTML UI OVERLAY --- */}
+      <nav className="fixed top-0 w-full z-50 bg-[#020617]/50 backdrop-blur-md border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xl font-bold text-white">
-            <span className="text-cyan-400">&lt;/&gt;</span> Shivang Ayar
+          <div className="flex items-center gap-2 text-xl font-bold text-white tracking-widest">
+            <span className="text-cyan-400">&lt;/&gt;</span> SHIVANG
           </div>
           <div className="hidden md:flex gap-8 text-sm font-medium text-gray-400">
-            <a href="#" className="hover:text-white transition-colors">Home</a>
-            <a href="#about" className="hover:text-white transition-colors">About</a>
-            <a href="#projects" className="hover:text-white transition-colors">Projects</a>
-            <a href="#contact" className="hover:text-white transition-colors">Contact</a>
+            <a href="#about" className="hover:text-cyan-400 transition-colors">Architecture</a>
+            <a href="#projects" className="hover:text-cyan-400 transition-colors">Projects</a>
+            <a href="#contact" className="hover:text-cyan-400 transition-colors">Comm-Link</a>
           </div>
         </div>
       </nav>
 
-      {/* --- HERO SECTION (SPLIT LAYOUT) --- */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-40 pb-20 min-h-screen flex items-center">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center w-full">
+      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-40 pb-20 min-h-screen pointer-events-none flex items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 w-full">
           
-          {/* Left Column: Text & CTA */}
+          {/* Left Text (pointer-events-auto allows clicking links despite the wrapper) */}
           <motion.div 
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="flex flex-col items-start"
+            transition={{ duration: 0.8 }}
+            className="flex flex-col items-start pointer-events-auto"
           >
-            <span className="px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-xs font-semibold text-gray-300 mb-6">
-              Hey there!
+            <span className="px-4 py-1.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 rounded-full text-xs font-bold tracking-widest mb-6">
+              SYSTEM ONLINE
             </span>
             
-            <h1 className="text-5xl md:text-7xl font-bold text-white mb-4 tracking-tight">
-              I'm <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600">Shivang</span>
+            <h1 className="text-6xl md:text-8xl font-black text-white mb-2 tracking-tighter mix-blend-difference">
+              Shivang
+            </h1>
+            <h1 className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600 mb-6 tracking-tighter">
+              Ayar.
             </h1>
             
-            <h2 className="text-3xl md:text-4xl font-bold text-purple-500 mb-6">
-              Full-Stack Architect
-            </h2>
-            
             <p className="text-lg text-gray-400 mb-8 max-w-md leading-relaxed">
-              Computer Programming student at Algonquin College crafting dynamic web applications and scalable backends. Building robust tech that drives real-world impact.
+              Full-Stack Architect & WebGL Enthusiast. Specializing in MERN stack applications, robust database design, and next-generation interactive experiences.
             </p>
             
-            <p className="text-sm font-semibold text-cyan-400 mb-8">
-              Whatever you conceptualize, I can engineer it.
-            </p>
-            
-            <div className="flex gap-4 mb-10">
-              <a href="#projects" className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:opacity-90 text-white px-8 py-3 rounded-xl font-semibold transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)] flex items-center gap-2">
-                View My Work <span className="text-xl">↗</span>
-              </a>
-              <a href="#contact" className="bg-white/5 hover:bg-white/10 border border-white/10 text-white px-8 py-3 rounded-xl font-semibold transition-all flex items-center gap-2">
-                Ping Me <span className="text-xl">✉</span>
-              </a>
-            </div>
-
-            {/* Social Icons Placeholder */}
             <div className="flex gap-4">
-              <a href="https://github.com" target="_blank" rel="noreferrer" className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center border border-white/10 hover:bg-white/10 transition-colors">
-                G
+              <a href="#projects" className="bg-white text-black px-8 py-3 rounded-none font-bold hover:bg-gray-200 transition-all">
+                EXECUTE / WORK
               </a>
-              <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center border border-white/10 hover:bg-white/10 transition-colors">
-                in
+              <a href="#contact" className="border border-white/20 hover:border-white/60 text-white px-8 py-3 rounded-none font-bold transition-all">
+                PING SECURE
               </a>
             </div>
           </motion.div>
-
-          {/* Right Column: Profile Image Placeholder */}
-          <motion.div 
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-            className="relative flex justify-center lg:justify-end"
-          >
-            {/* The Image Card */}
-            <div className="relative w-full max-w-[400px] aspect-square rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-b from-white/10 to-transparent p-1 shadow-2xl backdrop-blur-sm z-20">
-              <div className="w-full h-full rounded-[20px] bg-[#0a101f] flex items-center justify-center overflow-hidden">
-                {/* TODO: Put your image here! 
-                  Replace this <p> tag with an <img src="/your-photo.png" className="w-full h-full object-cover" />
-                */}
-                <p className="text-gray-500 font-mono text-sm">Drop your photo here</p>
-              </div>
-            </div>
-          </motion.div>
-
+          
         </div>
       </main>
 
     </div>
   );
 }
-
-export default App;
