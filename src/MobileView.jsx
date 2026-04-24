@@ -7,7 +7,7 @@ import * as THREE from 'three';
 const projectData = [
   { title: "Microservices", d: "Scalable ecosystem using Node.js/Docker. Integrated Stripe API and JWT auth.", t: ["Node.js", "Docker", "Stripe"] },
   { title: "Watchlist App", d: "MERN tracking app. Designed RESTful API and utilized MongoDB NoSQL architecture.", t: ["MongoDB", "Express", "Node"] },
-  { title: "Real-Time Collab", d: "Synchronized workspace using Socket.io and Next.js with high-performance Redis.", t: ["Socket.io", "Next.js", "Redis"] },
+  { title: "Real-Time Collab", d: "Synchronized workspace using Socket.io and Next.js with performance Redis.", t: ["Socket.io", "Next.js", "Redis"] },
   { title: "Voice AI Bot", d: "AI chatbot with emotion recognition logic. Leveraged OpenAI models and WebRTC.", t: ["React", "OpenAI", "WebRTC"] },
   { title: "DevOps Metrics", d: "Monitoring platform for GitHub Actions and AWS using Python ETL pipelines.", t: ["AWS", "Python", "GitHub"] },
   { title: "AI Generator", d: "SaaS platform for AI image generation featuring a credit-based user system.", t: ["Tailwind", "React", "DALL-E"] }
@@ -20,9 +20,9 @@ function Core({ scrollY }) {
   const cubeData = useMemo(() => {
     const temp = [];
     for (let i = 0; i < 64; i++) {
-      const targetPos = new THREE.Vector3((i%4)-1.5, (Math.floor(i/4)%4)-1.5, (Math.floor(i/16)%4)-1.5).multiplyScalar(1.05);
-      const randomPos = new THREE.Vector3((Math.random()-0.5)*30, (Math.random()-0.5)*30, (Math.random()-0.5)*20);
-      const randomRot = new THREE.Euler(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+      const targetPos = new THREE.Vector3((i % 4) - 1.5, (Math.floor(i / 4) % 4) - 1.5, (Math.floor(i / 16) % 4) - 1.5).multiplyScalar(1.05);
+      const randomPos = new THREE.Vector3((Math.random() - 0.5) * 30, (Math.random() - 0.5) * 30, (Math.random() - 0.5) * 20);
+      const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
       temp.push({ targetPos, randomPos, randomRot });
     }
     return temp;
