@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { ContactShadows, PerspectiveCamera, Environment } from '@react-three/drei';
-import { motion, AnimatePresence, useInView } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 
 // --- CUSTOM HACKER LOADING PROTOCOL ---
@@ -39,13 +39,14 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (Cinematic Intro & Scroll Disperse) ---
+// --- MECHANICAL SNAP CORE (Cinematic Intro & Enhanced Visibility) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
   const gridSize = 4;
   const count = gridSize ** 3;
   
+  // Assembled on Page 1, Disperses on scroll down
   const isActive = scrollY < 150;
 
   const cubeData = useMemo(() => {
@@ -55,6 +56,7 @@ function MechanicalCore({ scrollY }) {
       for (let y = 0; y < gridSize; y++) {
         for (let z = 0; z < gridSize; z++) {
           const targetPos = new THREE.Vector3(x - 1.5, y - 1.5, z - 1.5).multiplyScalar(1.05);
+          // Desktop requires wider dispersion
           const randomPos = new THREE.Vector3((Math.random() - 0.5) * 45, (Math.random() - 0.5) * 35, (Math.random() - 0.5) * 20);
           const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
           temp.push({ targetPos, randomPos, randomRot, index: i++ });
@@ -72,6 +74,7 @@ function MechanicalCore({ scrollY }) {
     const t = state.clock.getElapsedTime();
     groupRef.current.rotation.y += delta * (isActive ? 0.25 : 0.05);
     
+    // Scale up the cube when it's the centerpiece on load
     const targetScale = isActive ? 1.5 : 1;
     groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.08);
 
@@ -96,29 +99,39 @@ function MechanicalCore({ scrollY }) {
     <group ref={groupRef} position={[0, 0, 0]}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        <meshStandardMaterial color={isActive ? "#002222" : "#020202"} roughness={0.1} metalness={0.9} />
+        {/* ENHANCED VISIBILITY: Faint cyan emissive glow when scattered */}
+        <meshStandardMaterial 
+          color={isActive ? "#002222" : "#050A0F"} 
+          roughness={0.2} 
+          metalness={0.9} 
+          emissive={isActive ? "#001111" : "#00E5FF"}
+          emissiveIntensity={isActive ? 0.2 : 0.15}
+        />
       </instancedMesh>
       {isActive && <pointLight intensity={30} color="#FF8C00" distance={20} />}
     </group>
   );
 }
 
-// --- DESKTOP SLIDER BARS (Continuous Gradient & Scroll Reactive) ---
+// --- DESKTOP SLIDER BARS (Hover-Reactive) ---
 const CompCard = ({ title, icon, skills }) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { amount: 0.3, once: false });
+  const [isHovered, setIsHovered] = useState(false);
   
   return (
-    <div ref={ref} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-10 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex flex-col h-[400px] hover:border-white/20 transition-all group">
+    <div 
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-10 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex flex-col h-[400px] hover:border-white/20 transition-all cursor-crosshair"
+    >
       <h3 className="text-2xl font-bold text-white mb-10 tracking-tighter uppercase flex items-center gap-4"><span className="text-3xl">{icon}</span> {title}</h3>
       <div className="space-y-10 mt-auto">{skills.map((skill, i) => (
         <div key={i}>
-          <div className="flex justify-between text-xs font-bold text-gray-400 uppercase mb-3 transition-colors" style={{ color: isInView ? 'white' : '' }}><span>{skill.n}</span><span style={{ color: isInView ? "#00E5FF" : "" }}>{skill.v}</span></div>
+          <div className="flex justify-between text-xs font-bold text-gray-400 uppercase mb-3 transition-colors" style={{ color: isHovered ? 'white' : '' }}><span>{skill.n}</span><span style={{ color: isHovered ? "#00E5FF" : "" }}>{skill.v}</span></div>
           <div className="w-full bg-white/5 rounded-full h-[3px] overflow-hidden">
             <motion.div 
               initial={{ width: "0%" }} 
-              animate={{ width: isInView ? skill.v : "0%" }} 
-              transition={{ duration: 1.2, delay: isInView ? i * 0.15 : 0, ease: "easeOut" }} 
+              animate={{ width: isHovered ? skill.v : "0%" }} 
+              transition={{ duration: 0.8, delay: isHovered ? i * 0.1 : 0, ease: "easeOut" }} 
               className="h-full bg-gradient-to-r from-[#00E5FF] to-[#FF8C00] shadow-[0_0_10px_rgba(0,229,255,0.8)]" 
             />
           </div>
@@ -151,6 +164,7 @@ const ReactiveFooter = () => {
 
   return (
     <footer id="connect" className="pt-60 pb-12 flex flex-col items-center justify-center relative overflow-hidden px-10">
+      {/* Background Binary Rain */}
       <div className="absolute inset-0 opacity-10 pointer-events-none select-none overflow-hidden flex flex-wrap gap-8 text-[10px] font-mono text-[#00E5FF] justify-center">
         {Array.from({length: 80}).map((_,i) => (
           <motion.div key={i} animate={{ y: [0, 150, 0], opacity: [0, 1, 0] }} transition={{ duration: Math.random() * 5 + 3, repeat: Infinity, delay: Math.random() * 5 }}>
@@ -159,6 +173,7 @@ const ReactiveFooter = () => {
         ))}
       </div>
 
+      {/* Terminal Container */}
       <div className="w-full max-w-6xl mx-auto bg-[#020203] border-2 border-[#00E5FF]/30 p-16 md:p-24 rounded-[4rem] shadow-[0_0_100px_rgba(0,229,255,0.08)] relative z-10 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#00E5FF]/5 to-transparent h-8 w-full animate-scanline pointer-events-none" />
         <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" />
@@ -190,6 +205,7 @@ const ReactiveFooter = () => {
         </div>
       </div>
 
+      {/* Split Copyright */}
       <div className="w-full max-w-6xl mx-auto flex justify-between items-center mt-16 px-4 text-[10px] font-black tracking-[0.4em] text-gray-600 uppercase z-20 relative">
         <span className="text-left">© 2026 SHIVANG AYAR</span>
         <span className="text-right">MADE WITH INTENT</span>
@@ -235,6 +251,7 @@ export default function DesktopView() {
       
       <style dangerouslySetInnerHTML={{__html: `
         html, body { background-color: #010102 !important; }
+        /* Custom Scrollbar for Desktop */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #010102; }
         ::-webkit-scrollbar-thumb { background: #00E5FF40; border-radius: 10px; }
@@ -336,7 +353,7 @@ export default function DesktopView() {
           </div>
         </section>
 
-        {/* COMPETENCIES (SCROLL REACTIVE SKILLS) */}
+        {/* COMPETENCIES (HOVER REACTIVE SKILLS) */}
         <section id="skills" className="max-w-7xl mx-auto px-10 py-32 w-full">
             <h2 className="text-7xl font-black text-white mb-16 tracking-tighter text-center uppercase">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
