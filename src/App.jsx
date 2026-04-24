@@ -4,266 +4,252 @@ import { Float, Text, Environment, ContactShadows } from '@react-three/drei';
 import { motion } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- MATTE 3D INTERACTIVE TEXT ---
-function FloatingWord({ children, position, rotation, scale = 1, color = "#94a3b8" }) {
-  const textRef = useRef();
-  
+function CursorLight() {
+  const lightRef = useRef();
   useFrame((state) => {
-    textRef.current.position.y += Math.sin(state.clock.elapsedTime + position[0]) * 0.001;
+    const x = (state.pointer.x * state.viewport.width) / 2;
+    const y = (state.pointer.y * state.viewport.height) / 2;
+    lightRef.current.position.lerp(new THREE.Vector3(x, y, 2), 0.1);
   });
+  return <pointLight ref={lightRef} intensity={8} color="#00E5FF" distance={15} />;
+}
 
+function FloatingWord({ children, position, rotation, scale = 1, baseColor = "#1A1A24" }) {
+  const textRef = useRef();
+  useFrame((state) => {
+    textRef.current.position.y += Math.sin(state.clock.elapsedTime * 0.5 + position[0]) * 0.002;
+  });
   return (
-    <Float speed={1} rotationIntensity={0.2} floatIntensity={0.5}>
+    <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
       <Text
-        ref={textRef}
-        position={position}
-        rotation={rotation}
-        scale={scale}
+        ref={textRef} position={position} rotation={rotation} scale={scale}
         font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf"
-        letterSpacing={0.05}
+        letterSpacing={0.1}
       >
         {children}
-        <meshStandardMaterial 
-          color={color} 
-          roughness={0.8}
-          metalness={0.1}
-        />
+        <meshStandardMaterial color={baseColor} roughness={0.7} metalness={0.3} />
       </Text>
     </Float>
   );
 }
 
-// --- CENTRAL MATTE GEOMETRY ---
-function CentralMatteShape() {
+function CentralReactiveShape() {
   const meshRef = useRef();
-  
   useFrame((state, delta) => {
-    meshRef.current.rotation.x += delta * 0.05;
-    meshRef.current.rotation.y += delta * 0.1;
+    meshRef.current.rotation.x += delta * 0.1;
+    meshRef.current.rotation.y += delta * 0.15;
     
-    // Subtle scroll-linked interaction
-    const scrollY = window.scrollY;
-    meshRef.current.position.y = Math.sin(scrollY * 0.002) * 0.3;
+    meshRef.current.position.x = THREE.MathUtils.lerp(meshRef.current.position.x, state.pointer.x * 0.5, 0.05);
+    meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, state.pointer.y * 0.5, 0.05);
   });
 
   return (
-    <Float speed={1.5} rotationIntensity={0.5} floatIntensity={0.5}>
-      <mesh ref={meshRef} position={[0, 0, 0]} scale={2}>
-        <icosahedronGeometry args={[1, 0]} />
-        {/* Wireframe overlay for that highly technical look */}
-        <meshStandardMaterial 
-          color="#0f172a" 
-          roughness={0.9} 
-          metalness={0.1} 
-          wireframe={true}
-          transparent={true}
-          opacity={0.1}
-        />
+    <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
+      <mesh ref={meshRef} position={[0, 0, 0]} scale={2.2} castShadow receiveShadow>
+        <octahedronGeometry args={[1, 0]} />
+        <meshStandardMaterial color="#0A0A10" roughness={0.8} metalness={0.2} />
       </mesh>
-      <mesh position={[0, 0, 0]} scale={1.98}>
-        <icosahedronGeometry args={[1, 0]} />
-        <meshStandardMaterial 
-          color="#1e293b" 
-          roughness={1} 
-          metalness={0} 
-        />
+      <mesh position={[0, 0, 0]} scale={2.3}>
+        <octahedronGeometry args={[1, 0]} />
+        <meshBasicMaterial color="#00E5FF" wireframe={true} transparent opacity={0.05} />
       </mesh>
     </Float>
   );
 }
 
-// --- MOUSE RIG ---
-function CameraRig() {
-  useFrame((state) => {
-    state.camera.position.lerp(
-      new THREE.Vector3((state.mouse.x * 1.5), (state.mouse.y * 1.5), 10),
-      0.05
-    );
-    state.camera.lookAt(0, 0, 0);
-  });
-  return null;
-}
-
 export default function App() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
 
-  const handleContactSubmit = async (e) => {
+  const handleContactSubmit = (e) => {
     e.preventDefault();
-    alert('Transmission successful! Message logged.');
+    alert('Message transmitted securely.');
   };
 
   return (
-    <div className="bg-[#0b0f19] text-gray-200 antialiased selection:bg-blue-500 selection:text-white font-sans scroll-smooth">
+    <div className="bg-[#05050A] text-gray-200 antialiased selection:bg-[#FF3366] selection:text-white font-sans scroll-smooth">
       
-      {/* --- LAYER 1: MATTE 3D BACKGROUND --- */}
       <div className="fixed inset-0 z-0 pointer-events-auto">
-        <Canvas camera={{ position: [0, 0, 10], fov: 50 }}>
-          <color attach="background" args={['#0b0f19']} />
-          <ambientLight intensity={0.4} />
-          {/* Soft, diffused lighting for matte finish */}
-          <directionalLight position={[10, 10, 5]} intensity={1} color="#38bdf8" />
-          <directionalLight position={[-10, -10, -5]} intensity={0.5} color="#818cf8" />
+        <Canvas camera={{ position: [0, 0, 10], fov: 50 }} shadows>
+          <color attach="background" args={['#05050A']} />
+          <ambientLight intensity={0.1} />
           
-          <Environment preset="city" />
-          <CameraRig />
+          <directionalLight position={[10, 10, -5]} intensity={0.5} color="#FF3366" />
+          <directionalLight position={[-10, -10, -5]} intensity={0.3} color="#00E5FF" />
           
-          <CentralMatteShape />
+          <CursorLight />
+          <Environment preset="night" />
+          
+          <CentralReactiveShape />
 
-          <FloatingWord position={[-6, 3, -4]} rotation={[0, 0.2, 0]} scale={1} color="#334155">ARCHITECTURE</FloatingWord>
-          <FloatingWord position={[6, 4, -6]} rotation={[0, -0.3, 0]} scale={0.8} color="#334155">NODE.JS</FloatingWord>
-          <FloatingWord position={[-5, -3, -5]} rotation={[0, 0.3, 0]} scale={0.9} color="#334155">MONGODB</FloatingWord>
-          <FloatingWord position={[5, -2, -3]} rotation={[0, -0.2, 0]} scale={1.2} color="#334155">SYSTEMS</FloatingWord>
-          <FloatingWord position={[7, 0, -4]} rotation={[0, -0.4, 0]} scale={1.1} color="#334155">REACT</FloatingWord>
+          <FloatingWord position={[-6, 3, -4]} rotation={[0, 0.2, 0]} scale={1.2}>ARCHITECTURE</FloatingWord>
+          <FloatingWord position={[6, 4, -6]} rotation={[0, -0.3, 0]} scale={1}>ENGINEER</FloatingWord>
+          <FloatingWord position={[-5, -3, -5]} rotation={[0, 0.3, 0]} scale={0.9}>MERN STACK</FloatingWord>
+          <FloatingWord position={[7, -2, -3]} rotation={[0, -0.2, 0]} scale={1.3}>DATA</FloatingWord>
+          <FloatingWord position={[0, -5, -8]} rotation={[-0.2, 0, 0]} scale={2}>SHIVANG</FloatingWord>
 
-          <ContactShadows position={[0, -4, 0]} opacity={0.3} scale={20} blur={2.5} far={4} color="#000000" />
+          <ContactShadows position={[0, -4, 0]} opacity={0.6} scale={20} blur={2} far={4} color="#00E5FF" />
         </Canvas>
       </div>
 
-      {/* --- LAYER 2: HTML UI OVERLAY --- */}
       <div className="relative z-10 w-full">
         
-        {/* Sticky Navbar */}
-        <nav className="fixed top-0 w-full z-50 bg-[#0b0f19]/80 backdrop-blur-md border-b border-gray-800">
+        <nav className="fixed top-0 w-full z-50 bg-[#05050A]/70 backdrop-blur-xl border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xl font-bold text-white tracking-widest cursor-pointer" onClick={() => window.scrollTo(0,0)}>
-              <span className="text-blue-500">/</span> SHIVANG
+            <div className="flex items-center gap-2 text-xl font-bold tracking-widest text-white">
+              <span className="text-[#FF3366]">SA.</span>
             </div>
-            <div className="hidden md:flex gap-8 text-sm font-medium text-gray-400">
-              <a href="#journey" className="hover:text-blue-400 transition-colors">Journey</a>
-              <a href="#skills" className="hover:text-blue-400 transition-colors">Skills</a>
-              <a href="#projects" className="hover:text-blue-400 transition-colors">Projects</a>
-              <a href="#contact" className="hover:text-blue-400 transition-colors">Contact</a>
+            <div className="hidden md:flex gap-8 text-xs font-bold tracking-[0.2em] text-gray-500 uppercase">
+              <a href="#about" className="hover:text-[#00E5FF] transition-colors">Journey</a>
+              <a href="#skills" className="hover:text-[#FF3366] transition-colors">Competencies</a>
+              <a href="#projects" className="hover:text-[#00E5FF] transition-colors">Builds</a>
+              <a href="#contact" className="hover:text-[#FF3366] transition-colors">Connect</a>
             </div>
           </div>
         </nav>
 
-        {/* HERO SECTION */}
-        <section id="home" className="max-w-7xl mx-auto px-6 pt-40 pb-20 min-h-screen flex items-center pointer-events-none">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 w-full">
-            <motion.div 
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
-              className="flex flex-col items-start pointer-events-auto bg-[#0f172a]/40 p-10 rounded-2xl backdrop-blur-md border border-gray-800 shadow-2xl"
-            >
-              <h1 className="text-5xl md:text-7xl font-black text-white mb-4 tracking-tighter">
-                Shivang <span className="text-blue-500">Ayar.</span>
-              </h1>
-              <h2 className="text-2xl font-semibold text-gray-300 mb-6">Software Engineer & Data Architect</h2>
-              <p className="text-lg text-gray-400 mb-10 max-w-md leading-relaxed">
-                Computer Programming Analyst engineering scalable full-stack applications and highly optimized digital architectures.
-              </p>
-              <a href="#projects" className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-lg font-semibold transition-all">
-                View My Work
-              </a>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* JOURNEY SECTION */}
-        <section id="journey" className="max-w-7xl mx-auto px-6 py-32 min-h-screen flex flex-col justify-center pointer-events-none">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="pointer-events-auto w-full">
-            <div className="flex flex-col md:flex-row gap-16 items-start">
-              
-              {/* The "About Me" Narrative */}
-              <div className="md:w-1/2">
-                <h2 className="text-4xl font-black text-white mb-8 tracking-tighter">My <span className="text-blue-500">Journey.</span></h2>
-                <div className="space-y-6 text-gray-400 text-lg leading-relaxed bg-[#0f172a]/40 p-8 rounded-2xl backdrop-blur-md border border-gray-800 shadow-xl">
-                  <p>
-                    Currently pursuing my Advanced Diploma in Computer Programming and Analysis at Algonquin College. My focus is entirely on the full software development lifecycle—from designing robust MongoDB schemas to building clean, state-driven React interfaces.
-                  </p>
-                  <p>
-                    I approach code the same way I approach the rest of my life: with discipline and an obsession for optimization. Whether I am writing complex DAX expressions, pushing through a heavy 6-day split at the gym, or squeezing every last frame out of my setup for a competitive Valorant match, I am always focused on maximizing performance.
-                  </p>
-                  <p>
-                    My goal is simple: engineer software that is fast, reliable, and solves real-world business problems. 
-                  </p>
-                </div>
-              </div>
-
-              {/* The Timeline */}
-              <div className="md:w-1/2 mt-12 md:mt-0">
-                <div className="border-l-2 border-gray-800 ml-4 pl-8 space-y-12 relative">
-                  <div className="relative">
-                    <div className="absolute -left-[41px] top-1 w-4 h-4 rounded-full bg-[#0b0f19] border-2 border-blue-500"></div>
-                    <p className="text-sm text-blue-500 font-bold mb-1">Jan 2024 - Present</p>
-                    <h3 className="text-xl font-bold text-white mb-2">Adv. Dip. Computer Programming</h3>
-                    <p className="text-gray-400">Algonquin College | Ottawa, ON</p>
-                  </div>
-                  <div className="relative">
-                    <div className="absolute -left-[41px] top-1 w-4 h-4 rounded-full bg-[#0b0f19] border-2 border-gray-600"></div>
-                    <p className="text-sm text-gray-500 font-bold mb-1">Dec 2021 - 2023</p>
-                    <h3 className="text-xl font-bold text-white mb-2">Computer Science Pathway</h3>
-                    <p className="text-gray-400">Fraser International College | Vancouver, BC</p>
-                  </div>
-                </div>
-              </div>
-
+        <section className="max-w-7xl mx-auto px-6 pt-40 pb-20 min-h-screen flex items-center pointer-events-none">
+          <motion.div 
+            initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
+            className="flex flex-col items-start pointer-events-auto max-w-2xl"
+          >
+            <div className="px-4 py-2 bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-[#00E5FF] rounded-none text-xs font-bold tracking-[0.2em] mb-8 uppercase">
+              Available for Internships
             </div>
+            <h1 className="text-6xl md:text-8xl font-black text-white mb-2 tracking-tighter leading-none">
+              Shivang <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#FF3366]">Ayar.</span>
+            </h1>
+            <p className="text-xl text-gray-400 mt-8 mb-10 leading-relaxed font-light">
+              Software Engineer & Data Architect. Specializing in high-performance full-stack applications and precision backend systems.
+            </p>
+            <a href="#projects" className="bg-white text-black px-8 py-4 text-sm font-bold tracking-widest uppercase hover:bg-[#00E5FF] hover:text-white transition-all duration-300">
+              Execute Portfolio
+            </a>
           </motion.div>
         </section>
 
-        {/* SKILLS SECTION */}
-        <section id="skills" className="max-w-7xl mx-auto px-6 py-32 flex flex-col justify-center pointer-events-none">
-          <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-4xl font-black text-white mb-12 tracking-tighter pointer-events-auto">
-            Technical <span className="text-blue-500">Stack.</span>
-          </motion.h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pointer-events-auto">
-            <div className="bg-[#0f172a]/40 p-8 rounded-2xl backdrop-blur-md border border-gray-800">
-              <h3 className="text-xl font-bold text-white mb-6">Frontend</h3>
-              <p className="text-gray-400 mb-2 font-medium">React.js</p>
-              <p className="text-gray-400 mb-2 font-medium">JavaScript (ES6+)</p>
-              <p className="text-gray-400 mb-2 font-medium">HTML5 / CSS3</p>
+        <section id="about" className="max-w-7xl mx-auto px-6 py-32 min-h-screen flex flex-col justify-center pointer-events-none">
+          <div className="pointer-events-auto">
+            
+            <div className="mb-20">
+              <h2 className="text-4xl font-black text-white mb-4 tracking-tighter">The <span className="text-[#FF3366]">Journey.</span></h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="bg-[#0A0A10]/80 p-8 border-l-2 border-[#00E5FF] backdrop-blur-md">
+                  <p className="text-xs text-[#00E5FF] font-bold tracking-widest uppercase mb-2">2024 - Present</p>
+                  <h3 className="text-2xl font-bold text-white mb-2">Algonquin College</h3>
+                  <p className="text-gray-400 font-light">Advanced Diploma in Computer Programming and Analysis. Mastering enterprise-level database systems, advanced Java, and business intelligence.</p>
+                </div>
+                <div className="bg-[#0A0A10]/80 p-8 border-l-2 border-gray-800 backdrop-blur-md hover:border-[#FF3366] transition-colors">
+                  <p className="text-xs text-gray-500 font-bold tracking-widest uppercase mb-2">2021 - 2023</p>
+                  <h3 className="text-2xl font-bold text-white mb-2">Fraser International College (SFU)</h3>
+                  <p className="text-gray-400 font-light">Computer Science Pathway. Built a rigorous foundation in algorithms, systems analysis, and core software engineering principles.</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-[#0f172a]/40 p-8 rounded-2xl backdrop-blur-md border border-gray-800">
-              <h3 className="text-xl font-bold text-white mb-6">Backend & Data</h3>
-              <p className="text-gray-400 mb-2 font-medium">Node.js / Express</p>
-              <p className="text-gray-400 mb-2 font-medium">Java / OOP</p>
-              <p className="text-gray-400 mb-2 font-medium">MongoDB / MySQL</p>
-            </div>
-            <div className="bg-[#0f172a]/40 p-8 rounded-2xl backdrop-blur-md border border-gray-800">
-              <h3 className="text-xl font-bold text-white mb-6">Tools & Cloud</h3>
-              <p className="text-gray-400 mb-2 font-medium">Git / Docker</p>
-              <p className="text-gray-400 mb-2 font-medium">Power BI / DAX</p>
-              <p className="text-gray-400 mb-2 font-medium">AWS / Vercel</p>
+
+            <div>
+              <h2 className="text-4xl font-black text-white mb-8 tracking-tighter">Offline <span className="text-[#00E5FF]">Protocol.</span></h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <div className="bg-[#0A0A10]/60 border border-white/5 p-8 hover:border-[#FF3366]/50 transition-all group">
+                  <div className="text-4xl mb-4 grayscale group-hover:grayscale-0 transition-all">🏋️‍♂️</div>
+                  <h3 className="text-xl font-bold text-white mb-2">Iron & Discipline</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">Dedicated to a heavy 6-day split. Focusing strictly on compound movements and dialing in a cutting phase to hit that 10-11% target.</p>
+                </div>
+                
+                <div className="bg-[#0A0A10]/60 border border-white/5 p-8 hover:border-[#00E5FF]/50 transition-all group">
+                  <div className="text-4xl mb-4 grayscale group-hover:grayscale-0 transition-all">🎮</div>
+                  <h3 className="text-xl font-bold text-white mb-2">Gaming & Coding</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">Immersed in digital worlds and logic. Whether I am exploring immersive gaming mechanics or engineering personal side-projects late into the night.</p>
+                </div>
+
+                <div className="bg-[#0A0A10]/60 border border-white/5 p-8 hover:border-purple-500/50 transition-all group">
+                  <div className="text-4xl mb-4 grayscale group-hover:grayscale-0 transition-all">🌍</div>
+                  <h3 className="text-xl font-bold text-white mb-2">Hiking & Travelling</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">Always seeking new perspectives. Traveling to new destinations and hiking unfamiliar trails to maintain balance outside the terminal.</p>
+                </div>
+
+              </div>
             </div>
           </div>
         </section>
 
-        {/* PROJECTS SECTION */}
+        <section id="skills" className="max-w-7xl mx-auto px-6 py-32 pointer-events-none">
+          <div className="pointer-events-auto">
+            
+            <h2 className="text-4xl font-black text-white mb-8 tracking-tighter">Key <span className="text-[#FF3366]">Milestones.</span></h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-20">
+              <div className="bg-gradient-to-br from-[#0A0A10] to-[#12121A] p-6 border border-white/5 flex items-center gap-6">
+                <div className="w-16 h-16 rounded-full bg-[#00E5FF]/10 flex items-center justify-center text-[#00E5FF] text-2xl">🏆</div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Hackathon SDLC Execution</h3>
+                  <p className="text-sm text-gray-400">Delivered functional MVP Chatbot in &lt;24hrs</p>
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-[#0A0A10] to-[#12121A] p-6 border border-white/5 flex items-center gap-6">
+                <div className="w-16 h-16 rounded-full bg-[#FF3366]/10 flex items-center justify-center text-[#FF3366] text-2xl">⚡</div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Algorithm Optimization</h3>
+                  <p className="text-sm text-gray-400">Achieved O(1) time complexity & 100% accuracy in Java</p>
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-[#0A0A10] to-[#12121A] p-6 border border-white/5 flex items-center gap-6">
+                <div className="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-400 text-2xl">📈</div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Data Architecture Impact</h3>
+                  <p className="text-sm text-gray-400">Reduced data analysis time by 90% using Star Schema</p>
+                </div>
+              </div>
+              <div className="bg-gradient-to-br from-[#0A0A10] to-[#12121A] p-6 border border-white/5 flex items-center gap-6">
+                <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center text-yellow-400 text-2xl">⚙️</div>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Operations Leadership</h3>
+                  <p className="text-sm text-gray-400">Increased order processing efficiency by 20% in logistics</p>
+                </div>
+              </div>
+            </div>
+
+            <h2 className="text-4xl font-black text-white mb-8 tracking-tighter">Core <span className="text-[#00E5FF]">Competencies.</span></h2>
+            <div className="bg-[#0A0A10]/60 p-10 border border-white/5">
+              <div className="flex flex-wrap gap-3">
+                {['Java', 'JavaScript (ES6+)', 'Python', 'React', 'Node.js', 'Express', 'MongoDB', 'MySQL', 'SQL', 'HTML5/CSS3', 'Power BI', 'DAX', 'Git', 'Docker', 'AWS', 'JUnit', 'OOP', 'ETL Processes'].map((skill, i) => (
+                  <span key={i} className="px-5 py-3 bg-[#05050A] border border-white/10 text-gray-300 font-mono text-sm hover:border-[#00E5FF] hover:text-[#00E5FF] transition-colors cursor-default">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+          </div>
+        </section>
+
         <section id="projects" className="max-w-7xl mx-auto px-6 py-32 min-h-screen flex flex-col justify-center pointer-events-none">
-          <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-4xl font-black text-white mb-12 tracking-tighter pointer-events-auto">
-            Selected <span className="text-blue-500">Work.</span>
-          </motion.h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pointer-events-auto">
-            <div className="bg-[#0f172a]/40 p-8 rounded-2xl backdrop-blur-md border border-gray-800 hover:border-blue-500/50 transition-all">
-              <h3 className="text-2xl font-bold text-white mb-3">Movie Watchlist Web App</h3>
-              <p className="text-gray-400 mb-6 leading-relaxed">Full-stack web application tracking user media. Built RESTful APIs with Express for secure CRUD operations and integrated a flexible NoSQL MongoDB database.</p>
-              <div className="flex gap-2">
-                <span className="px-3 py-1 bg-gray-800 text-gray-300 rounded text-xs font-semibold">Node.js</span>
-                <span className="px-3 py-1 bg-gray-800 text-gray-300 rounded text-xs font-semibold">MongoDB</span>
+          <div className="pointer-events-auto">
+            <h2 className="text-4xl font-black text-white mb-12 tracking-tighter">System <span className="text-[#FF3366]">Builds.</span></h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              
+              <div className="bg-[#0A0A10]/80 p-10 border border-white/5 hover:border-[#00E5FF]/50 transition-all group relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#00E5FF]/5 rounded-bl-full -z-10 group-hover:bg-[#00E5FF]/10 transition-colors"></div>
+                <h3 className="text-2xl font-bold text-white mb-4">Movie Watchlist Web App</h3>
+                <p className="text-gray-400 mb-8 leading-relaxed">Engineered a complete full-stack web application for tracking user media. Built RESTful APIs with Express for secure CRUD operations, integrated with a highly flexible NoSQL MongoDB architecture.</p>
+                <div className="flex gap-3">
+                  <span className="text-xs font-bold tracking-widest text-[#00E5FF] uppercase">Node.js</span>
+                  <span className="text-xs font-bold tracking-widest text-[#00E5FF] uppercase">MongoDB</span>
+                </div>
               </div>
-            </div>
-            <div className="bg-[#0f172a]/40 p-8 rounded-2xl backdrop-blur-md border border-gray-800 hover:border-blue-500/50 transition-all">
-              <h3 className="text-2xl font-bold text-white mb-3">Voice AI Chatbot</h3>
-              <p className="text-gray-400 mb-6 leading-relaxed">Developed an emotion-aware chatbot by integrating Voice APIs with a Node.js backend, handling asynchronous streams to achieve &lt;200ms latency.</p>
-              <div className="flex gap-2">
-                <span className="px-3 py-1 bg-gray-800 text-gray-300 rounded text-xs font-semibold">React</span>
-                <span className="px-3 py-1 bg-gray-800 text-gray-300 rounded text-xs font-semibold">Voice APIs</span>
+
+              <div className="bg-[#0A0A10]/80 p-10 border border-white/5 hover:border-[#FF3366]/50 transition-all group relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF3366]/5 rounded-bl-full -z-10 group-hover:bg-[#FF3366]/10 transition-colors"></div>
+                <h3 className="text-2xl font-bold text-white mb-4">Voice AI Chatbot</h3>
+                <p className="text-gray-400 mb-8 leading-relaxed">Executed during a 24-hour hackathon. Developed an emotion-aware chatbot by integrating Voice APIs with a Node.js backend, achieving &lt;200ms latency on asynchronous streams.</p>
+                <div className="flex gap-3">
+                  <span className="text-xs font-bold tracking-widest text-[#FF3366] uppercase">React</span>
+                  <span className="text-xs font-bold tracking-widest text-[#FF3366] uppercase">Voice APIs</span>
+                </div>
               </div>
+
             </div>
           </div>
-        </section>
-
-        {/* CONTACT SECTION */}
-        <section id="contact" className="max-w-3xl mx-auto px-6 py-32 flex flex-col justify-center pointer-events-none">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="pointer-events-auto bg-[#0f172a]/40 p-10 rounded-2xl backdrop-blur-md border border-gray-800">
-            <h2 className="text-3xl font-black text-white mb-8 tracking-tighter">Let's <span className="text-blue-500">Connect.</span></h2>
-            <form onSubmit={handleContactSubmit} className="flex flex-col gap-4">
-              <input type="text" placeholder="Name" required className="p-4 bg-[#0b0f19] text-white rounded-lg outline-none focus:border-blue-500 border border-gray-800 transition-all" />
-              <input type="email" placeholder="Email" required className="p-4 bg-[#0b0f19] text-white rounded-lg outline-none focus:border-blue-500 border border-gray-800 transition-all" />
-              <textarea placeholder="Message" rows="4" required className="p-4 bg-[#0b0f19] text-white rounded-lg outline-none focus:border-blue-500 border border-gray-800 transition-all resize-none"></textarea>
-              <button type="submit" className="mt-2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-lg transition-all">Send Message</button>
-            </form>
-          </motion.div>
         </section>
 
       </div>
