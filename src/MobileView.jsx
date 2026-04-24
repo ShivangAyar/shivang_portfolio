@@ -1,13 +1,12 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Text, ContactShadows, PerspectiveCamera, Environment } from '@react-three/drei';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- HACKER LOADING PROTOCOL ---
+// --- CUSTOM LOADING PROTOCOL ---
 const LoadingScreen = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState("Initializing...");
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -17,39 +16,36 @@ const LoadingScreen = ({ onComplete }) => {
           setTimeout(onComplete, 1200);
           return 100;
         }
-        const next = prev + Math.floor(Math.random() * 2) + 1; 
-        if (next >= 89) setStatus("89% ALLOWING ACCESS...");
-        else if (next >= 54) setStatus("54% VERIFIED USER");
-        else if (next >= 33) setStatus("33% SCANNING IF YOU ARE HUMAN...");
-        return next > 100 ? 100 : next;
+        return prev + Math.floor(Math.random() * 4) + 1;
       });
-    }, 150); 
+    }, 80);
     return () => clearInterval(timer);
   }, [onComplete]);
 
   return (
     <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center">
-      <div className="w-full max-w-xs space-y-12">
-        <div className="space-y-4">
-          <h2 className="text-[#00E5FF] font-mono text-[10px] tracking-[0.5em] animate-pulse uppercase">Security Protocol Active</h2>
-          <div className="h-[1.5px] w-full bg-white/5 rounded-full overflow-hidden">
-            <motion.div className="h-full bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" style={{ width: progress + "%" }} />
-          </div>
+      <div className="w-full max-w-xs space-y-8">
+        <h2 className="text-[#00E5FF] font-mono text-2xl tracking-[0.2em] font-black uppercase">
+          &lt;/&gt; Shivang Ayar
+        </h2>
+        <div className="h-[1.5px] w-full bg-white/5 rounded-full overflow-hidden">
+          <motion.div className="h-full bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" style={{ width: progress + "%" }} />
         </div>
-        <p className="text-white font-black text-xs tracking-[0.2em] uppercase h-10 flex items-center justify-center leading-relaxed">{status}</p>
+        <p className="text-gray-400 font-black text-xs tracking-widest uppercase leading-relaxed">
+          Welcome to my realm <br /> hope you enjoy it 🚀
+        </p>
       </div>
     </motion.div>
   );
 };
 
-// --- MECHANICAL SNAP CORE (Exact Desktop logic mapped to scroll) ---
+// --- MECHANICAL SNAP CORE (Exact Desktop Colors & Logic) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
   const gridSize = 4;
   const count = gridSize ** 3;
   
-  // Logic: Assembled at top, disperses as you scroll down
   const isActive = scrollY < 150;
 
   const cubeData = useMemo(() => {
@@ -58,7 +54,7 @@ function MechanicalCore({ scrollY }) {
     for (let x = 0; x < gridSize; x++) {
       for (let y = 0; y < gridSize; y++) {
         for (let z = 0; z < gridSize; z++) {
-          const targetPos = new THREE.Vector3(x - 1.5, y - 1.5, z - 1.5).multiplyScalar(1.05);
+          const targetPos = new THREE.Vector3(x - (gridSize - 1) / 2, y - (gridSize - 1) / 2, z - (gridSize - 1) / 2).multiplyScalar(1.05);
           const randomPos = new THREE.Vector3((Math.random() - 0.5) * 25, (Math.random() - 0.5) * 25, (Math.random() - 0.5) * 20);
           const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
           temp.push({ targetPos, randomPos, randomRot, index: i++ });
@@ -69,26 +65,34 @@ function MechanicalCore({ scrollY }) {
   }, []);
 
   const dummy = new THREE.Object3D();
-  const cP = useMemo(() => cubeData.map(d => d.randomPos.clone()), [cubeData]);
-  const cR = useMemo(() => cubeData.map(d => new THREE.Quaternion().setFromEuler(d.randomRot)), [cubeData]);
+  const currentPositions = useMemo(() => cubeData.map(d => d.randomPos.clone()), [cubeData]);
+  const currentRotations = useMemo(() => cubeData.map(d => new THREE.Quaternion().setFromEuler(d.randomRot)), [cubeData]);
 
   const words = useMemo(() => [
-    { text: "SHIVANG", phase: 0, offset: [0, 4, 0] },
-    { text: "ARCHITECTURE", phase: 2, offset: [4, 1, 1] },
-    { text: "MERN STACK", phase: 3.5, offset: [-4, -2, 1] },
-    { text: "SYSTEMS", phase: 5, offset: [0, -4, 0] }
+    { text: "SHIVANG", phase: Math.random() * 10, offset: [0, 4, 0] },
+    { text: "ARCHITECTURE", phase: Math.random() * 10, offset: [5, 2, 2] },
+    { text: "MERN STACK", phase: Math.random() * 10, offset: [-5, -2, 2] },
+    { text: "FULL-STACK", phase: Math.random() * 10, offset: [2, -4, -2] },
+    { text: "SYSTEMS", phase: Math.random() * 10, offset: [-3, 3, -4] }
   ], []);
 
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
     groupRef.current.rotation.y += delta * (isActive ? 0.25 : 0.05);
+    
     cubeData.forEach((data, i) => {
-      const tP = isActive ? data.targetPos : data.randomPos;
-      const tR = isActive ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
-      cP[i].lerp(tP, 0.08); cR[i].slerp(tR, 0.08);
-      dummy.position.copy(cP[i]);
-      if (!isActive) dummy.position.y += Math.sin(t + i) * 0.005;
-      dummy.quaternion.copy(cR[i]);
+      const targetP = isActive ? data.targetPos : data.randomPos;
+      const targetR = isActive ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
+
+      currentPositions[i].lerp(targetP, isActive ? 0.08 : 0.015);
+      currentRotations[i].slerp(targetR, isActive ? 0.08 : 0.01);
+
+      dummy.position.copy(currentPositions[i]);
+      if (!isActive) {
+        dummy.position.y += Math.sin(t + i) * 0.005;
+        dummy.position.x += Math.cos(t * 0.5 + i) * 0.005;
+      }
+      dummy.quaternion.copy(currentRotations[i]);
       dummy.scale.setScalar(isActive ? 1 : 0.6);
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
@@ -100,16 +104,13 @@ function MechanicalCore({ scrollY }) {
     <group ref={groupRef}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        <meshStandardMaterial 
-          color="#00E5FF" 
-          metalness={1} 
-          roughness={0.05} 
-          emissive={isActive ? "#00E5FF" : "#000"} 
-          emissiveIntensity={isActive ? 0.5 : 0.1} 
-        />
+        {/* Exact Desktop Material */}
+        <meshStandardMaterial color={isActive ? "#002222" : "#020202"} roughness={0.1} metalness={0.9} />
       </instancedMesh>
       {isActive && <pointLight intensity={20} color="#FF8C00" distance={10} />}
-      {words.map((w, i) => <FloatingHUDText key={i} text={w.text} isActive={isActive} offset={w.offset} phase={w.phase} />)}
+      {words.map((w, i) => (
+        <FloatingHUDText key={i} text={w.text} isActive={isActive} offset={w.offset} phase={w.phase} />
+      ))}
     </group>
   );
 }
@@ -119,40 +120,55 @@ function FloatingHUDText({ text, isActive, offset, phase }) {
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
     if (ref.current) {
-      const driftX = Math.sin(t * 0.4 + phase) * (isActive ? 1 : 5);
-      const driftY = Math.cos(t * 0.3 + phase) * (isActive ? 1 : 5);
-      ref.current.position.lerp(new THREE.Vector3(isActive ? offset[0] + driftX : driftX, isActive ? offset[1] + driftY : driftY, isActive ? 0 : -10), 0.03);
+      const driftX = Math.sin(t * 0.4 + phase) * (isActive ? 1.5 : 8);
+      const driftY = Math.cos(t * 0.3 + phase) * (isActive ? 1.5 : 8);
+      const driftZ = Math.sin(t * 0.2 + phase) * (isActive ? 1 : 5);
+      
+      const targetX = isActive ? offset[0] + driftX : driftX * 2;
+      const targetY = isActive ? offset[1] + driftY : driftY * 2;
+      const targetZ = isActive ? offset[2] + driftZ : driftZ;
+      
+      ref.current.position.lerp(new THREE.Vector3(targetX, targetY, targetZ), 0.03);
       ref.current.lookAt(state.camera.position);
     }
   });
-  return <Text ref={ref} fontSize={0.4} color="#00E5FF" emissive="#00E5FF" emissiveIntensity={isActive ? 4 : 0.2} transparent opacity={isActive ? 0.9 : 0.15}>{text}</Text>;
+
+  return (
+    <Text ref={ref} fontSize={0.4} font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf" color="#00E5FF" emissive="#00E5FF" emissiveIntensity={isActive ? 4 : 0.2} transparent opacity={isActive ? 0.9 : 0.25}>
+      {text}
+    </Text>
+  );
 }
 
-// --- SEQUENTIAL SCROLL-REACTIVE SKILLS (Reset on scroll past) ---
+// --- DESKTOP SLIDER BARS (Scroll Reactive) ---
 const CompCard = ({ title, icon, skills }) => {
   const ref = useRef(null);
-  // once: false ensures it resets when scrolling out of view
+  // once: false allows the bars to fill up when scrolled to, and reset to 0 when scrolled away
   const isInView = useInView(ref, { amount: 0.3, once: false }); 
+  
   return (
-    <div ref={ref} className="bg-[#050507]/60 border border-white/5 p-8 rounded-[2.5rem] shadow-2xl flex flex-col h-[400px]">
-      <h3 className="text-xl font-bold text-white mb-8 tracking-tighter uppercase flex items-center gap-4"><span className="text-2xl">{icon}</span> {title}</h3>
-      <div className="space-y-10 mt-auto">{skills.map((skill, i) => (
-        <div key={i}>
-          <div className="flex justify-between text-[11px] font-bold text-gray-500 uppercase mb-3 transition-colors" style={{ color: isInView ? 'white' : '' }}><span>{skill.n}</span><span style={{ color: isInView ? "#00E5FF" : "" }}>{skill.v}</span></div>
-          <div className="flex gap-2 h-[5px] overflow-hidden bg-white/2 rounded-full">
-            {[...Array(12)].map((_, idx) => (
+    <div ref={ref} className="bg-[#050507]/60 border border-white/5 p-8 rounded-[2rem] shadow-2xl flex flex-col h-[380px]">
+      <h3 className="text-xl font-bold text-white mb-8 tracking-tighter uppercase flex items-center gap-4">
+        <span className="text-2xl">{icon}</span> {title}
+      </h3>
+      <div className="space-y-8 mt-auto">
+        {skills.map((skill, i) => (
+          <div key={i}>
+            <div className="flex justify-between text-[11px] font-bold text-gray-500 uppercase mb-3 transition-colors" style={{ color: isInView ? 'white' : '' }}>
+              <span>{skill.n}</span><span style={{ color: isInView ? "#00E5FF" : "" }}>{skill.v}</span>
+            </div>
+            {/* Exact Desktop Continuous Bar */}
+            <div className="w-full bg-white/5 rounded-full h-[2px] overflow-hidden">
               <motion.div 
-                key={idx} 
-                initial={{ backgroundColor: "#14141B" }} 
-                animate={isInView ? { backgroundColor: idx * (100/12) < parseInt(skill.v) ? "#00E5FF" : "#14141B" } : { backgroundColor: "#14141B" }} 
-                transition={{ delay: isInView ? (i * 0.1 + idx * 0.04) : 0 }} 
-                className="flex-1 rounded-sm" 
-                style={{ backgroundImage: isInView && idx * (100/12) < parseInt(skill.v) ? 'linear-gradient(to right, #00E5FF, #FF8C00)' : 'none' }} 
+                initial={{ width: "0%" }} 
+                animate={{ width: isInView ? skill.v : "0%" }} 
+                transition={{ duration: 1.2, delay: isInView ? i * 0.15 : 0, ease: "easeOut" }} 
+                className="h-full bg-gradient-to-r from-[#00E5FF] to-[#FF8C00] shadow-[0_0_10px_rgba(0,229,255,0.8)]" 
               />
-            ))}
+            </div>
           </div>
-        </div>
-      ))}</div>
+        ))}
+      </div>
     </div>
   );
 };
@@ -207,12 +223,18 @@ const ReactiveFooter = () => {
         </div>
 
         <div className="flex flex-col gap-6">
-          <a href="https://github.com/ayarshivang27" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all text-center">GitHub</a>
-          <a href="https://linkedin.com/in/shivangayar/" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all text-center">LinkedIn</a>
-          <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#FF8C00] hover:text-black transition-all text-center">Email</a>
+          <a href="https://github.com/ayarshivang27" target="_blank" className="bg-white/5 border border-white/10 px-8 py-5 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3">
+            <span className="text-xl">🐙</span> GitHub
+          </a>
+          <a href="https://linkedin.com/in/shivangayar/" target="_blank" className="bg-white/5 border border-white/10 px-8 py-5 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all flex items-center justify-center gap-3">
+            <span className="text-xl">💼</span> LinkedIn
+          </a>
+          <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 px-8 py-5 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#FF8C00] hover:text-black transition-all flex items-center justify-center gap-3">
+            <span className="text-xl">✉️</span> Email
+          </a>
         </div>
         
-        <p className="mt-40 text-[10px] font-black tracking-[1.5em] text-gray-800 uppercase leading-relaxed text-center">© 2026 SHIVANG AYAR.<br/>ARCHITECTED WITH INTENT.</p>
+        <p className="mt-20 text-[10px] font-black tracking-[1.5em] text-gray-800 uppercase leading-relaxed text-center">© 2026 SHIVANG AYAR.<br/>ARCHITECTED WITH INTENT.</p>
       </div>
 
       <style dangerouslySetInnerHTML={{__html: `
@@ -248,7 +270,6 @@ export default function MobileView() {
       
       <div className="fixed inset-0 z-0 pointer-events-none">
         <Canvas dpr={[1, 2]}>
-          {/* HARD BACKGROUND LOCK TO PREVENT WHITE OVERSCROLL GAP */}
           <color attach="background" args={['#010102']} />
           <PerspectiveCamera makeDefault position={[0, 0, 22]} fov={55} />
           <ambientLight intensity={0.5} />
@@ -282,7 +303,7 @@ export default function MobileView() {
           <div className="flex flex-col gap-6 w-full"><a href="#builds" className="bg-white text-black px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest shadow-2xl">Execute Builds</a><a href="/resume.pdf" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest">Resume ↓</a></div>
         </motion.div></section>
 
-        {/* ABOUT ME SECTION */}
+        {/* ABOUT ME */}
         <section id="about" className="px-6 py-32 flex flex-col gap-10"><div className="w-full text-left">
           <h2 className="text-5xl font-black text-white mb-8 tracking-tighter uppercase">About <span className="text-[#00E5FF]">Me.</span></h2>
           <p className="text-gray-400 text-lg font-light leading-relaxed">Born and raised in Zambia, now operating in Ottawa. My approach to engineering is purely objective: Build, Optimize, and Master.</p>
@@ -298,7 +319,7 @@ export default function MobileView() {
           ))}
         </section>
 
-        {/* TECHNICAL ARSENAL (ALL 6 ADDED & REACTIVE) */}
+        {/* TECHNICAL ARSENAL (REACTIVE GRADIENT BARS) */}
         <section id="skills" className="px-6 py-32 space-y-8">
           <h2 className="text-6xl font-black text-white mb-16 tracking-tighter uppercase text-center">Core Stacks.</h2>
           <CompCard title="Languages" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"}]} />
