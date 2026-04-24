@@ -4,10 +4,9 @@ import { ContactShadows, PerspectiveCamera, Environment } from '@react-three/dre
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- HACKER LOADING PROTOCOL ---
+// --- CUSTOM HACKER LOADING PROTOCOL ---
 const LoadingScreen = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
-  const [status, setStatus] = useState("Initializing...");
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -17,13 +16,9 @@ const LoadingScreen = ({ onComplete }) => {
           setTimeout(onComplete, 1200);
           return 100;
         }
-        const next = prev + Math.floor(Math.random() * 2) + 1; 
-        if (next >= 89) setStatus("89% ALLOWING ACCESS...");
-        else if (next >= 54) setStatus("54% VERIFIED USER");
-        else if (next >= 33) setStatus("33% SCANNING IF YOU ARE HUMAN...");
-        return next > 100 ? 100 : next;
+        return prev + Math.floor(Math.random() * 4) + 1;
       });
-    }, 180); 
+    }, 80);
     return () => clearInterval(timer);
   }, [onComplete]);
 
@@ -44,13 +39,15 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (Aesthetic Cube Only) ---
+// --- MECHANICAL SNAP CORE (Cinematic First-Page Logic) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
   const gridSize = 4;
   const count = gridSize ** 3;
-  const isActive = scrollY < 150;
+  
+  // Triggers shatter as soon as user starts scrolling past 50px
+  const isActive = scrollY < 50;
 
   const cubeData = useMemo(() => {
     const temp = [];
@@ -75,6 +72,11 @@ function MechanicalCore({ scrollY }) {
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
     groupRef.current.rotation.y += delta * (isActive ? 0.25 : 0.05);
+    
+    // Scale group to make the initial cube larger on screen
+    const targetScale = isActive ? 1.4 : 1;
+    groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.08);
+
     cubeData.forEach((data, i) => {
       const tP = isActive ? data.targetPos : data.randomPos;
       const tR = isActive ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
@@ -93,20 +95,19 @@ function MechanicalCore({ scrollY }) {
     <group ref={groupRef}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
+        {/* Exact Desktop Colors, adjusted lighting below for visibility */}
         <meshStandardMaterial 
-          color="#00E5FF" 
-          metalness={0.9} 
+          color={isActive ? "#002222" : "#020202"} 
           roughness={0.1} 
-          emissive={isActive ? "#00E5FF" : "#000"} 
-          emissiveIntensity={isActive ? 0.4 : 0.05} 
+          metalness={0.9} 
         />
       </instancedMesh>
-      {isActive && <pointLight intensity={15} color="#FF8C00" distance={15} />}
+      {isActive && <pointLight intensity={30} color="#FF8C00" distance={15} />}
     </group>
   );
 }
 
-// --- SEQUENTIAL SCROLL-REACTIVE SKILLS ---
+// --- DESKTOP SLIDER BARS (Continuous Gradient) ---
 const CompCard = ({ title, icon, skills }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { amount: 0.3, once: false });
@@ -161,7 +162,6 @@ const ReactiveFooter = () => {
         ))}
       </div>
 
-      {/* Terminal Container */}
       <div className="w-full bg-[#020203] border-2 border-[#00E5FF]/30 p-12 rounded-[4rem] shadow-[0_0_80px_rgba(0,229,255,0.08)] relative z-10 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#00E5FF]/5 to-transparent h-4 w-full animate-scanline pointer-events-none" />
         <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" />
@@ -193,7 +193,6 @@ const ReactiveFooter = () => {
         </div>
       </div>
 
-      {/* Split Copyright Outside Container */}
       <div className="w-full flex justify-between items-center mt-12 px-2 text-[8px] sm:text-[10px] font-black tracking-[0.2em] sm:tracking-[0.4em] text-gray-600 uppercase z-20 relative">
         <span className="text-left">© 2026 SHIVANG AYAR</span>
         <span className="text-right">MADE WITH INTENT</span>
@@ -207,7 +206,7 @@ const ReactiveFooter = () => {
   );
 };
 
-// --- FULL PROJECTS DATA ---
+// --- DATA ---
 const projectsData = [
   { title: "E-Commerce Microservices", desc: "Scaleable backend utilizing Docker, Stripe API, and JWT auth.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
   { title: "Movie Watchlist App", desc: "Full-stack media tracker via RESTful APIs and NoSQL architecture.", tags: ["MongoDB", "Express", "Node"], color: "#FF8C00" },
@@ -240,11 +239,13 @@ export default function MobileView() {
 
       <AnimatePresence>{isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}</AnimatePresence>
       
+      {/* 3D BACKGROUND (Stays fixed) */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <Canvas dpr={[1, 2]}>
           <color attach="background" args={['#010102']} />
           <PerspectiveCamera makeDefault position={[0, 0, 22]} fov={55} />
-          <ambientLight intensity={0.5} />
+          {/* Boosted ambient light for darker materials */}
+          <ambientLight intensity={1.2} />
           <Environment preset="night" />
           <MechanicalCore scrollY={scrollY} />
           <ContactShadows position={[0, -10, 0]} opacity={0.4} scale={40} blur={2} color="#00E5FF" />
@@ -267,13 +268,40 @@ export default function MobileView() {
           )}
         </AnimatePresence>
 
-        {/* HERO */}
-        <section className="px-6 min-h-screen flex items-center pt-20"><motion.div initial={{ opacity: 0, y: 20 }} animate={!isLoading ? { opacity: 1, y: 0 } : {}} className="flex flex-col items-start z-40">
-          <div className="mb-6 px-4 py-1.5 border border-[#00E5FF]/20 bg-[#00E5FF]/5 text-[#00E5FF] text-[10px] font-black uppercase tracking-widest">Architecture & Logic</div>
-          <h1 className="text-6xl font-black text-white mb-6 leading-none tracking-tighter uppercase leading-[0.85]">Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#FF8C00]">Ayar.</span></h1>
-          <p className="text-lg text-gray-400 mb-12 border-l-2 border-[#FF8C00] pl-6 leading-relaxed font-light text-left">Designing high-performance full-stack architectures and resilient digital systems.</p>
-          <div className="flex flex-col gap-6 w-full"><a href="#builds" className="bg-white text-black px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest shadow-2xl">Execute Builds</a><a href="/resume.pdf" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest">Resume ↓</a></div>
-        </motion.div></section>
+        {/* PAGE 1: CUBE ONLY (Empty spacer so cube shows center stage) */}
+        <section className="h-[90vh] w-full flex flex-col items-center justify-end pb-12 z-10">
+          <motion.div 
+            animate={{ y: [0, 10, 0], opacity: [0.3, 0.8, 0.3] }} 
+            transition={{ repeat: Infinity, duration: 2 }}
+            className="flex flex-col items-center gap-2 text-[#00E5FF] mix-blend-screen"
+          >
+            <span className="text-[10px] tracking-[0.4em] font-black uppercase">Initiate</span>
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+          </motion.div>
+        </section>
+
+        {/* PAGE 2: NAME TRANSITION (Scroll into view) */}
+        <section className="px-6 min-h-[80vh] flex items-center pt-10 z-40">
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }} 
+            whileInView={{ opacity: 1, y: 0 }} 
+            transition={{ duration: 1, ease: "easeOut" }} 
+            viewport={{ once: true, amount: 0.3 }}
+            className="flex flex-col items-start"
+          >
+            {/* The "Architecture & Logic" tag is REMOVED as requested */}
+            <h1 className="text-6xl font-black text-white mb-6 leading-none tracking-tighter uppercase leading-[0.85]">
+              Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#FF8C00]">Ayar.</span>
+            </h1>
+            <p className="text-lg text-gray-400 mb-12 border-l-2 border-[#FF8C00] pl-6 leading-relaxed font-light text-left">
+              Designing high-performance full-stack architectures and resilient digital systems.
+            </p>
+            <div className="flex flex-col gap-6 w-full">
+              <a href="#builds" className="bg-white text-black px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest shadow-2xl">Execute Builds</a>
+              <a href="/resume.pdf" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest">Resume ↓</a>
+            </div>
+          </motion.div>
+        </section>
 
         {/* ABOUT ME */}
         <section id="about" className="px-6 py-32 flex flex-col gap-10"><div className="w-full text-left">
