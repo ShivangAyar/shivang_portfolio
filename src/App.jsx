@@ -4,7 +4,7 @@ import { Text, ContactShadows, PerspectiveCamera, Environment } from '@react-thr
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- THE OBSIDIAN SNAP CORE ---
+// --- THE MECHANICAL SNAP CORE ---
 function MechanicalCore({ isHovered, scrollY, isMobile }) {
   const meshRef = useRef();
   const groupRef = useRef();
@@ -40,7 +40,7 @@ function MechanicalCore({ isHovered, scrollY, isMobile }) {
 
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
-    groupRef.current.rotation.y += delta * (isAssembled ? 0.2 : 0.02);
+    groupRef.current.rotation.y += delta * (isAssembled ? 0.3 : 0.02);
     
     cubeData.forEach((data, i) => {
       const targetP = isAssembled ? data.targetPos : data.randomPos;
@@ -64,7 +64,7 @@ function MechanicalCore({ isHovered, scrollY, isMobile }) {
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
         <meshPhysicalMaterial 
-          color="#050505" 
+          color="#080808" 
           metalness={1} 
           roughness={0.05} 
           reflectivity={1}
@@ -73,7 +73,7 @@ function MechanicalCore({ isHovered, scrollY, isMobile }) {
           emissiveIntensity={0.2}
         />
       </instancedMesh>
-      {isAssembled && <pointLight intensity={15} color="#FF8C00" distance={10} />}
+      {isAssembled && <pointLight intensity={25} color="#FF8C00" distance={10} />}
       
       {["SHIVANG", "ARCHITECTURE", "MERN STACK", "FULL-STACK"].map((txt, i) => (
         <FloatingHUDText key={txt} text={txt} offset={[[0, 5, 0], [7.5, 0, 0], [-7.5, -2, 0], [0, -5, 0]][i]} isAssembled={isAssembled} p={i * 0.4} />
@@ -98,7 +98,7 @@ function FloatingHUDText({ text, offset, isAssembled, p }) {
   );
 }
 
-// --- DUAL-MODE SEQUENTIAL SLIDER ---
+// --- REACTIVE POWER-CELL SLIDER COMPONENT ---
 const CompetencyCard = ({ title, icon, skills, isMobile }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: false, amount: 0.3 });
@@ -128,9 +128,9 @@ const CompetencyCard = ({ title, icon, skills, isMobile }) => {
                   key={idx}
                   initial={{ backgroundColor: "#14141B" }}
                   animate={active ? { backgroundColor: idx * (100/12) < parseInt(s.v) ? "#00E5FF" : "#14141B" } : { backgroundColor: "#14141B" }}
-                  transition={{ delay: active ? (idx * 0.05 + i * 0.1) : 0, duration: 0.2 }}
+                  transition={{ delay: active ? (idx * 0.04 + i * 0.1) : 0, duration: 0.2 }}
                   className="flex-1 rounded-sm"
-                  style={{ backgroundImage: active && idx * (100/12) < parseInt(s.v) ? 'linear-gradient(to right, #00E5FF, #FF8C00)' : 'none', boxShadow: active && idx * (100/12) < parseInt(s.v) ? '0 0 12px rgba(0,229,255,0.4)' : 'none' }}
+                  style={{ backgroundImage: active && idx * (100/12) < parseInt(s.v) ? 'linear-gradient(to right, #00E5FF, #FF8C00)' : 'none', boxShadow: active && idx * (100/12) < parseInt(s.v) ? '0 0 12px rgba(0,229,255,0.5)' : 'none' }}
                 />
               ))}
             </div>
@@ -169,7 +169,7 @@ export default function App() {
       
       {/* 2D LIGHT TRACKER */}
       {!isMobile && (
-        <div className="pointer-events-none fixed inset-0 z-20" style={{ background: `radial-gradient(850px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.04), transparent 85%)` }} />
+        <div className="pointer-events-none fixed inset-0 z-20" style={{ background: `radial-gradient(900px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.04), transparent 85%)` }} />
       )}
 
       {/* 3D SCENE BG LAYER (Z-INDEX -1) */}
@@ -197,7 +197,9 @@ export default function App() {
               </a>
             ))}
           </div>
-          <button onClick={() => setIsMenuOpen(true)} className="md:hidden text-[#00E5FF] p-2"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+          <button onClick={() => setIsMenuOpen(true)} className="md:hidden text-[#00E5FF] p-2 focus:outline-none">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
         </nav>
 
         {/* MOBILE MENU */}
@@ -288,7 +290,7 @@ export default function App() {
             <h2 className="text-6xl font-black text-white mb-20 tracking-tighter uppercase italic">Offline <span className="text-[#FF8C00]">Protocol.</span></h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               {[ {i:"🏋️‍♂️",t:"Iron & Discipline",d:"6-day compound split focus, applying progressive overload to software mastery."},
-                 {i:"🎮",t:"Logic & Strategy",d:"Tactical shooter mechanics and hardware tuning for peak performance."},
+                 {i:"🎮",t:"Logic & Strategy",d:"Hardware tuning and competitive tactical shooters. Peak performance optimization."},
                  {i:"🌍",t:"Nature Equilibrium",d:"Hiking and exploration of terrain to reset the internal digital buffer."}
               ].map((h,x)=>(
                 <motion.div key={x} initial={{scale:0.95, opacity: 0}} whileInView={{scale:1, opacity: 1}} transition={{duration: 0.5}} className="bg-white/5 p-12 rounded-[3.5rem] border border-white/5 hover:border-[#FF8C00]/40 transition-all duration-500 group shadow-2xl">
@@ -316,7 +318,7 @@ export default function App() {
               <a href="https://linkedin.com/in/shivangayar/" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all">LinkedIn</a>
               <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#FF8C00] hover:text-black transition-all">Email</a>
             </div>
-            <p className="mt-40 text-[10px] font-black tracking-[1.5em] text-gray-800 uppercase">© 2026 SHIVANG AYAR. CRAFTED WITH INTENT.</p>
+            <p className="mt-40 text-[10px] font-black tracking-[1.5em] text-gray-800 uppercase">© 2026 SHIVANG AYAR. ARCHITECTED WITH INTENT.</p>
           </div>
         </footer>
 
