@@ -4,7 +4,7 @@ import { Text, ContactShadows, PerspectiveCamera, Environment } from '@react-thr
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- THE HACKER LOADING SCREEN (Sequence Synchronized) ---
+// --- THE HACKER LOADING SCREEN (Slower Sequence) ---
 const LoadingScreen = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("Initializing...");
@@ -46,38 +46,58 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MOBILE REACTOR CORE (Scroll-Disperse Logic) ---
+// --- MOBILE REACTOR CORE WITH LABELS (Scroll-Disperse Logic) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
-  const isAssembled = scrollY < 150;
+  const gridSize = 4;
+  const count = gridSize ** 3;
+  
+  // Logic: Compact at top, Disperse as you scroll
+  const isAssembled = scrollY < 120;
 
   const cubeData = useMemo(() => {
     const temp = [];
-    for (let i = 0; i < 64; i++) {
-      const targetPos = new THREE.Vector3((i % 4) - 1.5, (Math.floor(i / 4) % 4) - 1.5, (Math.floor(i / 16) % 4) - 1.5).multiplyScalar(1.05);
-      const randomPos = new THREE.Vector3((Math.random() - 0.5) * 30, (Math.random() - 0.5) * 30, (Math.random() - 0.5) * 20);
-      const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
-      temp.push({ targetPos, randomPos, randomRot });
+    let i = 0;
+    for (let x = 0; x < gridSize; x++) {
+      for (let y = 0; y < gridSize; y++) {
+        for (let z = 0; z < gridSize; z++) {
+          const targetPos = new THREE.Vector3(x - 1.5, y - 1.5, z - 1.5).multiplyScalar(1.05);
+          const randomPos = new THREE.Vector3((Math.random() - 0.5) * 25, (Math.random() - 0.5) * 25, (Math.random() - 0.5) * 20);
+          const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
+          temp.push({ targetPos, randomPos, randomRot, index: i++ });
+        }
+      }
     }
     return temp;
   }, []);
 
   const dummy = new THREE.Object3D();
-  const cP = useMemo(() => cubeData.map(d => d.randomPos.clone()), []);
-  const cR = useMemo(() => cubeData.map(d => new THREE.Quaternion().setFromEuler(d.randomRot)), []);
+  const currentP = useMemo(() => cubeData.map(d => d.randomPos.clone()), []);
+  const currentR = useMemo(() => cubeData.map(d => new THREE.Quaternion().setFromEuler(d.randomRot)), []);
+
+  const words = useMemo(() => [
+    { text: "SHIVANG", phase: Math.random() * 10, offset: [0, 4, 0] },
+    { text: "ARCHITECTURE", phase: Math.random() * 10, offset: [5, 2, 2] },
+    { text: "MERN STACK", phase: Math.random() * 10, offset: [-5, -2, 2] },
+    { text: "FULL-STACK", phase: Math.random() * 10, offset: [2, -4, -2] }
+  ], []);
 
   useFrame((state, delta) => {
-    groupRef.current.rotation.y += delta * (isAssembled ? 0.3 : 0.05);
+    const t = state.clock.getElapsedTime();
+    groupRef.current.rotation.y += delta * (isAssembled ? 0.25 : 0.05);
+    
     cubeData.forEach((data, i) => {
-      const tP = isAssembled ? data.targetPos : data.randomPos;
-      const tR = isAssembled ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
-      cP[i].lerp(tP, isAssembled ? 0.12 : 0.01);
-      cR[i].slerp(tR, isAssembled ? 0.12 : 0.01);
-      dummy.position.copy(cP[i]);
-      if (!isAssembled) dummy.position.y += Math.sin(state.clock.elapsedTime + i) * 0.01;
-      dummy.quaternion.copy(cR[i]);
-      dummy.scale.setScalar(isAssembled ? 1 : 0.65);
+      const targetP = isAssembled ? data.targetPos : data.randomPos;
+      const targetR = isAssembled ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
+
+      currentP[i].lerp(targetP, isAssembled ? 0.1 : 0.015);
+      currentR[i].slerp(targetR, isAssembled ? 0.1 : 0.01);
+
+      dummy.position.copy(currentP[i]);
+      if (!isAssembled) dummy.position.y += Math.sin(t + i) * 0.005;
+      dummy.quaternion.copy(currentR[i]);
+      dummy.scale.setScalar(isAssembled ? 1 : 0.6);
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
     });
@@ -85,31 +105,37 @@ function MechanicalCore({ scrollY }) {
   });
 
   return (
-    <group ref={groupRef}>
-      <instancedMesh ref={meshRef} args={[null, null, 64]}>
+    <group ref={groupRef} position={[0, 0, 0]}>
+      <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        <meshStandardMaterial color={isAssembled ? "#00E5FF" : "#020202"} metalness={1} roughness={0.1} emissive={isAssembled ? "#00E5FF" : "#000"} emissiveIntensity={0.5} />
+        <meshStandardMaterial color={isAssembled ? "#002222" : "#020202"} roughness={0.1} metalness={0.9} />
       </instancedMesh>
-      {isAssembled && <pointLight intensity={15} color="#FF8C00" distance={12} />}
-      {["SHIVANG", "ARCHITECTURE", "LOGIC", "SYSTEMS"].map((t, i) => (
-        <HUDLabel key={t} text={t} offset={[[0, 5, 0], [7, 0, 0], [-7, -2, 0], [0, -5, 0]][i]} isAssembled={isAssembled} p={i * 0.5} />
+      {isAssembled && <pointLight intensity={20} color="#FF8C00" distance={10} />}
+      {words.map((w, i) => (
+        <HUDLabel key={i} text={w.text} isActive={isAssembled} offset={w.offset} phase={w.phase} />
       ))}
     </group>
   );
 }
 
-function HUDLabel({ text, offset, isAssembled, p }) {
+function HUDLabel({ text, isActive, offset, phase }) {
   const ref = useRef();
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
     if (ref.current) {
-      const dX = Math.sin(t * 0.2 + p) * (isAssembled ? 0.5 : 20);
-      const dY = Math.cos(t * 0.2 + p) * (isAssembled ? 0.5 : 15);
-      ref.current.position.lerp(new THREE.Vector3(offset[0] + dX, offset[1] + dY, isAssembled ? 0 : -10), 0.03);
+      const driftX = Math.sin(t * 0.4 + phase) * (isActive ? 1.5 : 8);
+      const driftY = Math.cos(t * 0.3 + phase) * (isActive ? 1.5 : 8);
+      const targetX = isActive ? offset[0] + driftX : driftX * 2;
+      const targetY = isActive ? offset[1] + driftY : driftY * 2;
+      ref.current.position.lerp(new THREE.Vector3(targetX, targetY, isActive ? 0 : -10), 0.03);
       ref.current.lookAt(state.camera.position);
     }
   });
-  return <Text ref={ref} fontSize={0.5} font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf" color="#00E5FF" emissive="#00E5FF" emissiveIntensity={isAssembled ? 5 : 0.1} transparent opacity={isAssembled ? 1 : 0.15}>{text}</Text>;
+  return (
+    <Text ref={ref} fontSize={0.4} font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf" color="#00E5FF" emissive="#00E5FF" emissiveIntensity={isActive ? 4 : 0.2} transparent opacity={isActive ? 0.9 : 0.25}>
+      {text}
+    </Text>
+  );
 }
 
 // --- SEQUENTIAL REACTIVE SKILL BARS ---
@@ -149,11 +175,19 @@ export default function MobileView() {
   return (
     <div className="min-h-screen bg-[#010102] text-gray-200 overflow-x-hidden touch-pan-y selection:bg-[#00E5FF]">
       <AnimatePresence>{isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}</AnimatePresence>
-      <div className="fixed inset-0 z-[-1] pointer-events-none"><Canvas dpr={[1, 2]}><PerspectiveCamera makeDefault position={[0, 0, 35]} fov={75} /><ambientLight intensity={0.5} /><MechanicalCore scrollY={scrollY} /><ContactShadows position={[0, -12, 0]} opacity={0.4} scale={50} blur={3} color="#00E5FF" /></Canvas></div>
+      <div className="fixed inset-0 z-[-1] pointer-events-none">
+        <Canvas dpr={[1, 2]}>
+          <PerspectiveCamera makeDefault position={[0, 0, 35]} fov={75} />
+          <ambientLight intensity={0.5} />
+          <Environment preset="night" />
+          <MechanicalCore scrollY={scrollY} />
+          <ContactShadows position={[0, -12, 0]} opacity={0.4} scale={50} blur={3} color="#00E5FF" />
+        </Canvas>
+      </div>
       
       <div className="relative z-10 w-full flex flex-col px-6">
         <nav className="fixed top-0 left-0 w-full z-[100] bg-[#010102]/70 backdrop-blur-3xl border-b border-white/5 h-20 flex items-center justify-between px-6">
-          <div className="text-xl font-black text-white">SHIVANG<span className="text-[#00E5FF]">.</span></div>
+          <div className="text-xl font-black text-white cursor-pointer" onClick={() => window.scrollTo(0,0)}>SHIVANG<span className="text-[#00E5FF]">.</span></div>
           <button onClick={() => setIsMenuOpen(true)} className="text-[#00E5FF] p-2 focus:outline-none"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/></svg></button>
         </nav>
 
@@ -168,8 +202,8 @@ export default function MobileView() {
         </section>
 
         <section id="journey" className="py-32 space-y-12 border-l-2 border-[#00E5FF]/20 ml-2">
-          {[{y:"2024 - PRES", t:"Algonquin College | Ottawa", d:"Advanced Diploma in Computer Programming. Focused on Enterprise Microservices, Java architectures, and high-scale cloud-native logic."},
-            {y:"2021 - 2023", t:"FIC | BC", d:"Computer Science Pathway. Foundational deep-dive into Big O efficiency, data structure optimization, and OOP principles."}].map((item, idx) => (
+          {[{y:"2024 - PRES", t:"Algonquin College", d:"Advanced Diploma in Computer Programming. Focused on Enterprise Microservices."},
+            {y:"2021 - 2023", t:"FIC | BC", d:"Computer Science Pathway. Foundational deep-dive into Big O efficiency and OOP logic."}].map((item, idx) => (
             <div key={idx} className="relative pl-10">
               <div className={`absolute -left-[11px] top-2 w-5 h-5 rounded-full shadow-[0_0_15px_#00E5FF] ${idx === 0 ? 'bg-[#00E5FF]' : 'bg-purple-500'}`} />
               <div className="bg-[#050507]/40 p-8 rounded-[3rem] border border-white/5 shadow-2xl"><span className="text-[10px] font-black text-gray-500 tracking-[0.3em]">{item.y}</span><h3 className="text-2xl font-black text-white mt-4 tracking-tight leading-tight">{item.t}</h3><p className="text-gray-400 text-lg mt-4 font-light leading-relaxed">{item.d}</p></div>
@@ -177,21 +211,22 @@ export default function MobileView() {
           ))}
         </section>
 
-        <section id="stacks" className="py-20 space-y-8"><h2 className="text-6xl font-black text-white mb-16 tracking-tighter uppercase text-center">Technical <span className="text-[#00E5FF]">Arsenal.</span></h2>
-          <CompCard title="Languages" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"}]} />
+        <section id="stacks" className="py-20 space-y-8"><h2 className="text-6xl font-black text-white mb-16 tracking-tighter uppercase text-center">Technical Arsenal.</h2>
+          <CompCard title="Programming" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"}]} />
           <CompCard title="Frontend" icon="🖥️" skills={[{n:"React",v:"90%"},{n:"HTML/CSS",v:"95%"},{n:"Tailwind",v:"85%"}]} />
           <CompCard title="Backend" icon="⚙️" skills={[{n:"Node",v:"85%"},{n:"REST",v:"90%"},{n:"WS",v:"75%"}]} />
         </section>
 
         <section id="builds" className="py-40 space-y-10">
-          {[ {title: "E-Commerce Services", d: "Architected a scalable microservices ecosystem using Node.js and Docker. Integrated Stripe API and JWT authentication."},
-             {title: "Movie Watchlist App", d: "Engineered a full-stack media tracking application using the MERN stack. Designed a robust RESTful API and utilized MongoDB."}
+          <h2 className="text-6xl font-black text-white mb-16 tracking-tighter uppercase text-right">System Builds.</h2>
+          {[ {title: "Microservices", d: "Scalable ecosystem using Node.js and Docker. Integrated Stripe API."},
+             {title: "Watchlist App", d: "Engineered a full-stack media tracking application using the MERN stack."}
           ].map((p, i) => (
           <div key={i} className="bg-[#050507]/40 p-10 rounded-[3rem] border border-white/5 shadow-2xl relative overflow-hidden"><div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#00E5FF]/20 m-6" /><h3 className="text-3xl font-black text-white mb-6 uppercase leading-tight tracking-tighter">{p.title}</h3><p className="text-gray-400 text-lg mb-8 leading-relaxed font-light">{p.d}</p></div>
         ))}</section>
 
         <section id="offline" className="py-32 space-y-8 text-center">
-          <h2 className="text-5xl font-black text-white mb-16 tracking-tighter uppercase italic">Offline <span className="text-[#FF8C00]">Protocol.</span></h2>
+          <h2 className="text-5xl font-black text-white mb-16 tracking-tighter uppercase italic">Offline Protocol.</h2>
           {[ {i:"🏋️‍♂️",t:"Discipline",d:"6-day compound split focus, applying progressive overload to mastery."},
              {i:"🎮",t:"Logic",d:"Hardware tuning and competitive tactical shooters for peak performance."},
              {i:"🌍",t:"Equilibrium",d:"Hiking and exploration of terrain to reset the digital buffer."}
@@ -202,13 +237,13 @@ export default function MobileView() {
         <footer id="connect" className="py-40 flex items-center justify-center">
           <div className="w-full bg-[#020203] border-2 border-[#00E5FF]/40 p-12 rounded-[5rem] shadow-2xl text-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-[#00E5FF] to-[#FF8C00]" />
-            <h2 className="text-6xl font-black text-white mb-10 tracking-tighter uppercase leading-none">Terminal <br/><span className="text-[#00E5FF]">Ready.</span></h2>
+            <h2 className="text-6xl font-black text-white mb-10 tracking-tighter uppercase leading-none text-center">Terminal Ready.</h2>
             <div className="flex flex-col gap-6 mt-10">
               <a href="https://github.com/ayarshivang27" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase">GitHub</a>
               <a href="https://linkedin.com/in/shivangayar/" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase">LinkedIn</a>
               <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase">Email</a>
             </div>
-            <p className="mt-40 text-[10px] font-black tracking-[1.5em] text-gray-800 uppercase leading-relaxed">© 2026 SHIVANG AYAR.<br/>ARCHITECTED WITH INTENT.</p>
+            <p className="mt-40 text-[10px] font-black tracking-[1.5em] text-gray-800 uppercase leading-relaxed text-center">© 2026 SHIVANG AYAR.<br/>ARCHITECTED WITH INTENT.</p>
           </div>
         </footer>
       </div>
