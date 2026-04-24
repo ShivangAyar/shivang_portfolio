@@ -104,7 +104,7 @@ function MechanicalCore({ scrollY }) {
           roughness={0.1} 
           metalness={0.9} 
           emissive={isActive ? "#000000" : "#334444"}
-          emissiveIntensity={isActive ? 0 : 0.3}
+          emissiveIntensity={isActive ? 0 : 0.4}
         />
       </instancedMesh>
       {isActive && <pointLight intensity={25} color="#FF8C00" distance={15} />}
@@ -192,10 +192,10 @@ const ReactiveFooter = () => {
         </div>
 
         <div className="flex flex-col gap-6">
-          <a href="https://github.com/ShivangAyar" target="_blank" className="bg-white/5 border border-white/10 px-8 py-5 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3">
+          <a href="https://github.com/ShivangAyar" target="_blank" rel="noopener noreferrer" className="bg-white/5 border border-white/10 px-8 py-5 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3">
             <span className="text-xl">🐙</span> GitHub
           </a>
-          <a href="https://www.linkedin.com/in/shivangayar" target="_blank" className="bg-white/5 border border-white/10 px-8 py-5 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all flex items-center justify-center gap-3">
+          <a href="https://www.linkedin.com/in/shivangayar" target="_blank" rel="noopener noreferrer" className="bg-white/5 border border-white/10 px-8 py-5 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all flex items-center justify-center gap-3">
             <span className="text-xl">💼</span> LinkedIn
           </a>
           <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 px-8 py-5 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#FF8C00] hover:text-black transition-all flex items-center justify-center gap-3">
@@ -265,7 +265,7 @@ export default function MobileView() {
 
       <AnimatePresence>{isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}</AnimatePresence>
       
-      {/* 3D BACKGROUND */}
+      {/* 3D BACKGROUND (Stays fixed) */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <Canvas dpr={[1, 2]}>
           <color attach="background" args={['#010102']} />
@@ -374,8 +374,10 @@ export default function MobileView() {
             <p className="text-[#00E5FF] font-medium tracking-widest uppercase text-xs mb-10 pl-6">Whatever you imagine, I can build it.</p>
             
             <div className="flex flex-col gap-6 w-full pl-6">
-              <a href="#projects" onClick={(e) => { e.preventDefault(); document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#00E5FF] text-black px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest shadow-[0_0_20px_rgba(0,229,255,0.4)] rounded-xl">Explore Builds</a>
-              <a href="/resume.pdf" target="_blank" className="bg-white/5 border border-white/10 text-white px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest rounded-xl">Resume ↓</a>
+              {/* FIX: Scroll smooth correctly to #projects */}
+              <a href="#projects" onClick={(e) => { e.preventDefault(); document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#00E5FF] text-black px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest shadow-[0_0_20px_rgba(0,229,255,0.4)] rounded-xl cursor-pointer">Explore Builds</a>
+              {/* FIX: Resume Link correctly targets new tab */}
+              <a href="/resume.pdf" target="_blank" rel="noopener noreferrer" className="bg-white/5 border border-white/10 text-white px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest rounded-xl">Resume ↓</a>
             </div>
           </motion.div>
         </section>
@@ -456,7 +458,7 @@ export default function MobileView() {
         <section id="projects" className="px-6 py-40 space-y-10">
           <div className="flex flex-col items-center mb-16 text-center">
             <h2 className="text-6xl font-black text-white tracking-tighter uppercase">My Projects & <span className="text-[#FF8C00]">Works</span></h2>
-            <p className="text-gray-400 mt-6 max-w-xl text-lg font-light leading-relaxed">From enterprise microservices to real-time sync engines—here's a showcase of my diverse technical expertise and passion for building resilient systems.</p>
+            <p className="text-gray-400 mt-6 max-w-xl text-lg font-light leading-relaxed">From enterprise APIs to AI chatbots—here's a showcase of my diverse technical expertise and passion for building resilient systems.</p>
             <div className="h-[3px] w-20 bg-gradient-to-r from-[#FF8C00] to-[#7B61FF] mt-8 rounded-full" />
           </div>
           {projectsData.map((p, i) => (

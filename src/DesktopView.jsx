@@ -24,6 +24,7 @@ const LoadingScreen = ({ onComplete }) => {
 
   return (
     <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
+      
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,229,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,229,255,0.05)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_40%,transparent_100%)] opacity-40" />
         <motion.div animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-[#00E5FF] rounded-full blur-[140px]" />
@@ -45,7 +46,7 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (Silver Glow Visibility Fix) ---
+// --- MECHANICAL SNAP CORE ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
@@ -102,13 +103,12 @@ function MechanicalCore({ scrollY }) {
     <group ref={groupRef} position={[0, 0, 0]}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        {/* Soft Silver/Steel emissive glow applied so cubes don't blend entirely into black, while maintaining dark look */}
         <meshStandardMaterial 
-          color={isActive ? "#002222" : "#0A0A0A"} 
-          roughness={0.2} 
-          metalness={0.8} 
-          emissive={isActive ? "#000000" : "#334444"}
-          emissiveIntensity={isActive ? 0 : 0.3}
+          color={isActive ? "#002222" : "#020202"} 
+          roughness={0.1} 
+          metalness={0.9} 
+          emissive={isActive ? "#000000" : "#2a3a3a"}
+          emissiveIntensity={isActive ? 0 : 0.4}
         />
       </instancedMesh>
       {isActive && <pointLight intensity={30} color="#FF8C00" distance={20} />}
@@ -194,10 +194,10 @@ const ReactiveFooter = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          <a href="https://github.com/ShivangAyar" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all flex items-center justify-center gap-4 text-sm shadow-xl">
+          <a href="https://github.com/ShivangAyar" target="_blank" rel="noopener noreferrer" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all flex items-center justify-center gap-4 text-sm shadow-xl">
             <span className="text-2xl">🐙</span> GitHub
           </a>
-          <a href="https://www.linkedin.com/in/shivangayar" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all flex items-center justify-center gap-4 text-sm shadow-xl">
+          <a href="https://www.linkedin.com/in/shivangayar" target="_blank" rel="noopener noreferrer" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all flex items-center justify-center gap-4 text-sm shadow-xl">
             <span className="text-2xl">💼</span> LinkedIn
           </a>
           <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#FF8C00] hover:text-black transition-all flex items-center justify-center gap-4 text-sm shadow-xl">
@@ -226,7 +226,7 @@ const NavLink = ({ href, children }) => (
   </a>
 );
 
-// --- DATA FROM RESUME ---
+// --- DATA ---
 const projectsData = [
   { title: "Movie Watchlist App", desc: "A full-stack web platform built for searching, adding, and tracking favorite movies. Features RESTful APIs to handle HTTP requests and secure CRUD operations.", tags: ["Node.js", "Express", "MongoDB", "HTML/CSS"], color: "#FF8C00", icon: "🎬" },
   { title: "Voice AI Chatbot", desc: "Developed during a 24-hr hackathon. An emotion-aware chatbot integrating Voice APIs with a Node.js backend to parse audio with <200ms latency.", tags: ["React", "Node.js", "JavaScript"], color: "#00E5FF", icon: "🤖" },
@@ -288,7 +288,7 @@ export default function DesktopView() {
       </div>
 
       <div className="relative z-30 w-full flex flex-col">
-        {/* NAVBAR */}
+        {/* PREMIUM DESKTOP NAVBAR */}
         <nav className="fixed top-0 left-0 w-full z-[100] bg-[#010102]/60 backdrop-blur-3xl border-b border-white/5 h-24 flex items-center justify-between px-10">
           <div className="text-2xl font-black text-white cursor-pointer flex items-center" onClick={() => window.scrollTo(0,0)}>
             <span className="text-[#00E5FF] font-mono mr-3 tracking-tighter">&lt;/&gt;</span>
@@ -303,11 +303,11 @@ export default function DesktopView() {
           </div>
         </nav>
 
-        {/* HERO CUBE PAGE */}
+        {/* PAGE 1: CUBE ONLY */}
         <section className="h-[100vh] w-full flex flex-col items-center justify-end pb-16 z-20 pointer-events-none">
           <div style={{ opacity: Math.max(0, 1 - scrollY / 200) }} className="transition-opacity duration-100 pointer-events-auto">
             <motion.button 
-              onClick={() => document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={(e) => { e.preventDefault(); document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' }); }}
               animate={{ y: [0, 10, 0], opacity: [0.4, 1, 0.4] }} 
               transition={{ repeat: Infinity, duration: 2 }}
               className="flex flex-col items-center gap-3 text-[#00E5FF] mix-blend-screen cursor-pointer hover:text-white transition-colors"
@@ -318,7 +318,7 @@ export default function DesktopView() {
           </div>
         </section>
 
-        {/* HERO TITLE */}
+        {/* PAGE 2: WELCOMING HERO */}
         <section id="hero" className="px-10 min-h-[80vh] flex items-center pt-10 z-40 max-w-7xl mx-auto w-full">
           <motion.div 
             initial={{ opacity: 0, y: 50 }} 
@@ -327,20 +327,29 @@ export default function DesktopView() {
             viewport={{ once: true, amount: 0.3 }}
             className="flex flex-col items-start"
           >
+            <div className="inline-block px-5 py-2 rounded-full border border-[#00E5FF]/30 bg-[#00E5FF]/10 text-[#00E5FF] text-[11px] font-bold tracking-widest mb-8 shadow-[0_0_15px_rgba(0,229,255,0.15)] backdrop-blur-md">
+              HELLO WORLD 👋
+            </div>
             <h1 className="text-8xl md:text-[9rem] font-black text-white mb-6 tracking-tighter uppercase leading-[0.85]">
-              Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Ayar.</span>
+              Hey, I'm <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Shivang.</span>
             </h1>
-            <p className="text-2xl text-gray-400 mt-6 mb-12 font-light max-w-2xl border-l border-[#FF8C00] pl-8 leading-relaxed">
-              Designing high-performance full-stack architectures and resilient digital systems.
+            <h2 className="text-4xl font-bold text-gray-300 mb-8 tracking-tight">Full-Stack Architect</h2>
+            
+            <p className="text-2xl text-gray-400 mt-6 mb-8 font-light max-w-2xl border-l-2 border-[#FF8C00] pl-8 leading-relaxed">
+              A Computer Programming student at Algonquin College specializing in building scalable web apps, robust APIs, and immersive digital experiences. If it involves code, I'm in.
             </p>
-            <div className="flex gap-6">
-              <a href="#projects" onClick={(e) => { e.preventDefault(); document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' }); }} className="bg-white text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-[#00E5FF] hover:text-white transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]">Execute Builds</a>
-              <a href="/resume.pdf" target="_blank" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all">Resume ↓</a>
+            <p className="text-[#00E5FF] font-medium tracking-widest uppercase text-sm mb-12 pl-8">Whatever you imagine, I can build it.</p>
+
+            <div className="flex gap-6 pl-8">
+              {/* FIX: Scroll smooth correctly to #projects */}
+              <a href="#projects" onClick={(e) => { e.preventDefault(); document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#00E5FF] text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all shadow-[0_0_20px_rgba(0,229,255,0.4)] rounded-xl cursor-pointer">Explore Builds</a>
+              {/* FIX: Resume Link correctly targets new tab */}
+              <a href="/resume.pdf" target="_blank" rel="noopener noreferrer" className="bg-white/5 border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white/10 hover:text-white transition-all rounded-xl">Resume ↓</a>
             </div>
           </motion.div>
         </section>
 
-        {/* ABOUT ME & JOURNEY */}
+        {/* ABOUT & JOURNEY TIMELINE */}
         <section id="about" className="max-w-7xl mx-auto px-10 py-40 w-full relative">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
             <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-5 sticky top-40">
@@ -351,6 +360,7 @@ export default function DesktopView() {
             </motion.div>
             
             <div className="lg:col-span-7 relative mt-16">
+              {/* Vertical Line */}
               <div className="absolute left-[31px] top-6 bottom-6 w-[2px] bg-gradient-to-b from-[#00E5FF] via-[#7B61FF] to-transparent opacity-40" />
               
               <div className="space-y-12 pl-20">
@@ -374,7 +384,7 @@ export default function DesktopView() {
           </div>
         </section>
 
-        {/* CORE STACKS (SKILLS) */}
+        {/* COMPETENCIES */}
         <section id="skills" className="max-w-7xl mx-auto px-10 py-32 w-full">
             <div className="flex flex-col items-center mb-20 text-center">
               <h2 className="text-7xl font-black text-white tracking-tighter uppercase">My Skills & <span className="text-[#00E5FF]">Expertise</span></h2>
@@ -392,7 +402,7 @@ export default function DesktopView() {
             </div>
         </section>
 
-        {/* TECH STACK & ACHIEVEMENTS (MOVED DOWN) */}
+        {/* TECH STACK & ACHIEVEMENTS */}
         <section id="achievements" className="max-w-7xl mx-auto px-10 py-32 w-full relative z-30">
           <div className="mb-24">
              <h3 className="text-3xl font-black text-white text-center mb-8 uppercase tracking-widest">Tech <span className="text-[#00E5FF]">Stack</span></h3>
