@@ -4,7 +4,7 @@ import { Text, ContactShadows, PerspectiveCamera, Environment } from '@react-thr
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- THE HACKER LOADING SCREEN (Slower Sequence) ---
+// --- THE HACKER LOADING SCREEN (Slower Protocol) ---
 const LoadingScreen = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("Initializing...");
@@ -46,15 +46,14 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MOBILE REACTOR CORE WITH LABELS (Scroll-Disperse Logic) ---
-function MechanicalCore({ scrollY }) {
+// --- THE DESKTOP CUBE LOGIC (Extracted from your App.jsx) ---
+function MechanicalCore({ isActive }) {
   const meshRef = useRef();
   const groupRef = useRef();
   const gridSize = 4;
   const count = gridSize ** 3;
-  
-  // Logic: Compact at top, Disperse as you scroll
-  const isAssembled = scrollY < 120;
+  const { viewport } = useThree();
+  const isMobile = viewport.width < 6;
 
   const cubeData = useMemo(() => {
     const temp = [];
@@ -62,42 +61,55 @@ function MechanicalCore({ scrollY }) {
     for (let x = 0; x < gridSize; x++) {
       for (let y = 0; y < gridSize; y++) {
         for (let z = 0; z < gridSize; z++) {
-          const targetPos = new THREE.Vector3(x - 1.5, y - 1.5, z - 1.5).multiplyScalar(1.05);
-          const randomPos = new THREE.Vector3((Math.random() - 0.5) * 25, (Math.random() - 0.5) * 25, (Math.random() - 0.5) * 20);
+          const targetPos = new THREE.Vector3(
+            x - (gridSize - 1) / 2,
+            y - (gridSize - 1) / 2,
+            z - (gridSize - 1) / 2
+          ).multiplyScalar(1.05);
+
+          const randomPos = new THREE.Vector3(
+            (Math.random() - 0.5) * (isMobile ? 15 : 35),
+            (Math.random() - 0.5) * (isMobile ? 15 : 35),
+            (Math.random() - 0.5) * 20
+          );
+          
           const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
           temp.push({ targetPos, randomPos, randomRot, index: i++ });
         }
       }
     }
     return temp;
-  }, []);
+  }, [isMobile]);
 
   const dummy = new THREE.Object3D();
-  const currentP = useMemo(() => cubeData.map(d => d.randomPos.clone()), []);
-  const currentR = useMemo(() => cubeData.map(d => new THREE.Quaternion().setFromEuler(d.randomRot)), []);
+  const currentPositions = useMemo(() => cubeData.map(d => d.randomPos.clone()), [cubeData]);
+  const currentRotations = useMemo(() => cubeData.map(d => new THREE.Quaternion().setFromEuler(d.randomRot)), [cubeData]);
 
   const words = useMemo(() => [
     { text: "SHIVANG", phase: Math.random() * 10, offset: [0, 4, 0] },
     { text: "ARCHITECTURE", phase: Math.random() * 10, offset: [5, 2, 2] },
     { text: "MERN STACK", phase: Math.random() * 10, offset: [-5, -2, 2] },
-    { text: "FULL-STACK", phase: Math.random() * 10, offset: [2, -4, -2] }
+    { text: "FULL-STACK", phase: Math.random() * 10, offset: [2, -4, -2] },
+    { text: "SYSTEMS", phase: Math.random() * 10, offset: [-3, 3, -4] }
   ], []);
 
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
-    groupRef.current.rotation.y += delta * (isAssembled ? 0.25 : 0.05);
+    groupRef.current.rotation.y += delta * (isActive ? 0.25 : 0.05);
     
     cubeData.forEach((data, i) => {
-      const targetP = isAssembled ? data.targetPos : data.randomPos;
-      const targetR = isAssembled ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
+      const targetP = isActive ? data.targetPos : data.randomPos;
+      const targetR = isActive ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
 
-      currentP[i].lerp(targetP, isAssembled ? 0.1 : 0.015);
-      currentR[i].slerp(targetR, isAssembled ? 0.1 : 0.01);
+      currentPositions[i].lerp(targetP, isActive ? 0.08 : 0.015);
+      currentRotations[i].slerp(targetR, isActive ? 0.08 : 0.01);
 
-      dummy.position.copy(currentP[i]);
-      if (!isAssembled) dummy.position.y += Math.sin(t + i) * 0.005;
-      dummy.quaternion.copy(currentR[i]);
-      dummy.scale.setScalar(isAssembled ? 1 : 0.6);
+      dummy.position.copy(currentPositions[i]);
+      if (!isActive) {
+        dummy.position.y += Math.sin(t + i) * 0.005;
+        dummy.position.x += Math.cos(t * 0.5 + i) * 0.005;
+      }
+      dummy.quaternion.copy(currentRotations[i]);
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
     });
@@ -108,18 +120,21 @@ function MechanicalCore({ scrollY }) {
     <group ref={groupRef} position={[0, 0, 0]}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        <meshStandardMaterial color={isAssembled ? "#002222" : "#020202"} roughness={0.1} metalness={0.9} />
+        <meshStandardMaterial color={isActive ? "#002222" : "#020202"} roughness={0.1} metalness={0.9} />
       </instancedMesh>
-      {isAssembled && <pointLight intensity={20} color="#FF8C00" distance={10} />}
+      {isActive && <pointLight intensity={20} color="#FF8C00" distance={10} />}
       {words.map((w, i) => (
-        <HUDLabel key={i} text={w.text} isActive={isAssembled} offset={w.offset} phase={w.phase} />
+        <FloatingHUDText key={i} text={w.text} isActive={isActive} offset={w.offset} phase={w.phase} />
       ))}
     </group>
   );
 }
 
-function HUDLabel({ text, isActive, offset, phase }) {
+function FloatingHUDText({ text, isActive, offset, phase }) {
   const ref = useRef();
+  const { viewport } = useThree();
+  const isMobile = viewport.width < 6;
+
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
     if (ref.current) {
@@ -131,8 +146,18 @@ function HUDLabel({ text, isActive, offset, phase }) {
       ref.current.lookAt(state.camera.position);
     }
   });
+
   return (
-    <Text ref={ref} fontSize={0.4} font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf" color="#00E5FF" emissive="#00E5FF" emissiveIntensity={isActive ? 4 : 0.2} transparent opacity={isActive ? 0.9 : 0.25}>
+    <Text
+      ref={ref}
+      fontSize={isMobile ? 0.4 : 0.6}
+      font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf"
+      color="#00E5FF"
+      emissive="#00E5FF"
+      emissiveIntensity={isActive ? 4 : 0.2}
+      transparent
+      opacity={isActive ? 0.9 : 0.25}
+    >
       {text}
     </Text>
   );
@@ -172,6 +197,8 @@ export default function MobileView() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const activeState = scrollY < 150;
+
   return (
     <div className="min-h-screen bg-[#010102] text-gray-200 overflow-x-hidden touch-pan-y selection:bg-[#00E5FF]">
       <AnimatePresence>{isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}</AnimatePresence>
@@ -180,7 +207,7 @@ export default function MobileView() {
           <PerspectiveCamera makeDefault position={[0, 0, 35]} fov={75} />
           <ambientLight intensity={0.5} />
           <Environment preset="night" />
-          <MechanicalCore scrollY={scrollY} />
+          <MechanicalCore isActive={activeState} />
           <ContactShadows position={[0, -12, 0]} opacity={0.4} scale={50} blur={3} color="#00E5FF" />
         </Canvas>
       </div>
@@ -212,7 +239,7 @@ export default function MobileView() {
         </section>
 
         <section id="stacks" className="py-20 space-y-8"><h2 className="text-6xl font-black text-white mb-16 tracking-tighter uppercase text-center">Technical Arsenal.</h2>
-          <CompCard title="Programming" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"}]} />
+          <CompCard title="Languages" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"}]} />
           <CompCard title="Frontend" icon="🖥️" skills={[{n:"React",v:"90%"},{n:"HTML/CSS",v:"95%"},{n:"Tailwind",v:"85%"}]} />
           <CompCard title="Backend" icon="⚙️" skills={[{n:"Node",v:"85%"},{n:"REST",v:"90%"},{n:"WS",v:"75%"}]} />
         </section>
@@ -224,15 +251,6 @@ export default function MobileView() {
           ].map((p, i) => (
           <div key={i} className="bg-[#050507]/40 p-10 rounded-[3rem] border border-white/5 shadow-2xl relative overflow-hidden"><div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#00E5FF]/20 m-6" /><h3 className="text-3xl font-black text-white mb-6 uppercase leading-tight tracking-tighter">{p.title}</h3><p className="text-gray-400 text-lg mb-8 leading-relaxed font-light">{p.d}</p></div>
         ))}</section>
-
-        <section id="offline" className="py-32 space-y-8 text-center">
-          <h2 className="text-5xl font-black text-white mb-16 tracking-tighter uppercase italic">Offline Protocol.</h2>
-          {[ {i:"🏋️‍♂️",t:"Discipline",d:"6-day compound split focus, applying progressive overload to mastery."},
-             {i:"🎮",t:"Logic",d:"Hardware tuning and competitive tactical shooters for peak performance."},
-             {i:"🌍",t:"Equilibrium",d:"Hiking and exploration of terrain to reset the digital buffer."}
-          ].map((h,x)=>(
-            <motion.div key={x} initial={{scale:0.9, opacity: 0}} whileInView={{scale:1, opacity: 1}} transition={{duration: 0.6}} viewport={{once: true}} className="bg-[#050507]/40 p-12 rounded-[3.5rem] border border-white/5 shadow-2xl"><div className="text-7xl mb-10">{h.i}</div><h3 className="text-2xl font-black text-white uppercase tracking-widest">{h.t}</h3><p className="text-gray-500 text-lg mt-6 font-light leading-relaxed">{h.d}</p></motion.div>
-          ))}</section>
 
         <footer id="connect" className="py-40 flex items-center justify-center">
           <div className="w-full bg-[#020203] border-2 border-[#00E5FF]/40 p-12 rounded-[5rem] shadow-2xl text-center relative overflow-hidden">
