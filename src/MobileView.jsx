@@ -24,8 +24,6 @@ const LoadingScreen = ({ onComplete }) => {
 
   return (
     <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
-      
-      {/* Animated Background */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,229,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,229,255,0.05)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_40%,transparent_100%)] opacity-40" />
         <motion.div animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} className="absolute top-[-20%] left-[-10%] w-[80%] h-[60%] bg-[#00E5FF] rounded-full blur-[120px]" />
@@ -47,7 +45,7 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (Original Colors + Visibility Fix) ---
+// --- MECHANICAL SNAP CORE (Silver Glow Visibility Fix) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
@@ -101,13 +99,12 @@ function MechanicalCore({ scrollY }) {
     <group ref={groupRef}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        {/* Subtle Edge Glow for better background visibility */}
         <meshStandardMaterial 
-          color={isActive ? "#002222" : "#020202"} 
+          color={isActive ? "#002222" : "#0A0A0A"} 
           roughness={0.1} 
           metalness={0.9} 
-          emissive={isActive ? "#000000" : "#2a3a3a"}
-          emissiveIntensity={isActive ? 0 : 0.4}
+          emissive={isActive ? "#000000" : "#334444"}
+          emissiveIntensity={isActive ? 0 : 0.3}
         />
       </instancedMesh>
       {isActive && <pointLight intensity={25} color="#FF8C00" distance={15} />}
@@ -195,10 +192,10 @@ const ReactiveFooter = () => {
         </div>
 
         <div className="flex flex-col gap-6">
-          <a href="https://github.com/ayarshivang27" target="_blank" className="bg-white/5 border border-white/10 px-8 py-5 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3">
+          <a href="https://github.com/ShivangAyar" target="_blank" className="bg-white/5 border border-white/10 px-8 py-5 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all flex items-center justify-center gap-3">
             <span className="text-xl">🐙</span> GitHub
           </a>
-          <a href="https://linkedin.com/in/shivangayar/" target="_blank" className="bg-white/5 border border-white/10 px-8 py-5 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all flex items-center justify-center gap-3">
+          <a href="https://www.linkedin.com/in/shivangayar" target="_blank" className="bg-white/5 border border-white/10 px-8 py-5 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all flex items-center justify-center gap-3">
             <span className="text-xl">💼</span> LinkedIn
           </a>
           <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 px-8 py-5 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#FF8C00] hover:text-black transition-all flex items-center justify-center gap-3">
@@ -220,23 +217,23 @@ const ReactiveFooter = () => {
   );
 };
 
-// --- DATA ---
+// --- DATA FROM RESUME ---
 const projectsData = [
-  { title: "E-Commerce Microservices", desc: "A scalable backend system for an online store, handling secure payments and managing user accounts smoothly.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF", icon: "🛒" },
-  { title: "Movie Watchlist App", desc: "A full-stack web platform where users can search, add, and track their favorite movies using a custom database.", tags: ["MongoDB", "Express", "Node"], color: "#7B61FF", icon: "🎬" },
-  { title: "Real-Time Collab Workspace", desc: "A live document-editing platform where multiple users can type and collaborate at the exact same time.", tags: ["Socket.io", "Next.js", "Redis"], color: "#FF8C00", icon: "⚡" },
-  { title: "Voice AI Chatbot", desc: "An intelligent chatbot you can speak to, built with AI to understand and respond naturally to human emotions.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF", icon: "🤖" },
-  { title: "DevOps CI/CD Dashboard", desc: "A control center that automatically tests and deploys code updates to live servers without breaking the site.", tags: ["AWS", "Python", "GitHub"], color: "#7B61FF", icon: "🚀" },
-  { title: "Financial Ledger Engine", desc: "Developed a tailored tracking application in Visual Studio to monitor cash flow, recurring API subscriptions, and optimize utility expenses.", tags: ["C#", "Visual Studio", ".NET"], color: "#FF8C00", icon: "📈" }
+  { title: "Movie Watchlist App", desc: "A full-stack web platform built for searching, adding, and tracking favorite movies. Features RESTful APIs to handle HTTP requests and secure CRUD operations.", tags: ["Node.js", "Express", "MongoDB", "HTML/CSS"], color: "#FF8C00", icon: "🎬" },
+  { title: "Voice AI Chatbot", desc: "Developed during a 24-hr hackathon. An emotion-aware chatbot integrating Voice APIs with a Node.js backend to parse audio with <200ms latency.", tags: ["React", "Node.js", "JavaScript"], color: "#00E5FF", icon: "🤖" },
+  { title: "BI Dashboard Engine", desc: "Engineered a Power BI dashboard sourced from a MySQL database. Applied Star Schema data modeling to clean 50k+ records and optimize query speed.", tags: ["Power BI", "MySQL", "DAX"], color: "#7B61FF", icon: "📊" },
+  { title: "E-Commerce Microservices", desc: "A scalable backend system for an online store, handling secure payments and managing user accounts smoothly across nodes.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF", icon: "🛒" },
+  { title: "Real-Time Collab Workspace", desc: "A live document-editing platform where multiple users can type and collaborate at the exact same time without state conflicts.", tags: ["Socket.io", "Next.js", "Redis"], color: "#FF8C00", icon: "⚡" },
+  { title: "DevOps CI/CD Dashboard", desc: "A control center that automatically tests and deploys code updates to live servers without breaking the application state.", tags: ["AWS", "Python", "GitHub"], color: "#7B61FF", icon: "🚀" }
 ];
 
 const techStack = ["Java", "Python", "C#", "JavaScript", "HTML5", "CSS3", "React", "Node.js", "MySQL", "PostgreSQL", "MongoDB", "Git", "GitHub", "AWS", "Docker", "Power BI", "REST APIs"];
 
 const achievements = [
-  { icon: "🏆", title: "3rd Place in Tech Hackathon", desc: "Demonstrated rapid problem-solving and flawless full-stack execution under extreme time constraints." },
-  { icon: "💼", title: "Full-Stack Dev Experience", desc: "Architecting, developing, and deploying resilient end-to-end web applications using modern stacks." },
-  { icon: "🔧", title: "IT Support Specialist", desc: "Optimized technical operations, diagnosed system criticalities, and elevated end-user digital experiences." },
-  { icon: "🎓", title: "Academic Excellence", desc: "Maintaining top-tier academic performance while architecting enterprise-grade applications." }
+  { icon: "🏆", title: "Tech Hackathon Competitor", desc: "Demonstrated rapid problem-solving and flawless full-stack MVP execution under strict 24-hour time constraints." },
+  { icon: "💼", title: "Full-Stack Dev Experience", desc: "Architecting, developing, and deploying resilient end-to-end web applications using modern, scalable tech stacks." },
+  { icon: "🔧", title: "Warehouse Ops Supervisor", desc: "Supervised a team of 5+, modernized tracking with Excel, and increased order processing efficiency by 20%." },
+  { icon: "🎓", title: "Academic Progression", desc: "Transitioning from a foundational Computer Science Pathway directly into advanced enterprise-grade application engineering." }
 ];
 
 const timelineData = [
@@ -268,7 +265,7 @@ export default function MobileView() {
 
       <AnimatePresence>{isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}</AnimatePresence>
       
-      {/* 3D BACKGROUND (Stays fixed) */}
+      {/* 3D BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <Canvas dpr={[1, 2]}>
           <color attach="background" args={['#010102']} />
@@ -343,7 +340,7 @@ export default function MobileView() {
         <section className="h-[90vh] w-full flex flex-col items-center justify-end pb-12 z-20">
           <div style={{ opacity: Math.max(0, 1 - scrollY / 150) }} className="transition-opacity duration-100 pointer-events-auto">
             <motion.button 
-              onClick={() => document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' })}
+              onClick={(e) => { e.preventDefault(); document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' }); }}
               animate={{ y: [0, 10, 0], opacity: [0.4, 1, 0.4] }} 
               transition={{ repeat: Infinity, duration: 2 }}
               className="flex flex-col items-center gap-2 text-[#00E5FF] mix-blend-screen cursor-pointer"
@@ -377,7 +374,7 @@ export default function MobileView() {
             <p className="text-[#00E5FF] font-medium tracking-widest uppercase text-xs mb-10 pl-6">Whatever you imagine, I can build it.</p>
             
             <div className="flex flex-col gap-6 w-full pl-6">
-              <a href="#projects" className="bg-[#00E5FF] text-black px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest shadow-[0_0_20px_rgba(0,229,255,0.4)] rounded-xl">Explore Builds</a>
+              <a href="#projects" onClick={(e) => { e.preventDefault(); document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#00E5FF] text-black px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest shadow-[0_0_20px_rgba(0,229,255,0.4)] rounded-xl">Explore Builds</a>
               <a href="/resume.pdf" target="_blank" className="bg-white/5 border border-white/10 text-white px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest rounded-xl">Resume ↓</a>
             </div>
           </motion.div>
@@ -391,7 +388,6 @@ export default function MobileView() {
           </p>
         </div>
         
-        {/* TIMELINE */}
         <div className="relative pl-10 md:pl-16 mt-8">
           <div className="absolute left-[19px] md:left-[31px] top-6 bottom-6 w-[2px] bg-gradient-to-b from-[#00E5FF] via-[#7B61FF] to-transparent opacity-40" />
           <div className="space-y-12">
@@ -417,7 +413,7 @@ export default function MobileView() {
         {/* COMPETENCIES */}
         <section id="skills" className="px-6 py-32 space-y-8">
           <div className="flex flex-col items-center mb-16 text-center">
-            <h2 className="text-6xl font-black text-white tracking-tighter uppercase">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
+            <h2 className="text-6xl font-black text-white tracking-tighter uppercase">My Skills & <span className="text-[#00E5FF]">Expertise</span></h2>
             <p className="text-gray-400 mt-6 max-w-xl text-lg font-light leading-relaxed">A comprehensive overview of my technical skills, tools, and technologies I work with to bring ideas to life.</p>
             <div className="h-[3px] w-20 bg-gradient-to-r from-[#00E5FF] to-[#7B61FF] mt-8 rounded-full" />
           </div>
@@ -457,11 +453,11 @@ export default function MobileView() {
         </section>
 
         {/* SYSTEM BUILDS */}
-        <section id="builds" className="px-6 py-40 space-y-10">
-          <div className="flex flex-col items-end mb-16 text-right">
-            <h2 className="text-6xl font-black text-white tracking-tighter uppercase">System <span className="text-[#FF8C00]">Builds.</span></h2>
+        <section id="projects" className="px-6 py-40 space-y-10">
+          <div className="flex flex-col items-center mb-16 text-center">
+            <h2 className="text-6xl font-black text-white tracking-tighter uppercase">My Projects & <span className="text-[#FF8C00]">Works</span></h2>
             <p className="text-gray-400 mt-6 max-w-xl text-lg font-light leading-relaxed">From enterprise microservices to real-time sync engines—here's a showcase of my diverse technical expertise and passion for building resilient systems.</p>
-            <div className="h-[3px] w-20 bg-gradient-to-l from-[#FF8C00] to-[#7B61FF] mt-8 rounded-full" />
+            <div className="h-[3px] w-20 bg-gradient-to-r from-[#FF8C00] to-[#7B61FF] mt-8 rounded-full" />
           </div>
           {projectsData.map((p, i) => (
           <div key={i} className="bg-[#0A0A15]/80 backdrop-blur-xl p-10 rounded-[3rem] border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col">
@@ -482,7 +478,7 @@ export default function MobileView() {
         {/* OFFLINE PROTOCOL */}
         <section id="offline" className="px-6 py-32 space-y-8 text-center">
           <div className="flex flex-col items-center mb-16 text-center">
-            <h2 className="text-5xl font-black text-white tracking-tighter uppercase italic">Offline <span className="text-[#FF8C00]">Protocol.</span></h2>
+            <h2 className="text-5xl font-black text-white tracking-tighter uppercase italic">When I'm Not <span className="text-[#FF8C00]">Coding</span></h2>
             <p className="text-gray-400 mt-6 max-w-xl text-lg font-light leading-relaxed">Life's about balance! Here are the activities that keep me energized and inspired outside of tech.</p>
             <div className="h-[3px] w-20 bg-gradient-to-r from-[#FF8C00] to-[#00E5FF] mt-8 rounded-full" />
           </div>

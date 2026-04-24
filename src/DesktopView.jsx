@@ -24,8 +24,6 @@ const LoadingScreen = ({ onComplete }) => {
 
   return (
     <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
-      
-      {/* --- AESTHETIC BACKGROUND ANIMATION --- */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,229,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,229,255,0.05)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_40%,transparent_100%)] opacity-40" />
         <motion.div animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-[#00E5FF] rounded-full blur-[140px]" />
@@ -47,7 +45,7 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (Dark Colors + Visibility Fix) ---
+// --- MECHANICAL SNAP CORE (Silver Glow Visibility Fix) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
@@ -63,7 +61,7 @@ function MechanicalCore({ scrollY }) {
       for (let y = 0; y < gridSize; y++) {
         for (let z = 0; z < gridSize; z++) {
           const targetPos = new THREE.Vector3(x - 1.5, y - 1.5, z - 1.5).multiplyScalar(1.05);
-          const randomPos = new THREE.Vector3((Math.random() - 0.5) * 60, (Math.random() - 0.5) * 45, (Math.random() - 0.5) * 20);
+          const randomPos = new THREE.Vector3((Math.random() - 0.5) * 45, (Math.random() - 0.5) * 35, (Math.random() - 0.5) * 20);
           const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
           temp.push({ targetPos, randomPos, randomRot, index: i++ });
         }
@@ -104,13 +102,13 @@ function MechanicalCore({ scrollY }) {
     <group ref={groupRef} position={[0, 0, 0]}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        {/* Dark base but with a faint cool-gray reflection so they don't glow cyan, but remain visible */}
+        {/* Soft Silver/Steel emissive glow applied so cubes don't blend entirely into black, while maintaining dark look */}
         <meshStandardMaterial 
-          color={isActive ? "#002222" : "#020202"} 
-          roughness={0.1} 
-          metalness={0.9} 
-          emissive={isActive ? "#000000" : "#2a3a3a"}
-          emissiveIntensity={isActive ? 0 : 0.4}
+          color={isActive ? "#002222" : "#0A0A0A"} 
+          roughness={0.2} 
+          metalness={0.8} 
+          emissive={isActive ? "#000000" : "#334444"}
+          emissiveIntensity={isActive ? 0 : 0.3}
         />
       </instancedMesh>
       {isActive && <pointLight intensity={30} color="#FF8C00" distance={20} />}
@@ -196,10 +194,10 @@ const ReactiveFooter = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          <a href="https://github.com/ayarshivang27" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all flex items-center justify-center gap-4 text-sm shadow-xl">
+          <a href="https://github.com/ShivangAyar" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all flex items-center justify-center gap-4 text-sm shadow-xl">
             <span className="text-2xl">🐙</span> GitHub
           </a>
-          <a href="https://linkedin.com/in/shivangayar/" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all flex items-center justify-center gap-4 text-sm shadow-xl">
+          <a href="https://www.linkedin.com/in/shivangayar" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all flex items-center justify-center gap-4 text-sm shadow-xl">
             <span className="text-2xl">💼</span> LinkedIn
           </a>
           <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#FF8C00] hover:text-black transition-all flex items-center justify-center gap-4 text-sm shadow-xl">
@@ -228,23 +226,23 @@ const NavLink = ({ href, children }) => (
   </a>
 );
 
-// --- DATA ---
+// --- DATA FROM RESUME ---
 const projectsData = [
-  { title: "E-Commerce Microservices", desc: "A scalable backend system for an online store, handling secure payments and managing user accounts smoothly.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF", icon: "🛒" },
-  { title: "Movie Watchlist App", desc: "A full-stack web platform where users can search, add, and track their favorite movies using a custom database.", tags: ["MongoDB", "Express", "Node"], color: "#7B61FF", icon: "🎬" },
-  { title: "Real-Time Collab Workspace", desc: "A live document-editing platform where multiple users can type and collaborate at the exact same time.", tags: ["Socket.io", "Next.js", "Redis"], color: "#FF8C00", icon: "⚡" },
-  { title: "Voice AI Chatbot", desc: "An intelligent chatbot you can speak to, built with AI to understand and respond naturally to human emotions.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF", icon: "🤖" },
-  { title: "DevOps CI/CD Dashboard", desc: "A control center that automatically tests and deploys code updates to live servers without breaking the site.", tags: ["AWS", "Python", "GitHub"], color: "#7B61FF", icon: "🚀" },
-  { title: "Financial Ledger Engine", desc: "Developed a tailored tracking application in Visual Studio to monitor cash flow, recurring API subscriptions, and optimize utility expenses.", tags: ["C#", "Visual Studio", ".NET"], color: "#FF8C00", icon: "📈" }
+  { title: "Movie Watchlist App", desc: "A full-stack web platform built for searching, adding, and tracking favorite movies. Features RESTful APIs to handle HTTP requests and secure CRUD operations.", tags: ["Node.js", "Express", "MongoDB", "HTML/CSS"], color: "#FF8C00", icon: "🎬" },
+  { title: "Voice AI Chatbot", desc: "Developed during a 24-hr hackathon. An emotion-aware chatbot integrating Voice APIs with a Node.js backend to parse audio with <200ms latency.", tags: ["React", "Node.js", "JavaScript"], color: "#00E5FF", icon: "🤖" },
+  { title: "BI Dashboard Engine", desc: "Engineered a Power BI dashboard sourced from a MySQL database. Applied Star Schema data modeling to clean 50k+ records and optimize query speed.", tags: ["Power BI", "MySQL", "DAX"], color: "#7B61FF", icon: "📊" },
+  { title: "E-Commerce Microservices", desc: "A scalable backend system for an online store, handling secure payments and managing user accounts smoothly across nodes.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF", icon: "🛒" },
+  { title: "Real-Time Collab Workspace", desc: "A live document-editing platform where multiple users can type and collaborate at the exact same time without state conflicts.", tags: ["Socket.io", "Next.js", "Redis"], color: "#FF8C00", icon: "⚡" },
+  { title: "DevOps CI/CD Dashboard", desc: "A control center that automatically tests and deploys code updates to live servers without breaking the application state.", tags: ["AWS", "Python", "GitHub"], color: "#7B61FF", icon: "🚀" }
 ];
 
 const techStack = ["Java", "Python", "C#", "JavaScript", "HTML5", "CSS3", "React", "Node.js", "MySQL", "PostgreSQL", "MongoDB", "Git", "GitHub", "AWS", "Docker", "Power BI", "REST APIs"];
 
 const achievements = [
-  { icon: "🏆", title: "3rd Place in Tech Hackathon", desc: "Demonstrated rapid problem-solving and flawless full-stack execution under extreme time constraints." },
-  { icon: "💼", title: "Full-Stack Dev Experience", desc: "Architecting, developing, and deploying resilient end-to-end web applications using modern stacks." },
-  { icon: "🔧", title: "IT Support Specialist", desc: "Optimized technical operations, diagnosed system criticalities, and elevated end-user digital experiences." },
-  { icon: "🎓", title: "Academic Excellence", desc: "Maintaining top-tier academic performance while architecting enterprise-grade applications." }
+  { icon: "🏆", title: "Tech Hackathon Competitor", desc: "Demonstrated rapid problem-solving and flawless full-stack MVP execution under strict 24-hour time constraints." },
+  { icon: "💼", title: "Full-Stack Dev Experience", desc: "Architecting, developing, and deploying resilient end-to-end web applications using modern, scalable tech stacks." },
+  { icon: "🔧", title: "Warehouse Ops Supervisor", desc: "Supervised a team of 5+, modernized tracking with Excel, and increased order processing efficiency by 20%." },
+  { icon: "🎓", title: "Academic Progression", desc: "Transitioning from a foundational Computer Science Pathway directly into advanced enterprise-grade application engineering." }
 ];
 
 const timelineData = [
@@ -290,22 +288,22 @@ export default function DesktopView() {
       </div>
 
       <div className="relative z-30 w-full flex flex-col">
-        {/* PREMIUM DESKTOP NAVBAR */}
+        {/* NAVBAR */}
         <nav className="fixed top-0 left-0 w-full z-[100] bg-[#010102]/60 backdrop-blur-3xl border-b border-white/5 h-24 flex items-center justify-between px-10">
           <div className="text-2xl font-black text-white cursor-pointer flex items-center" onClick={() => window.scrollTo(0,0)}>
             <span className="text-[#00E5FF] font-mono mr-3 tracking-tighter">&lt;/&gt;</span>
             SHIVANG<span className="text-[#00E5FF]">.</span>
           </div>
-          <div className="hidden md:flex gap-8 items-center">
+          <div className="hidden md:flex gap-10 items-center">
             <NavLink href="#about">Journey</NavLink>
-            <NavLink href="#skills">Competencies</NavLink>
+            <NavLink href="#skills">Skills</NavLink>
             <NavLink href="#achievements">Milestones</NavLink>
             <NavLink href="#projects">Builds</NavLink>
             <NavLink href="#contact">Connect</NavLink>
           </div>
         </nav>
 
-        {/* PAGE 1: CUBE ONLY */}
+        {/* HERO CUBE PAGE */}
         <section className="h-[100vh] w-full flex flex-col items-center justify-end pb-16 z-20 pointer-events-none">
           <div style={{ opacity: Math.max(0, 1 - scrollY / 200) }} className="transition-opacity duration-100 pointer-events-auto">
             <motion.button 
@@ -320,7 +318,7 @@ export default function DesktopView() {
           </div>
         </section>
 
-        {/* PAGE 2: WELCOMING HERO */}
+        {/* HERO TITLE */}
         <section id="hero" className="px-10 min-h-[80vh] flex items-center pt-10 z-40 max-w-7xl mx-auto w-full">
           <motion.div 
             initial={{ opacity: 0, y: 50 }} 
@@ -329,27 +327,20 @@ export default function DesktopView() {
             viewport={{ once: true, amount: 0.3 }}
             className="flex flex-col items-start"
           >
-            <div className="inline-block px-5 py-2 rounded-full border border-[#00E5FF]/30 bg-[#00E5FF]/10 text-[#00E5FF] text-[11px] font-bold tracking-widest mb-8 shadow-[0_0_15px_rgba(0,229,255,0.15)] backdrop-blur-md">
-              HELLO WORLD 👋
-            </div>
             <h1 className="text-8xl md:text-[9rem] font-black text-white mb-6 tracking-tighter uppercase leading-[0.85]">
-              Hey, I'm <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Shivang.</span>
+              Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Ayar.</span>
             </h1>
-            <h2 className="text-4xl font-bold text-gray-300 mb-8 tracking-tight">Full-Stack Architect</h2>
-            
-            <p className="text-2xl text-gray-400 mt-6 mb-8 font-light max-w-2xl border-l-2 border-[#FF8C00] pl-8 leading-relaxed">
-              A Computer Programming student at Algonquin College specializing in building scalable web apps, robust APIs, and immersive digital experiences. If it involves code, I'm in.
+            <p className="text-2xl text-gray-400 mt-6 mb-12 font-light max-w-2xl border-l border-[#FF8C00] pl-8 leading-relaxed">
+              Designing high-performance full-stack architectures and resilient digital systems.
             </p>
-            <p className="text-[#00E5FF] font-medium tracking-widest uppercase text-sm mb-12 pl-8">Whatever you imagine, I can build it.</p>
-
-            <div className="flex gap-6 pl-8">
-              <a href="#projects" className="bg-[#00E5FF] text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all shadow-[0_0_20px_rgba(0,229,255,0.4)] rounded-xl">Explore Builds</a>
-              <a href="/resume.pdf" target="_blank" className="bg-white/5 border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all rounded-xl">Resume ↓</a>
+            <div className="flex gap-6">
+              <a href="#projects" onClick={(e) => { e.preventDefault(); document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' }); }} className="bg-white text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-[#00E5FF] hover:text-white transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]">Execute Builds</a>
+              <a href="/resume.pdf" target="_blank" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all">Resume ↓</a>
             </div>
           </motion.div>
         </section>
 
-        {/* ABOUT & JOURNEY TIMELINE */}
+        {/* ABOUT ME & JOURNEY */}
         <section id="about" className="max-w-7xl mx-auto px-10 py-40 w-full relative">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
             <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-5 sticky top-40">
@@ -360,7 +351,6 @@ export default function DesktopView() {
             </motion.div>
             
             <div className="lg:col-span-7 relative mt-16">
-              {/* Vertical Line */}
               <div className="absolute left-[31px] top-6 bottom-6 w-[2px] bg-gradient-to-b from-[#00E5FF] via-[#7B61FF] to-transparent opacity-40" />
               
               <div className="space-y-12 pl-20">
@@ -384,13 +374,14 @@ export default function DesktopView() {
           </div>
         </section>
 
-        {/* COMPETENCIES (HOVER REACTIVE) */}
+        {/* CORE STACKS (SKILLS) */}
         <section id="skills" className="max-w-7xl mx-auto px-10 py-32 w-full">
             <div className="flex flex-col items-center mb-20 text-center">
-              <h2 className="text-7xl font-black text-white tracking-tighter uppercase">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
+              <h2 className="text-7xl font-black text-white tracking-tighter uppercase">My Skills & <span className="text-[#00E5FF]">Expertise</span></h2>
               <p className="text-gray-400 mt-6 max-w-2xl text-xl font-light">A comprehensive overview of my technical skills, tools, and technologies I work with to bring ideas to life.</p>
               <div className="h-[3px] w-24 bg-gradient-to-r from-[#00E5FF] to-[#7B61FF] mt-8 rounded-full" />
             </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <CompCard title="Languages" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"}]} />
                 <CompCard title="Frontend Dev" icon="🖥️" skills={[{n:"React.js",v:"90%"},{n:"HTML5/CSS3",v:"95%"},{n:"Tailwind",v:"85%"}]} />
@@ -401,10 +392,10 @@ export default function DesktopView() {
             </div>
         </section>
 
-        {/* TECH STACK & ACHIEVEMENTS */}
+        {/* TECH STACK & ACHIEVEMENTS (MOVED DOWN) */}
         <section id="achievements" className="max-w-7xl mx-auto px-10 py-32 w-full relative z-30">
           <div className="mb-24">
-             <h3 className="text-4xl font-black text-white text-center mb-10 uppercase tracking-widest">Tech <span className="text-[#00E5FF]">Stack</span></h3>
+             <h3 className="text-3xl font-black text-white text-center mb-8 uppercase tracking-widest">Tech <span className="text-[#00E5FF]">Stack</span></h3>
              <div className="flex flex-wrap justify-center gap-4 max-w-5xl mx-auto">
                 {techStack.map((tech, i) => (
                    <span key={i} className="px-6 py-3 rounded-full bg-white/[0.03] border border-white/10 text-gray-300 text-sm font-bold tracking-wider hover:border-[#00E5FF]/50 hover:text-white transition-all cursor-default shadow-lg">{tech}</span>
@@ -413,14 +404,14 @@ export default function DesktopView() {
           </div>
 
           <div>
-             <h3 className="text-4xl font-black text-white text-center mb-12 uppercase tracking-widest">Key <span className="text-[#FF8C00]">Achievements</span></h3>
+             <h3 className="text-3xl font-black text-white text-center mb-12 uppercase tracking-widest">Key <span className="text-[#FF8C00]">Achievements</span></h3>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {achievements.map((ach, i) => (
-                   <div key={i} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-8 rounded-3xl flex items-start gap-6 hover:bg-white/[0.03] transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] group">
-                      <div className="text-5xl group-hover:scale-110 transition-transform">{ach.icon}</div>
+                   <div key={i} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-8 rounded-3xl flex items-start gap-6 hover:bg-white/[0.03] transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
+                      <div className="text-4xl">{ach.icon}</div>
                       <div>
                          <h4 className="text-xl font-bold text-white mb-2">{ach.title}</h4>
-                         <p className="text-gray-400 text-base leading-relaxed">{ach.desc}</p>
+                         <p className="text-gray-400 text-sm leading-relaxed">{ach.desc}</p>
                       </div>
                    </div>
                 ))}
@@ -430,24 +421,24 @@ export default function DesktopView() {
 
         {/* PROJECTS */}
         <section id="projects" className="max-w-7xl mx-auto px-10 py-40 w-full">
-            <div className="flex flex-col items-end mb-20 text-right">
-              <h2 className="text-7xl font-black text-white tracking-tighter uppercase">System <span className="text-[#FF8C00]">Builds.</span></h2>
-              <p className="text-gray-400 mt-6 max-w-2xl text-xl font-light">From enterprise microservices to real-time sync engines—here's a showcase of my diverse technical expertise and passion for building resilient systems.</p>
-              <div className="h-[3px] w-24 bg-gradient-to-l from-[#FF8C00] to-[#7B61FF] mt-8 rounded-full" />
+            <div className="flex flex-col items-center mb-20 text-center">
+              <h2 className="text-7xl font-black text-white tracking-tighter uppercase">My Projects & <span className="text-[#FF8C00]">Works</span></h2>
+              <p className="text-gray-400 mt-6 max-w-2xl text-xl font-light">From enterprise APIs to AI chatbots—here's a showcase of my diverse technical expertise and passion for building resilient systems.</p>
+              <div className="h-[3px] w-24 bg-gradient-to-r from-[#FF8C00] to-[#7B61FF] mt-8 rounded-full" />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 [perspective:2000px]">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 [perspective:2000px]">
                 {projectsData.map((p, i) => (
                     <motion.div 
                         key={i} 
-                        className="bg-[#0A0A15]/80 backdrop-blur-xl p-12 rounded-[2.5rem] border border-white/10 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col group cursor-pointer min-h-[400px]"
+                        className="bg-[#0A0A15]/80 backdrop-blur-xl p-10 rounded-[2.5rem] border border-white/10 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col group cursor-pointer min-h-[420px]"
                         whileHover={{ y: -15, rotateX: -4, rotateY: 4, borderColor: `${p.color}50`, boxShadow: `0 30px 60px ${p.color}20` }}
                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
-                        <div className="absolute top-0 right-0 w-48 h-48 rounded-bl-full opacity-5 group-hover:opacity-20 transition-all duration-700" style={{ background: p.color }}></div>
+                        <div className="absolute top-0 right-0 w-40 h-40 rounded-bl-full opacity-5 group-hover:opacity-20 transition-all duration-700" style={{ background: p.color }}></div>
                         
                         <div className="flex items-center gap-4 mb-6">
-                            <span className="text-4xl relative z-10">{p.icon}</span>
+                            <span className="text-3xl relative z-10">{p.icon}</span>
                             <h3 className="text-2xl font-bold text-white leading-tight tracking-tighter uppercase relative z-10">{p.title}</h3>
                         </div>
                         
@@ -455,7 +446,7 @@ export default function DesktopView() {
                         
                         <div className="flex flex-wrap gap-2 mt-8 relative z-10">
                             {p.tags.map((tag, tIdx) => (
-                                <span key={tIdx} className="text-[10px] font-black border border-white/10 px-5 py-2 rounded-full uppercase text-gray-400 group-hover:text-white transition-colors">{tag}</span>
+                                <span key={tIdx} className="text-[10px] font-black border border-white/10 px-4 py-2 rounded-full uppercase text-gray-400 group-hover:text-white transition-colors">{tag}</span>
                             ))}
                         </div>
 
@@ -468,10 +459,10 @@ export default function DesktopView() {
             </div>
         </section>
 
-        {/* OFFLINE PROTOCOL */}
+        {/* OFFLINE PROTOCOL (HOBBIES) */}
         <section className="max-w-7xl mx-auto px-10 py-40 flex flex-col items-center w-full">
             <div className="flex flex-col items-center mb-20 text-center">
-              <h2 className="text-6xl font-black text-white tracking-tighter uppercase italic">Offline <span className="text-[#FF8C00]">Protocol.</span></h2>
+              <h2 className="text-6xl font-black text-white tracking-tighter uppercase italic">When I'm Not <span className="text-[#FF8C00]">Coding</span></h2>
               <p className="text-gray-400 mt-6 max-w-xl text-xl font-light">Life's about balance! Here are the activities that keep me energized and inspired outside of tech.</p>
               <div className="h-[3px] w-24 bg-gradient-to-r from-[#FF8C00] to-[#00E5FF] mt-8 rounded-full" />
             </div>
@@ -485,10 +476,10 @@ export default function DesktopView() {
                  {i:"⛳",t:"Golf",d:"Precision, patience, and mastering the physical mechanics."},
                  {i:"🍽️",t:"Food Tasting",d:"Culinary exploration and discovering unique fine dining."}
               ].map((h,x)=>(
-                <div key={x} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-10 rounded-[3rem] text-center hover:border-white/30 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] group">
-                  <div className="text-6xl mb-8 grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110">{h.i}</div>
-                  <h3 className="text-xl font-black text-white mb-4 uppercase tracking-[0.2em]">{h.t}</h3>
-                  <p className="text-gray-400 font-light leading-relaxed text-base">{h.d}</p>
+                <div key={x} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-14 rounded-[3rem] text-center hover:border-white/30 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] group">
+                  <div className="text-7xl mb-10 grayscale opacity-30 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110">{h.i}</div>
+                  <h3 className="text-2xl font-black text-white mb-5 uppercase tracking-[0.2em]">{h.t}</h3>
+                  <p className="text-gray-400 font-light leading-relaxed text-lg">{h.d}</p>
                 </div>
               ))}
             </div>
