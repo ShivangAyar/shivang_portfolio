@@ -1,30 +1,37 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Text, ContactShadows, PerspectiveCamera, Environment } from '@react-three/drei';
-import { motion, AnimatePresence, useInView, useScroll, useTransform } from 'framer-motion';
+import { Float, Text, ContactShadows, Edges, PerspectiveCamera, Environment } from '@react-three/drei';
+import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 
 // --- THE MECHANICAL SNAP CORE ---
-function MechanicalCore({ isAssembled }) {
+function MechanicalCore({ isActive }) {
   const meshRef = useRef();
   const groupRef = useRef();
-  const gridSize = 4;
+  const gridSize = 4; // 4x4x4 = 64 cubes
   const count = gridSize ** 3;
   const { viewport } = useThree();
   const isMobile = viewport.width < 6;
 
+  // Pre-calculate positions
   const cubeData = useMemo(() => {
     const temp = [];
     let i = 0;
     for (let x = 0; x < gridSize; x++) {
       for (let y = 0; y < gridSize; y++) {
         for (let z = 0; z < gridSize; z++) {
-          const targetPos = new THREE.Vector3(x - 1.5, y - 1.5, z - 1.5).multiplyScalar(1.05);
+          const targetPos = new THREE.Vector3(
+            x - (gridSize - 1) / 2,
+            y - (gridSize - 1) / 2,
+            z - (gridSize - 1) / 2
+          ).multiplyScalar(1.05);
+
           const randomPos = new THREE.Vector3(
-            (Math.random() - 0.5) * (isMobile ? 25 : 45),
-            (Math.random() - 0.5) * (isMobile ? 25 : 45),
+            (Math.random() - 0.5) * (isMobile ? 15 : 35),
+            (Math.random() - 0.5) * (isMobile ? 15 : 35),
             (Math.random() - 0.5) * 20
           );
+          
           const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
           temp.push({ targetPos, randomPos, randomRot, index: i++ });
         }
@@ -37,23 +44,33 @@ function MechanicalCore({ isAssembled }) {
   const currentPositions = useMemo(() => cubeData.map(d => d.randomPos.clone()), [cubeData]);
   const currentRotations = useMemo(() => cubeData.map(d => new THREE.Quaternion().setFromEuler(d.randomRot)), [cubeData]);
 
+  // Words Data with unique phases for natural floating
+  const words = useMemo(() => [
+    { text: "SHIVANG", phase: Math.random() * 10, offset: [0, 4, 0] },
+    { text: "ARCHITECTURE", phase: Math.random() * 10, offset: [5, 2, 2] },
+    { text: "MERN STACK", phase: Math.random() * 10, offset: [-5, -2, 2] },
+    { text: "FULL-STACK", phase: Math.random() * 10, offset: [2, -4, -2] },
+    { text: "SYSTEMS", phase: Math.random() * 10, offset: [-3, 3, -4] }
+  ], []);
+
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
-    groupRef.current.rotation.y += delta * (isAssembled ? 0.2 : 0.04);
+    groupRef.current.rotation.y += delta * (isActive ? 0.25 : 0.05);
     
     cubeData.forEach((data, i) => {
-      const targetP = isAssembled ? data.targetPos : data.randomPos;
-      const targetR = isAssembled ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
+      const targetP = isActive ? data.targetPos : data.randomPos;
+      const targetR = isActive ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
 
-      currentPositions[i].lerp(targetP, isAssembled ? 0.1 : 0.02);
-      currentRotations[i].slerp(targetR, isAssembled ? 0.1 : 0.02);
+      currentPositions[i].lerp(targetP, isActive ? 0.08 : 0.015);
+      currentRotations[i].slerp(targetR, isActive ? 0.08 : 0.01);
 
       dummy.position.copy(currentPositions[i]);
-      if (!isAssembled) {
+      // Natural idle drift
+      if (!isActive) {
         dummy.position.y += Math.sin(t + i) * 0.005;
+        dummy.position.x += Math.cos(t * 0.5 + i) * 0.005;
       }
       dummy.quaternion.copy(currentRotations[i]);
-      dummy.scale.setScalar(isAssembled ? 1 : 0.6);
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
     });
@@ -64,168 +81,269 @@ function MechanicalCore({ isAssembled }) {
     <group ref={groupRef} position={[isMobile ? 0 : 2.5, 0, 0]}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        <meshStandardMaterial color={isAssembled ? "#00E5FF" : "#020202"} roughness={0.1} metalness={0.9} emissive={isAssembled ? "#00E5FF" : "#000"} emissiveIntensity={isAssembled ? 0.5 : 0} />
+        <meshStandardMaterial color={isActive ? "#002222" : "#020202"} roughness={0.1} metalness={0.9} />
       </instancedMesh>
-      {isAssembled && <pointLight intensity={20} color="#FF8C00" distance={10} />}
+
+      {isActive && <pointLight intensity={20} color="#FF8C00" distance={10} />}
+
+      {words.map((w, i) => (
+        <FloatingHUDText key={i} text={w.text} isActive={isActive} offset={w.offset} phase={w.phase} />
+      ))}
     </group>
   );
 }
 
-// --- REACTIVE COMPETENCY CARD ---
-const CompetencyCard = ({ title, icon, skills }) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, amount: 0.2 });
+function FloatingHUDText({ text, isActive, offset, phase }) {
+  const ref = useRef();
+  const { viewport } = useThree();
+  const isMobile = viewport.width < 6;
+
+  useFrame((state) => {
+    const t = state.clock.getElapsedTime();
+    if (ref.current) {
+      // Natural Float Logic (Perlin-like Sine drift)
+      const driftX = Math.sin(t * 0.4 + phase) * (isActive ? 1.5 : 8);
+      const driftY = Math.cos(t * 0.3 + phase) * (isActive ? 1.5 : 8);
+      const driftZ = Math.sin(t * 0.2 + phase) * (isActive ? 1 : 5);
+
+      const targetX = isActive ? offset[0] + driftX : driftX * 2;
+      const targetY = isActive ? offset[1] + driftY : driftY * 2;
+      const targetZ = isActive ? offset[2] + driftZ : driftZ;
+
+      ref.current.position.lerp(new THREE.Vector3(targetX, targetY, targetZ), 0.03);
+      ref.current.lookAt(state.camera.position);
+    }
+  });
 
   return (
-    <motion.div 
+    <Text
       ref={ref}
-      initial={{ opacity: 0, y: 20 }}
-      animate={isInView ? { opacity: 1, y: 0 } : {}}
-      className="bg-[#0A0A12]/40 backdrop-blur-xl border border-white/5 p-8 rounded-3xl flex flex-col shadow-2xl"
+      fontSize={isMobile ? 0.4 : 0.6}
+      font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf"
+      color="#00E5FF"
+      emissive="#00E5FF"
+      emissiveIntensity={isActive ? 4 : 0.2}
+      transparent
+      opacity={isActive ? 0.9 : 0.25}
     >
-      <h3 className="text-xl font-bold text-white mb-8 tracking-tighter uppercase flex items-center gap-4">
-        <span className="text-2xl">{icon}</span> {title}
-      </h3>
-      <div className="space-y-6 mt-auto">
-        {skills.map((skill, i) => (
-          <div key={i}>
-            <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase mb-2">
-              <span>{skill.n}</span><span className="text-white">{skill.v}</span>
-            </div>
-            <div className="w-full bg-white/5 rounded-full h-[2px] overflow-hidden">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={isInView ? { width: skill.v } : {}}
-                transition={{ duration: 1.5, delay: i * 0.1, ease: "easeOut" }}
-                className="h-full bg-gradient-to-r from-[#00E5FF] to-[#FF8C00] shadow-[0_0_10px_#00E5FF]" 
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-    </motion.div>
+      {text}
+    </Text>
   );
-};
+}
+
+// --- APP SECTIONS DATA ---
+const projects = [
+  { title: "E-Commerce Microservices", desc: "Scaleable backend utilizing Docker, Stripe API, and JWT auth.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
+  { title: "Movie Watchlist App", desc: "Full-stack media tracker via RESTful APIs and NoSQL architecture.", tags: ["MongoDB", "Express", "Node"], color: "#FF8C00" },
+  { title: "Real-Time Collab Workspace", desc: "Live-syncing environment using WebSockets for real-time editing.", tags: ["Socket.io", "Next.js", "Redis"], color: "#A855F7" },
+  { title: "Voice AI Chatbot", desc: "Emotion-aware chatbot integrating OpenAI and Voice APIs.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF" },
+  { title: "DevOps CI/CD Dashboard", desc: "Command center for GitHub Actions and AWS deployment metrics.", tags: ["AWS", "Python", "GitHub"], color: "#FF8C00" },
+  { title: "AI SaaS Image Generator", desc: "SaaS wrapping OpenAI featuring user credits and async generation.", tags: ["Tailwind", "React", "DALL-E"], color: "#FF8C00" }
+];
+
+const NavLink = ({ href, children }) => (
+  <a href={href} className="group relative py-2 text-[10px] font-black tracking-[0.3em] text-gray-500 uppercase transition-colors hover:text-white">
+    {children}
+    <span className="absolute bottom-0 left-0 h-[1.5px] w-full origin-left scale-x-0 bg-gradient-to-r from-[#00E5FF] to-[#FF8C00] transition-transform duration-500 group-hover:scale-x-100 shadow-[0_0_10px_#00E5FF]" />
+  </a>
+);
 
 export default function App() {
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const heroRef = useRef(null);
-  const isHeroVisible = useInView(heroRef, { amount: 0.5 });
+  const [isMobile, setIsMobile] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleMouseMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
+  // For Mobile: Active if hero is visible. For Desktop: Active on Hover.
+  const activeState = isMobile ? true : isHovered;
 
   return (
-    <div className="bg-[#010102] text-gray-200 antialiased font-sans scroll-smooth relative min-h-screen overflow-x-hidden selection:bg-[#00E5FF] selection:text-black">
+    <div className="bg-[#010102] text-gray-200 antialiased selection:bg-[#00E5FF] selection:text-black font-sans scroll-smooth relative min-h-screen overflow-x-hidden">
       
-      {/* 3D SCENE BACKGROUND */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
+      {/* 2D LIGHT TRACKER */}
+      {!isMobile && (
+        <div className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-300"
+          style={{ background: `radial-gradient(800px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.04), transparent 85%)` }} />
+      )}
+
+      {/* 3D SCENE */}
+      <div className="fixed inset-0 z-0 pointer-events-auto">
         <Canvas dpr={[1, 2]}>
-          <PerspectiveCamera makeDefault position={[0, 0, 16]} fov={50} />
+          <PerspectiveCamera makeDefault position={[0, 0, isMobile ? 22 : 16]} fov={isMobile ? 55 : 40} />
+          <color attach="background" args={['#010102']} />
           <ambientLight intensity={0.5} />
+          <pointLight position={[10, 10, 10]} intensity={1.5} color="#00E5FF" />
           <Environment preset="night" />
-          <MechanicalCore isAssembled={isHeroVisible || isHovered} />
+          <MechanicalCore isActive={activeState} />
           <ContactShadows position={[0, -10, 0]} opacity={0.4} scale={40} blur={2} far={20} color="#00E5FF" />
         </Canvas>
       </div>
 
       <div className="relative z-30 w-full flex flex-col">
-        {/* NAV & MOBILE MENU */}
-        <nav className="fixed top-0 w-full z-[100] bg-[#010102]/60 backdrop-blur-xl border-b border-white/5 h-20 flex items-center justify-between px-6 md:px-12">
-          <div className="text-xl md:text-2xl font-black text-white cursor-pointer" onClick={() => window.scrollTo(0,0)}>
+        {/* NAVBAR */}
+        <nav className="fixed top-0 w-full z-50 bg-[#010102]/60 backdrop-blur-xl border-b border-white/5 h-20 md:h-24 flex items-center justify-between px-10">
+          <div className="text-xl md:text-2xl font-black tracking-tighter text-white cursor-pointer" onClick={() => window.scrollTo(0,0)}>
             SHIVANG<span className="text-[#00E5FF]">.</span>
           </div>
           <div className="hidden md:flex gap-10">
-            {['Journey', 'Stacks', 'Builds', 'Connect'].map(link => (
-              <a key={link} href={`#${link.toLowerCase()}`} className="text-[10px] font-black tracking-widest text-gray-400 hover:text-white transition-colors uppercase">{link}</a>
-            ))}
+            <NavLink href="#about">Journey</NavLink>
+            <NavLink href="#skills">Competencies</NavLink>
+            <NavLink href="#projects">Builds</NavLink>
+            <NavLink href="#contact">Connect</NavLink>
           </div>
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="md:hidden text-[#00E5FF] p-2 z-[110]">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}/>
-            </svg>
-          </button>
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-gray-300 p-2"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}/></svg></button>
         </nav>
 
-        <AnimatePresence>
-          {isMenuOpen && (
-            <motion.div 
-              initial={{ opacity: 0, x: '100%' }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: '100%' }}
-              className="fixed inset-0 z-[105] bg-[#010102] flex flex-col items-center justify-center gap-12"
-            >
-              {['Journey', 'Stacks', 'Builds', 'Connect'].map(link => (
-                <a key={link} href={`#${link.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="text-4xl font-black text-white uppercase tracking-tighter hover:text-[#00E5FF] transition-colors">{link}</a>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* HERO SECTION */}
-        <section ref={heroRef} className="max-w-7xl mx-auto px-6 min-h-screen flex items-center relative w-full pt-20" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }} className="max-w-4xl">
-            <div className="mb-6 px-4 py-1.5 border border-[#00E5FF]/20 bg-[#00E5FF]/5 text-[#00E5FF] text-[10px] font-black tracking-[0.5em] uppercase w-fit">Architecture & Logic</div>
-            <h1 className="text-6xl sm:text-8xl md:text-[9.5rem] font-black text-white mb-6 tracking-tighter leading-[0.85]">Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Ayar.</span></h1>
-            <p className="text-lg md:text-2xl text-gray-400 mt-6 mb-12 font-light max-w-2xl border-l-2 border-[#FF8C00] pl-8 leading-relaxed">Designing high-performance systems and full-stack architectures.</p>
-            <div className="flex flex-col sm:flex-row gap-6">
-              <a href="#builds" className="bg-white text-black px-12 py-5 text-[10px] font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-white transition-all text-center">Execute Builds</a>
-              <a href="/resume.pdf" target="_blank" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all text-center">Resume ↓</a>
+        {/* HERO */}
+        <section 
+          className="max-w-7xl mx-auto px-6 min-h-screen flex items-center relative w-full pt-20"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1 }} className="flex flex-col items-start max-w-4xl z-40">
+            <div className="mb-8 px-4 py-1.5 border border-[#00E5FF]/20 bg-[#00E5FF]/5 text-[#00E5FF] text-[10px] font-black tracking-[0.5em] uppercase">Architecture & Logic</div>
+            <h1 className="text-6xl sm:text-8xl md:text-[9rem] font-black text-white mb-6 tracking-tighter leading-[0.9]">Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Ayar.</span></h1>
+            <p className="text-lg md:text-2xl text-gray-400 mt-6 mb-12 font-light max-w-2xl border-l border-white/10 pl-8 leading-relaxed">Designing high-performance full-stack architectures and resilient digital systems.</p>
+            <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto">
+              <a href="#projects" className="bg-white text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-[#00E5FF] hover:text-white transition-all duration-500">Execute Builds</a>
+              <a href="/resume.pdf" target="_blank" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all duration-500">Resume ↓</a>
             </div>
           </motion.div>
         </section>
 
-        {/* STACKS (Competencies) */}
-        <section id="stacks" className="max-w-7xl mx-auto px-6 py-32 w-full">
-          <h2 className="text-5xl md:text-7xl font-black text-white mb-16 tracking-tighter uppercase">Technical <span className="text-[#00E5FF]">Arsenal.</span></h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <CompetencyCard title="Languages" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"}]} />
-            <CompetencyCard title="Frontend" icon="🖥️" skills={[{n:"React.js",v:"90%"},{n:"HTML/CSS",v:"95%"},{n:"Tailwind",v:"85%"}]} />
-            <CompetencyCard title="Backend" icon="⚙️" skills={[{n:"Node.js",v:"85%"},{n:"REST APIs",v:"90%"},{n:"WebSockets",v:"75%"}]} />
-            <CompetencyCard title="Databases" icon="🗄️" skills={[{n:"MongoDB",v:"85%"},{n:"MySQL",v:"90%"},{n:"NoSQL",v:"85%"}]} />
-            <CompetencyCard title="Data Arch" icon="📊" skills={[{n:"Power BI",v:"90%"},{n:"DAX",v:"85%"},{n:"Star Schema",v:"85%"}]} />
-            <CompetencyCard title="DevOps" icon="☁️" skills={[{n:"Git",v:"95%"},{n:"AWS",v:"80%"},{n:"Docker",v:"75%"}]} />
+        {/* ABOUT & JOURNEY */}
+        <section id="about" className="max-w-7xl mx-auto px-6 py-40 w-full relative">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-5">
+              <h2 className="text-5xl md:text-6xl font-black text-white mb-10 tracking-tighter">About <span className="text-[#00E5FF]">Me.</span></h2>
+              <p className="text-gray-400 mb-8 text-xl font-light leading-relaxed">Born and raised in Zambia, now operating in Ottawa. My approach to engineering is purely objective: Build, Optimize, and Master.</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-[#0A0A12]/60 border border-white/5 p-8 rounded-2xl text-center"><h3 className="text-4xl font-black text-white">3+</h3><p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2 font-black">Years</p></div>
+                <div className="bg-[#0A0A12]/60 border border-white/5 p-8 rounded-2xl text-center"><h3 className="text-4xl font-black text-white">10+</h3><p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2 font-black">Builds</p></div>
+              </div>
+            </motion.div>
+            
+            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-7 space-y-12 border-l-2 border-[#00E5FF]/20 ml-4 relative">
+              {[ {i:"🎓", y:"2024 - Present", t:"Algonquin College", p:"Advanced Diploma in Computer Programming. Enterprise focus.", c:"#00E5FF"},
+                 {i:"💻", y:"2021 - 2023", t:"Fraser International College", p:"Computer Science Pathway. specialized expertise in algorithm design.", c:"#A855F7"}
+              ].map((step, idx) => (
+                <div key={idx} className="relative pl-12 group">
+                  <div className={`absolute -left-[18px] top-2 w-8 h-8 rounded-full bg-[#030305] border flex items-center justify-center transition-all duration-500 shadow-[0_0_15px_rgba(0,229,255,0.2)]`} style={{ borderColor: step.c }}>{step.i}</div>
+                  <div className="bg-[#0A0A12]/40 backdrop-blur-xl border border-white/5 p-10 rounded-3xl transition-all hover:border-white/20 shadow-2xl">
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em]" style={{ color: step.c }}>{step.y}</span>
+                    <h3 className="text-2xl font-bold text-white mt-4 tracking-tight">{step.t}</h3>
+                    <p className="text-gray-400 text-base mt-4 font-light leading-relaxed">{step.p}</p>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
           </div>
+        </section>
+
+        {/* COMPETENCIES */}
+        <section id="skills" className="max-w-7xl mx-auto px-6 py-20 w-full">
+            <h2 className="text-6xl md:text-7xl font-black text-white mb-16 tracking-tighter">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[ { t: "Programming", i: "💻", s: [{n: "Java", v: "90%"}, {n: "Python", v: "85%"}, {n: "JavaScript", v: "85%"}] },
+                   { t: "Frontend Dev", i: "🖥️", s: [{n: "React.js", v: "90%"}, {n: "HTML5/CSS3", v: "95%"}, {n: "Tailwind", v: "85%"}] },
+                   { t: "Backend & APIs", i: "⚙️", s: [{n: "Node.js", v: "85%"}, {n: "Express.js", v: "85%"}, {n: "REST APIs", v: "90%"}] },
+                   { t: "Databases", i: "🗄️", s: [{n: "MongoDB", v: "85%"}, {n: "MySQL", v: "90%"}, {n: "PostgreSQL", v: "75%"}] },
+                   { t: "Data Arch", i: "📊", s: [{n: "Power BI", v: "90%"}, {n: "DAX", v: "85%"}, {n: "Star Schema", v: "85%"}] },
+                   { t: "Cloud & DevOps", i: "☁️", s: [{n: "Git / GitHub", v: "95%"}, {n: "AWS", v: "80%"}, {n: "Docker", v: "75%"}] }
+                ].map((card, idx) => (
+                    <div key={idx} className="bg-[#0A0A12]/40 border border-white/5 p-10 rounded-3xl hover:border-[#00E5FF]/40 transition-all shadow-2xl group flex flex-col">
+                        <h3 className="text-xl font-bold text-white mb-8 tracking-tighter uppercase flex items-center gap-4">
+                            <span className="text-2xl">{card.i}</span> {card.t}
+                        </h3>
+                        <div className="space-y-6 mt-auto">
+                            {card.s.map((skill, i) => (
+                                <div key={i}>
+                                    <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase mb-2"><span>{skill.n}</span><span className="text-white">{skill.v}</span></div>
+                                    <div className="w-full bg-white/5 rounded-full h-[2px] overflow-hidden">
+                                        <div className="h-full bg-gradient-to-r from-[#00E5FF] to-[#FF8C00] transition-all duration-1000 w-0 group-hover:w-full shadow-[0_0_10px_rgba(0,229,255,0.8)]" style={{ maxWidth: skill.v }}></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </section>
+
+        {/* PROJECTS */}
+        <section id="projects" className="max-w-7xl mx-auto px-6 py-40">
+            <h2 className="text-7xl font-black text-white mb-20 tracking-tighter text-right">System <span className="text-[#FF8C00]">Builds.</span></h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 [perspective:2000px]">
+                {projects.map((p, i) => (
+                    <motion.div 
+                        key={i} 
+                        className="bg-[#0A0A12]/40 backdrop-blur-xl p-12 rounded-[2.5rem] border border-white/5 transition-all shadow-2xl relative overflow-hidden h-[450px] flex flex-col group cursor-pointer"
+                        whileHover={{ y: -15, rotateX: -7, rotateY: 7, borderColor: `${p.color}30`, boxShadow: `0 30px 60px ${p.color}15` }}
+                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                        <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-5 group-hover:opacity-20 transition-all duration-700" style={{ background: p.color }}></div>
+                        <h3 className="text-3xl font-bold text-white mb-6 leading-tight tracking-tighter">{p.title}</h3>
+                        <p className="text-gray-400 text-lg font-light leading-relaxed mb-auto">{p.desc}</p>
+                        <div className="flex flex-wrap gap-2 mt-8">
+                            {p.tags.map((tag, tIdx) => (
+                                <span key={tIdx} className="text-[9px] font-black border border-white/10 px-4 py-1.5 rounded-full uppercase text-gray-500 group-hover:text-white transition-colors">{tag}</span>
+                            ))}
+                        </div>
+                    </motion.div>
+                ))}
+            </div>
         </section>
 
         {/* OFFLINE PROTOCOL */}
-        <section className="max-w-7xl mx-auto px-6 py-32 flex flex-col w-full">
-          <h2 className="text-5xl font-black text-white mb-16 tracking-tighter text-center uppercase">Offline <span className="text-[#FF8C00]">Protocol.</span></h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[ {i:"🏋️‍♂️",t:"Discipline",d:"6-day compound split focus."},
-               {i:"🎮",t:"Logic",d:"Hardware tuning & mechanics."},
-               {i:"🌍",t:"Equilibrium",d:"Hiking and exploration."}
-            ].map((h,x)=>(
-              <motion.div 
-                key={x} 
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                className="bg-[#0A0A12]/40 border border-white/5 p-12 rounded-[2.5rem] text-center shadow-2xl group transition-all hover:border-[#FF8C00]/40"
-              >
-                <div className="text-7xl mb-8 group-hover:scale-110 transition-transform duration-500">{h.i}</div>
-                <h3 className="text-xl font-bold text-white mb-4 uppercase tracking-widest">{h.t}</h3>
-                <p className="text-gray-500 font-light leading-relaxed">{h.d}</p>
-              </motion.div>
-            ))}
-          </div>
+        <section className="max-w-7xl mx-auto px-6 py-40 flex flex-col items-center w-full">
+            <h2 className="text-5xl font-black text-white mb-16 tracking-tighter text-center">Offline <span className="text-[#FF8C00]">Protocol.</span></h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full pointer-events-auto">
+              {[ {i:"🏋️‍♂️",t:"Discipline",d:"6-day compound split focusing on progressive overload."},
+                 {i:"🎮",t:"Logic",d:"Competitive strategy and hardware optimization."},
+                 {i:"🌍",t:"Equilibrium",d:"Hiking and trail exploration to maintain technical focus."}
+              ].map((h,x)=>(
+                <div key={x} className="bg-[#0A0A12]/40 border border-white/5 p-12 rounded-[2.5rem] text-center hover:border-white/20 transition-all shadow-2xl group">
+                  <div className="text-7xl mb-8 grayscale opacity-20 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105">{h.i}</div>
+                  <h3 className="text-xl font-black text-white mb-4 uppercase tracking-[0.3em]">{h.t}</h3>
+                  <p className="text-gray-500 font-light leading-relaxed text-lg">{h.d}</p>
+                </div>
+              ))}
+            </div>
         </section>
 
         {/* TERMINAL FOOTER */}
-        <footer id="connect" className="w-full py-40 px-6">
-          <div className="max-w-5xl mx-auto bg-[#010102]/80 backdrop-blur-3xl border border-white/10 p-12 md:p-24 rounded-[4rem] text-center relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-[#00E5FF] to-[#FF8C00]" />
-            <h2 className="text-6xl md:text-8xl font-black text-white mb-10 tracking-tighter leading-tight uppercase">Terminal <br/><span className="text-[#00E5FF]">Ready.</span></h2>
-            <div className="flex items-center justify-center gap-4 mb-20 bg-white/5 w-max mx-auto px-8 py-4 rounded-full border border-white/10">
-              <span className="relative flex h-3 w-3"><span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative h-3 w-3 rounded-full bg-green-500"></span></span>
-              <span className="text-[10px] font-black tracking-widest uppercase text-green-400">Available For New Builds</span>
+        <footer id="contact" className="w-full py-60 flex items-center justify-center relative z-30">
+          <div className="max-w-5xl mx-auto px-6 flex flex-col items-center w-full">
+            <div className="bg-[#010102]/80 backdrop-blur-3xl border border-white/10 p-16 md:p-24 rounded-[4rem] shadow-[0_0_100px_rgba(0,0,0,1)] text-center relative overflow-hidden group w-full">
+              <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00] shadow-[0_0_20px_#00E5FF]" />
+              <h2 className="text-6xl md:text-8xl font-black text-white mb-10 tracking-tighter leading-tight">Terminal <br/><span className="text-[#00E5FF]">Ready.</span></h2>
+              <div className="flex items-center justify-center gap-4 mb-20 bg-white/5 w-max mx-auto px-12 py-5 rounded-full border border-white/10">
+                <span className="relative flex h-4 w-4"><span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative h-4 w-4 rounded-full bg-green-500 shadow-[0_0_15px_#4ade80]"></span></span>
+                <span className="text-[10px] font-black tracking-[0.5em] uppercase text-green-400">Secure Protocol Active</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <a href="https://github.com" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all duration-500">GitHub</a>
+                <a href="https://linkedin.com" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all duration-500">LinkedIn</a>
+                <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#FF8C00] hover:text-black transition-all duration-500">Email</a>
+              </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              <a href="https://github.com" className="bg-white/5 border border-white/10 py-5 rounded-2xl text-white font-bold tracking-widest uppercase hover:bg-white hover:text-black transition-all">GitHub</a>
-              <a href="https://linkedin.com" className="bg-white/5 border border-white/10 py-5 rounded-2xl text-white font-bold tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all">LinkedIn</a>
-              <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 py-5 rounded-2xl text-white font-bold tracking-widest uppercase hover:bg-[#FF8C00] hover:text-black transition-all">Email</a>
-            </div>
-            <p className="mt-32 text-center text-[10px] font-black tracking-[0.5em] text-gray-700 uppercase">© 2026 SHIVANG AYAR. ARCHITECTED WITH INTENT.</p>
+            <p className="mt-32 text-center text-[11px] font-black tracking-[0.8em] text-gray-700 uppercase">© 2026 SHIVANG AYAR. ARCHITECTED WITH INTENT.</p>
           </div>
         </footer>
+
       </div>
     </div>
   );
