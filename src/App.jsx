@@ -85,7 +85,7 @@ export default function App() {
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
   return (
-    <div className="bg-[#030305] text-gray-200 antialiased selection:bg-[#00E5FF] selection:text-black font-sans scroll-smooth relative min-h-screen">
+    <div className="bg-[#030305] text-gray-200 antialiased selection:bg-[#00E5FF] selection:text-black font-sans scroll-smooth relative min-h-screen overflow-x-hidden flex flex-col">
       <div className="pointer-events-none fixed inset-0 z-50 opacity-30 mix-blend-overlay" style={{ backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")' }} />
       <div className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-300 hidden md:block" style={{ background: `radial-gradient(800px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.05), transparent 60%)` }} />
 
@@ -107,7 +107,7 @@ export default function App() {
         </Canvas>
       </div>
 
-      <div className="relative z-30 w-full">
+      <div className="relative z-30 w-full flex-grow flex flex-col">
         <nav className="fixed top-0 w-full z-50 bg-[#030305]/60 backdrop-blur-2xl border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
             <div className="flex items-center gap-2 text-2xl font-black tracking-tighter text-white cursor-pointer" onClick={() => window.scrollTo(0,0)}>
@@ -277,7 +277,8 @@ export default function App() {
           </div>
         </section>
 
-        <section id="contact" className="w-full bg-[#0A0A12]/90 backdrop-blur-2xl border-t border-white/5 py-32 pointer-events-none mt-20">
+        {/* FIXED FOOTER - NO CUTOFF */}
+        <section id="contact" className="w-full bg-[#0A0A12]/80 backdrop-blur-2xl border-t border-white/5 pt-32 pb-16 pointer-events-none mt-20 relative z-30">
           <div className="max-w-4xl mx-auto px-6 pointer-events-auto flex flex-col items-center">
             <div className="bg-[#030305] border border-white/5 p-12 rounded-[2.5rem] shadow-2xl w-full text-center relative overflow-hidden group">
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#00E5FF] to-[#FF3366]"></div>
