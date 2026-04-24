@@ -1,12 +1,13 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Text, ContactShadows, PerspectiveCamera, Environment } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { ContactShadows, PerspectiveCamera, Environment } from '@react-three/drei';
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- CUSTOM LOADING PROTOCOL ---
+// --- HACKER LOADING PROTOCOL ---
 const LoadingScreen = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
+  const [status, setStatus] = useState("Initializing...");
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -16,9 +17,13 @@ const LoadingScreen = ({ onComplete }) => {
           setTimeout(onComplete, 1200);
           return 100;
         }
-        return prev + Math.floor(Math.random() * 4) + 1;
+        const next = prev + Math.floor(Math.random() * 2) + 1; 
+        if (next >= 89) setStatus("89% ALLOWING ACCESS...");
+        else if (next >= 54) setStatus("54% VERIFIED USER");
+        else if (next >= 33) setStatus("33% SCANNING IF YOU ARE HUMAN...");
+        return next > 100 ? 100 : next;
       });
-    }, 80);
+    }, 180); 
     return () => clearInterval(timer);
   }, [onComplete]);
 
@@ -39,13 +44,12 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (Exact Desktop Colors & Logic) ---
+// --- MECHANICAL SNAP CORE (Aesthetic Cube Only) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
   const gridSize = 4;
   const count = gridSize ** 3;
-  
   const isActive = scrollY < 150;
 
   const cubeData = useMemo(() => {
@@ -54,7 +58,7 @@ function MechanicalCore({ scrollY }) {
     for (let x = 0; x < gridSize; x++) {
       for (let y = 0; y < gridSize; y++) {
         for (let z = 0; z < gridSize; z++) {
-          const targetPos = new THREE.Vector3(x - (gridSize - 1) / 2, y - (gridSize - 1) / 2, z - (gridSize - 1) / 2).multiplyScalar(1.05);
+          const targetPos = new THREE.Vector3(x - 1.5, y - 1.5, z - 1.5).multiplyScalar(1.05);
           const randomPos = new THREE.Vector3((Math.random() - 0.5) * 25, (Math.random() - 0.5) * 25, (Math.random() - 0.5) * 20);
           const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
           temp.push({ targetPos, randomPos, randomRot, index: i++ });
@@ -65,34 +69,19 @@ function MechanicalCore({ scrollY }) {
   }, []);
 
   const dummy = new THREE.Object3D();
-  const currentPositions = useMemo(() => cubeData.map(d => d.randomPos.clone()), [cubeData]);
-  const currentRotations = useMemo(() => cubeData.map(d => new THREE.Quaternion().setFromEuler(d.randomRot)), [cubeData]);
-
-  const words = useMemo(() => [
-    { text: "SHIVANG", phase: Math.random() * 10, offset: [0, 4, 0] },
-    { text: "ARCHITECTURE", phase: Math.random() * 10, offset: [5, 2, 2] },
-    { text: "MERN STACK", phase: Math.random() * 10, offset: [-5, -2, 2] },
-    { text: "FULL-STACK", phase: Math.random() * 10, offset: [2, -4, -2] },
-    { text: "SYSTEMS", phase: Math.random() * 10, offset: [-3, 3, -4] }
-  ], []);
+  const cP = useMemo(() => cubeData.map(d => d.randomPos.clone()), [cubeData]);
+  const cR = useMemo(() => cubeData.map(d => new THREE.Quaternion().setFromEuler(d.randomRot)), [cubeData]);
 
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
     groupRef.current.rotation.y += delta * (isActive ? 0.25 : 0.05);
-    
     cubeData.forEach((data, i) => {
-      const targetP = isActive ? data.targetPos : data.randomPos;
-      const targetR = isActive ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
-
-      currentPositions[i].lerp(targetP, isActive ? 0.08 : 0.015);
-      currentRotations[i].slerp(targetR, isActive ? 0.08 : 0.01);
-
-      dummy.position.copy(currentPositions[i]);
-      if (!isActive) {
-        dummy.position.y += Math.sin(t + i) * 0.005;
-        dummy.position.x += Math.cos(t * 0.5 + i) * 0.005;
-      }
-      dummy.quaternion.copy(currentRotations[i]);
+      const tP = isActive ? data.targetPos : data.randomPos;
+      const tR = isActive ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
+      cP[i].lerp(tP, 0.08); cR[i].slerp(tR, 0.08);
+      dummy.position.copy(cP[i]);
+      if (!isActive) dummy.position.y += Math.sin(t + i) * 0.005;
+      dummy.quaternion.copy(cR[i]);
       dummy.scale.setScalar(isActive ? 1 : 0.6);
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
@@ -104,71 +93,39 @@ function MechanicalCore({ scrollY }) {
     <group ref={groupRef}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        {/* Exact Desktop Material */}
-        <meshStandardMaterial color={isActive ? "#002222" : "#020202"} roughness={0.1} metalness={0.9} />
+        <meshStandardMaterial 
+          color="#00E5FF" 
+          metalness={0.9} 
+          roughness={0.1} 
+          emissive={isActive ? "#00E5FF" : "#000"} 
+          emissiveIntensity={isActive ? 0.4 : 0.05} 
+        />
       </instancedMesh>
-      {isActive && <pointLight intensity={20} color="#FF8C00" distance={10} />}
-      {words.map((w, i) => (
-        <FloatingHUDText key={i} text={w.text} isActive={isActive} offset={w.offset} phase={w.phase} />
-      ))}
+      {isActive && <pointLight intensity={15} color="#FF8C00" distance={15} />}
     </group>
   );
 }
 
-function FloatingHUDText({ text, isActive, offset, phase }) {
-  const ref = useRef();
-  useFrame((state) => {
-    const t = state.clock.getElapsedTime();
-    if (ref.current) {
-      const driftX = Math.sin(t * 0.4 + phase) * (isActive ? 1.5 : 8);
-      const driftY = Math.cos(t * 0.3 + phase) * (isActive ? 1.5 : 8);
-      const driftZ = Math.sin(t * 0.2 + phase) * (isActive ? 1 : 5);
-      
-      const targetX = isActive ? offset[0] + driftX : driftX * 2;
-      const targetY = isActive ? offset[1] + driftY : driftY * 2;
-      const targetZ = isActive ? offset[2] + driftZ : driftZ;
-      
-      ref.current.position.lerp(new THREE.Vector3(targetX, targetY, targetZ), 0.03);
-      ref.current.lookAt(state.camera.position);
-    }
-  });
-
-  return (
-    <Text ref={ref} fontSize={0.4} font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf" color="#00E5FF" emissive="#00E5FF" emissiveIntensity={isActive ? 4 : 0.2} transparent opacity={isActive ? 0.9 : 0.25}>
-      {text}
-    </Text>
-  );
-}
-
-// --- DESKTOP SLIDER BARS (Scroll Reactive) ---
+// --- SEQUENTIAL SCROLL-REACTIVE SKILLS ---
 const CompCard = ({ title, icon, skills }) => {
   const ref = useRef(null);
-  // once: false allows the bars to fill up when scrolled to, and reset to 0 when scrolled away
-  const isInView = useInView(ref, { amount: 0.3, once: false }); 
-  
+  const isInView = useInView(ref, { amount: 0.3, once: false });
   return (
-    <div ref={ref} className="bg-[#050507]/60 border border-white/5 p-8 rounded-[2rem] shadow-2xl flex flex-col h-[380px]">
-      <h3 className="text-xl font-bold text-white mb-8 tracking-tighter uppercase flex items-center gap-4">
-        <span className="text-2xl">{icon}</span> {title}
-      </h3>
-      <div className="space-y-8 mt-auto">
-        {skills.map((skill, i) => (
-          <div key={i}>
-            <div className="flex justify-between text-[11px] font-bold text-gray-500 uppercase mb-3 transition-colors" style={{ color: isInView ? 'white' : '' }}>
-              <span>{skill.n}</span><span style={{ color: isInView ? "#00E5FF" : "" }}>{skill.v}</span>
-            </div>
-            {/* Exact Desktop Continuous Bar */}
-            <div className="w-full bg-white/5 rounded-full h-[2px] overflow-hidden">
-              <motion.div 
-                initial={{ width: "0%" }} 
-                animate={{ width: isInView ? skill.v : "0%" }} 
-                transition={{ duration: 1.2, delay: isInView ? i * 0.15 : 0, ease: "easeOut" }} 
-                className="h-full bg-gradient-to-r from-[#00E5FF] to-[#FF8C00] shadow-[0_0_10px_rgba(0,229,255,0.8)]" 
-              />
-            </div>
+    <div ref={ref} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex flex-col h-[400px]">
+      <h3 className="text-xl font-bold text-white mb-8 tracking-tighter uppercase flex items-center gap-4"><span className="text-2xl">{icon}</span> {title}</h3>
+      <div className="space-y-10 mt-auto">{skills.map((skill, i) => (
+        <div key={i}>
+          <div className="flex justify-between text-[11px] font-bold text-gray-400 uppercase mb-3 transition-colors" style={{ color: isInView ? 'white' : '' }}><span>{skill.n}</span><span style={{ color: isInView ? "#00E5FF" : "" }}>{skill.v}</span></div>
+          <div className="w-full bg-white/5 rounded-full h-[2px] overflow-hidden">
+            <motion.div 
+              initial={{ width: "0%" }} 
+              animate={{ width: isInView ? skill.v : "0%" }} 
+              transition={{ duration: 1.2, delay: isInView ? i * 0.15 : 0, ease: "easeOut" }} 
+              className="h-full bg-gradient-to-r from-[#00E5FF] to-[#FF8C00] shadow-[0_0_10px_rgba(0,229,255,0.8)]" 
+            />
           </div>
-        ))}
-      </div>
+        </div>
+      ))}</div>
     </div>
   );
 };
@@ -195,7 +152,7 @@ const ReactiveFooter = () => {
   }, []);
 
   return (
-    <footer id="connect" className="py-40 flex items-center justify-center relative overflow-hidden px-6">
+    <footer id="connect" className="pt-40 pb-12 flex flex-col items-center justify-center relative overflow-hidden px-6">
       <div className="absolute inset-0 opacity-5 pointer-events-none select-none overflow-hidden flex flex-wrap gap-4 text-[8px] font-mono text-[#00E5FF]">
         {Array.from({length: 40}).map((_,i) => (
           <motion.div key={i} animate={{ y: [0, 100, 0], opacity: [0, 1, 0] }} transition={{ duration: Math.random() * 5 + 3, repeat: Infinity, delay: Math.random() * 5 }}>
@@ -204,6 +161,7 @@ const ReactiveFooter = () => {
         ))}
       </div>
 
+      {/* Terminal Container */}
       <div className="w-full bg-[#020203] border-2 border-[#00E5FF]/30 p-12 rounded-[4rem] shadow-[0_0_80px_rgba(0,229,255,0.08)] relative z-10 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#00E5FF]/5 to-transparent h-4 w-full animate-scanline pointer-events-none" />
         <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" />
@@ -233,8 +191,12 @@ const ReactiveFooter = () => {
             <span className="text-xl">✉️</span> Email
           </a>
         </div>
-        
-        <p className="mt-20 text-[10px] font-black tracking-[1.5em] text-gray-800 uppercase leading-relaxed text-center">© 2026 SHIVANG AYAR.<br/>ARCHITECTED WITH INTENT.</p>
+      </div>
+
+      {/* Split Copyright Outside Container */}
+      <div className="w-full flex justify-between items-center mt-12 px-2 text-[8px] sm:text-[10px] font-black tracking-[0.2em] sm:tracking-[0.4em] text-gray-600 uppercase z-20 relative">
+        <span className="text-left">© 2026 SHIVANG AYAR</span>
+        <span className="text-right">MADE WITH INTENT</span>
       </div>
 
       <style dangerouslySetInnerHTML={{__html: `
@@ -244,6 +206,16 @@ const ReactiveFooter = () => {
     </footer>
   );
 };
+
+// --- FULL PROJECTS DATA ---
+const projectsData = [
+  { title: "E-Commerce Microservices", desc: "Scaleable backend utilizing Docker, Stripe API, and JWT auth.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
+  { title: "Movie Watchlist App", desc: "Full-stack media tracker via RESTful APIs and NoSQL architecture.", tags: ["MongoDB", "Express", "Node"], color: "#FF8C00" },
+  { title: "Real-Time Collab Workspace", desc: "Live-syncing environment using WebSockets for real-time editing.", tags: ["Socket.io", "Next.js", "Redis"], color: "#A855F7" },
+  { title: "Voice AI Chatbot", desc: "Emotion-aware chatbot integrating OpenAI and Voice APIs.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF" },
+  { title: "DevOps CI/CD Dashboard", desc: "Command center for GitHub Actions and AWS deployment metrics.", tags: ["AWS", "Python", "GitHub"], color: "#FF8C00" },
+  { title: "AI SaaS Image Generator", desc: "SaaS wrapping OpenAI featuring user credits and async generation.", tags: ["Tailwind", "React", "DALL-E"], color: "#FF8C00" }
+];
 
 export default function MobileView() {
   const [isLoading, setIsLoading] = useState(true);
@@ -261,7 +233,7 @@ export default function MobileView() {
   return (
     <div className="min-h-screen bg-[#010102] text-gray-200 overflow-x-hidden selection:bg-[#00E5FF]">
       
-      {/* OVERFLOW FIX: Forces body background to black on mobile bounce */}
+      {/* OVERFLOW FIX */}
       <style dangerouslySetInnerHTML={{__html: `
         html, body { background-color: #010102 !important; overscroll-behavior-y: none; overflow-x: hidden; }
       `}} />
@@ -314,12 +286,12 @@ export default function MobileView() {
           {[{y:"2024 - PRES", t:"Algonquin College", d:"Advanced Diploma in Computer Programming. Enterprise focus."},
             {y:"2021 - 2023", t:"Fraser International College", d:"Computer Science Pathway. Specialized algorithm design."}].map((item, idx) => (
             <div key={idx} className="relative pl-10"><div className={`absolute -left-[11px] top-2 w-5 h-5 rounded-full shadow-[0_0_15px_#00E5FF] ${idx === 0 ? 'bg-[#00E5FF]' : 'bg-purple-500'}`} />
-              <div className="bg-[#050507]/40 p-8 rounded-[3rem] border border-white/5 shadow-2xl"><span className="text-[10px] font-black text-gray-500 tracking-[0.3em]">{item.y}</span><h3 className="text-xl font-black text-white mt-4 tracking-tight">{item.t}</h3><p className="text-gray-400 text-sm mt-4 font-light leading-relaxed">{item.d}</p></div>
+              <div className="bg-[#0A0A15]/80 backdrop-blur-xl p-8 rounded-[3rem] border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.8)]"><span className="text-[10px] font-black text-gray-500 tracking-[0.3em]">{item.y}</span><h3 className="text-xl font-black text-white mt-4 tracking-tight">{item.t}</h3><p className="text-gray-400 text-sm mt-4 font-light leading-relaxed">{item.d}</p></div>
             </div>
           ))}
         </section>
 
-        {/* TECHNICAL ARSENAL (REACTIVE GRADIENT BARS) */}
+        {/* TECHNICAL ARSENAL */}
         <section id="skills" className="px-6 py-32 space-y-8">
           <h2 className="text-6xl font-black text-white mb-16 tracking-tighter uppercase text-center">Core Stacks.</h2>
           <CompCard title="Languages" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"}]} />
@@ -330,13 +302,20 @@ export default function MobileView() {
           <CompCard title="DevOps" icon="☁️" skills={[{n:"Git / GitHub",v:"95%"},{n:"AWS",v:"80%"},{n:"Docker",v:"75%"}]} />
         </section>
 
-        {/* SYSTEM BUILDS */}
+        {/* SYSTEM BUILDS (ALL 6 PROJECTS) */}
         <section id="builds" className="px-6 py-40 space-y-10">
           <h2 className="text-6xl font-black text-white mb-16 tracking-tighter uppercase text-right">System Builds.</h2>
-          {[ {title: "Microservices", d: "Scalable ecosystem using Node.js and Docker. Integrated Stripe API."},
-             {title: "Watchlist App", d: "Engineered a full-stack media tracking application using the MERN stack."}
-          ].map((p, i) => (
-          <div key={i} className="bg-[#050507]/40 p-10 rounded-[3rem] border border-white/5 shadow-2xl relative overflow-hidden"><div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#00E5FF]/20 m-6" /><h3 className="text-3xl font-black text-white mb-6 uppercase leading-tight tracking-tighter">{p.title}</h3><p className="text-gray-400 text-lg mb-8 leading-relaxed font-light">{p.d}</p></div>
+          {projectsData.map((p, i) => (
+          <div key={i} className="bg-[#0A0A15]/80 backdrop-blur-xl p-10 rounded-[3rem] border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col">
+            <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 m-6" style={{ borderColor: p.color }} />
+            <h3 className="text-3xl font-black text-white mb-6 uppercase leading-tight tracking-tighter">{p.title}</h3>
+            <p className="text-gray-400 text-lg mb-8 leading-relaxed font-light flex-grow">{p.desc}</p>
+            <div className="flex flex-wrap gap-2 mt-auto">
+              {p.tags.map((tag, tIdx) => (
+                <span key={tIdx} className="text-[9px] font-black border border-white/10 px-4 py-1.5 rounded-full uppercase text-gray-400">{tag}</span>
+              ))}
+            </div>
+          </div>
         ))}</section>
 
         {/* OFFLINE PROTOCOL */}
@@ -346,7 +325,11 @@ export default function MobileView() {
              {i:"🎮",t:"Logic",d:"Hardware tuning and competitive tactical shooters."},
              {i:"🌍",t:"Equilibrium",d:"Hiking and exploration of terrain to reset the digital buffer."}
           ].map((h,x)=>(
-            <motion.div key={x} initial={{scale:0.9, opacity: 0}} whileInView={{scale:1, opacity: 1}} transition={{duration: 0.6}} viewport={{once: true}} className="bg-[#050507]/40 p-12 rounded-[3.5rem] border border-white/5 shadow-2xl"><div className="text-7xl mb-10">{h.i}</div><h3 className="text-2xl font-black text-white uppercase tracking-widest">{h.t}</h3><p className="text-gray-500 text-lg mt-6 font-light leading-relaxed">{h.d}</p></motion.div>
+            <motion.div key={x} initial={{scale:0.9, opacity: 0}} whileInView={{scale:1, opacity: 1}} transition={{duration: 0.6}} viewport={{once: true}} className="bg-[#0A0A15]/80 backdrop-blur-xl p-12 rounded-[3.5rem] border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
+              <div className="text-7xl mb-10">{h.i}</div>
+              <h3 className="text-2xl font-black text-white uppercase tracking-widest">{h.t}</h3>
+              <p className="text-gray-400 text-lg mt-6 font-light leading-relaxed">{h.d}</p>
+            </motion.div>
           ))}</section>
 
         <ReactiveFooter />
