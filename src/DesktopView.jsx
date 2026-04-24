@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { ContactShadows, PerspectiveCamera, Environment } from '@react-three/drei';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import * as THREE from 'three';
 
 // --- CUSTOM HACKER LOADING PROTOCOL ---
@@ -39,14 +39,13 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (Cinematic Intro & Enhanced Visibility) ---
+// --- MECHANICAL SNAP CORE (Original Dark Colors + Visibility Fix) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
   const gridSize = 4;
   const count = gridSize ** 3;
   
-  // Assembled on Page 1, Disperses on scroll down
   const isActive = scrollY < 150;
 
   const cubeData = useMemo(() => {
@@ -56,7 +55,6 @@ function MechanicalCore({ scrollY }) {
       for (let y = 0; y < gridSize; y++) {
         for (let z = 0; z < gridSize; z++) {
           const targetPos = new THREE.Vector3(x - 1.5, y - 1.5, z - 1.5).multiplyScalar(1.05);
-          // Desktop requires wider dispersion
           const randomPos = new THREE.Vector3((Math.random() - 0.5) * 45, (Math.random() - 0.5) * 35, (Math.random() - 0.5) * 20);
           const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
           temp.push({ targetPos, randomPos, randomRot, index: i++ });
@@ -74,7 +72,6 @@ function MechanicalCore({ scrollY }) {
     const t = state.clock.getElapsedTime();
     groupRef.current.rotation.y += delta * (isActive ? 0.25 : 0.05);
     
-    // Scale up the cube when it's the centerpiece on load
     const targetScale = isActive ? 1.5 : 1;
     groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.08);
 
@@ -99,13 +96,13 @@ function MechanicalCore({ scrollY }) {
     <group ref={groupRef} position={[0, 0, 0]}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        {/* ENHANCED VISIBILITY: Faint cyan emissive glow when scattered */}
+        {/* Restored to your original dark colors, but added a faint neutral emissive glow so it doesn't vanish into the background */}
         <meshStandardMaterial 
-          color={isActive ? "#002222" : "#050A0F"} 
-          roughness={0.2} 
+          color={isActive ? "#002222" : "#020202"} 
+          roughness={0.1} 
           metalness={0.9} 
-          emissive={isActive ? "#001111" : "#00E5FF"}
-          emissiveIntensity={isActive ? 0.2 : 0.15}
+          emissive={isActive ? "#000000" : "#1a1a1a"}
+          emissiveIntensity={isActive ? 0 : 0.3}
         />
       </instancedMesh>
       {isActive && <pointLight intensity={30} color="#FF8C00" distance={20} />}
@@ -113,7 +110,7 @@ function MechanicalCore({ scrollY }) {
   );
 }
 
-// --- DESKTOP SLIDER BARS (Hover-Reactive) ---
+// --- DESKTOP SLIDER BARS (Hover Reactive) ---
 const CompCard = ({ title, icon, skills }) => {
   const [isHovered, setIsHovered] = useState(false);
   
@@ -141,7 +138,7 @@ const CompCard = ({ title, icon, skills }) => {
   );
 };
 
-// --- CRAZY TERMINAL FOOTER (Desktop Layout) ---
+// --- CRAZY TERMINAL FOOTER ---
 const ReactiveFooter = () => {
   const [logs, setLogs] = useState(["> Uplink Established", "> Syncing Ottawa_Node..."]);
   
@@ -164,7 +161,6 @@ const ReactiveFooter = () => {
 
   return (
     <footer id="connect" className="pt-60 pb-12 flex flex-col items-center justify-center relative overflow-hidden px-10">
-      {/* Background Binary Rain */}
       <div className="absolute inset-0 opacity-10 pointer-events-none select-none overflow-hidden flex flex-wrap gap-8 text-[10px] font-mono text-[#00E5FF] justify-center">
         {Array.from({length: 80}).map((_,i) => (
           <motion.div key={i} animate={{ y: [0, 150, 0], opacity: [0, 1, 0] }} transition={{ duration: Math.random() * 5 + 3, repeat: Infinity, delay: Math.random() * 5 }}>
@@ -173,7 +169,6 @@ const ReactiveFooter = () => {
         ))}
       </div>
 
-      {/* Terminal Container */}
       <div className="w-full max-w-6xl mx-auto bg-[#020203] border-2 border-[#00E5FF]/30 p-16 md:p-24 rounded-[4rem] shadow-[0_0_100px_rgba(0,229,255,0.08)] relative z-10 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#00E5FF]/5 to-transparent h-8 w-full animate-scanline pointer-events-none" />
         <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" />
@@ -205,7 +200,6 @@ const ReactiveFooter = () => {
         </div>
       </div>
 
-      {/* Split Copyright */}
       <div className="w-full max-w-6xl mx-auto flex justify-between items-center mt-16 px-4 text-[10px] font-black tracking-[0.4em] text-gray-600 uppercase z-20 relative">
         <span className="text-left">© 2026 SHIVANG AYAR</span>
         <span className="text-right">MADE WITH INTENT</span>
@@ -226,14 +220,14 @@ const NavLink = ({ href, children }) => (
   </a>
 );
 
-// --- DATA ---
+// --- SIMPLIFIED PROJECTS DATA ---
 const projectsData = [
-  { title: "E-Commerce Microservices", desc: "Scaleable backend utilizing Docker, Stripe API, and JWT auth.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
-  { title: "Movie Watchlist App", desc: "Full-stack media tracker via RESTful APIs and NoSQL architecture.", tags: ["MongoDB", "Express", "Node"], color: "#FF8C00" },
-  { title: "Real-Time Collab Workspace", desc: "Live-syncing environment using WebSockets for real-time editing.", tags: ["Socket.io", "Next.js", "Redis"], color: "#A855F7" },
-  { title: "Voice AI Chatbot", desc: "Emotion-aware chatbot integrating OpenAI and Voice APIs.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF" },
-  { title: "DevOps CI/CD Dashboard", desc: "Command center for GitHub Actions and AWS deployment metrics.", tags: ["AWS", "Python", "GitHub"], color: "#FF8C00" },
-  { title: "AI SaaS Image Generator", desc: "SaaS wrapping OpenAI featuring user credits and async generation.", tags: ["Tailwind", "React", "DALL-E"], color: "#FF8C00" }
+  { title: "E-Commerce Microservices", desc: "A scalable backend system for an online store, handling secure payments and managing user accounts smoothly.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
+  { title: "Movie Watchlist App", desc: "A full-stack web platform where users can search, add, and track their favorite movies using a custom database.", tags: ["MongoDB", "Express", "Node"], color: "#FF8C00" },
+  { title: "Real-Time Collab Workspace", desc: "A live document-editing platform where multiple users can type and collaborate at the exact same time.", tags: ["Socket.io", "Next.js", "Redis"], color: "#A855F7" },
+  { title: "Voice AI Chatbot", desc: "An intelligent chatbot you can speak to, built with AI to understand and respond naturally to human emotions.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF" },
+  { title: "DevOps CI/CD Dashboard", desc: "A control center that automatically tests and deploys code updates to live servers without breaking the site.", tags: ["AWS", "Python", "GitHub"], color: "#FF8C00" },
+  { title: "AI SaaS Image Generator", desc: "A subscription website where users can generate custom images using AI by spending purchased credits.", tags: ["Tailwind", "React", "DALL-E"], color: "#FF8C00" }
 ];
 
 export default function DesktopView() {
@@ -251,7 +245,6 @@ export default function DesktopView() {
       
       <style dangerouslySetInnerHTML={{__html: `
         html, body { background-color: #010102 !important; }
-        /* Custom Scrollbar for Desktop */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #010102; }
         ::-webkit-scrollbar-thumb { background: #00E5FF40; border-radius: 10px; }
@@ -288,8 +281,8 @@ export default function DesktopView() {
         </nav>
 
         {/* PAGE 1: CUBE ONLY (Centerpiece with Scroll Fade/Click) */}
-        <section className="h-[100vh] w-full flex flex-col items-center justify-end pb-16 z-20">
-          <div style={{ opacity: Math.max(0, 1 - scrollY / 200) }} className="transition-opacity duration-100">
+        <section className="h-[100vh] w-full flex flex-col items-center justify-end pb-16 z-20 pointer-events-none">
+          <div style={{ opacity: Math.max(0, 1 - scrollY / 200) }} className="transition-opacity duration-100 pointer-events-auto">
             <motion.button 
               onClick={() => document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' })}
               animate={{ y: [0, 10, 0], opacity: [0.4, 1, 0.4] }} 
@@ -329,7 +322,9 @@ export default function DesktopView() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-5">
               <h2 className="text-6xl font-black text-white mb-10 tracking-tighter uppercase">About <span className="text-[#00E5FF]">Me.</span></h2>
-              <p className="text-gray-400 mb-10 text-xl font-light leading-relaxed">Born and raised in Zambia, now operating in Ottawa. My approach to engineering is purely objective: Build, Optimize, and Master.</p>
+              <p className="text-gray-400 mb-10 text-xl font-light leading-relaxed">
+                Currently pursuing a degree in Computer Programming and translating the skills learned so far into practical, real-world applications. My approach to engineering is purely objective: Build, Optimize, and Master.
+              </p>
               <div className="grid grid-cols-2 gap-6">
                 <div className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-10 rounded-3xl text-center shadow-xl"><h3 className="text-5xl font-black text-white">3+</h3><p className="text-xs text-gray-500 uppercase tracking-widest mt-3 font-black">Years</p></div>
                 <div className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-10 rounded-3xl text-center shadow-xl"><h3 className="text-5xl font-black text-white">10+</h3><p className="text-xs text-gray-500 uppercase tracking-widest mt-3 font-black">Builds</p></div>
@@ -337,8 +332,9 @@ export default function DesktopView() {
             </motion.div>
             
             <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-7 space-y-12 border-l-2 border-[#00E5FF]/20 ml-4 relative">
-              {[ {i:"🎓", y:"2024 - Present", t:"Algonquin College", p:"Advanced Diploma in Computer Programming. Enterprise focus.", c:"#00E5FF"},
-                 {i:"💻", y:"2021 - 2023", t:"Fraser International College", p:"Computer Science Pathway. Specialized expertise in algorithm design.", c:"#A855F7"}
+              {[ 
+                {i:"🎓", y:"2024 - PRES", t:"Algonquin College", p:"Computer Programming and Analysis.", c:"#00E5FF"},
+                {i:"💻", y:"2021 - 2023", t:"Fraser International College", p:"Computer Science Pathway.", c:"#A855F7"}
               ].map((step, idx) => (
                 <div key={idx} className="relative pl-12 group">
                   <div className={`absolute -left-[18px] top-2 w-8 h-8 rounded-full bg-[#030305] border flex items-center justify-center transition-all duration-500 shadow-[0_0_15px_rgba(0,229,255,0.2)]`} style={{ borderColor: step.c }}>{step.i}</div>
@@ -378,7 +374,7 @@ export default function DesktopView() {
                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
                         <div className="absolute top-0 right-0 w-40 h-40 rounded-bl-full opacity-5 group-hover:opacity-20 transition-all duration-700" style={{ background: p.color }}></div>
-                        <h3 className="text-3xl font-bold text-white mb-6 leading-tight tracking-tighter uppercase relative z-10">{p.title}</h3>
+                        <h3 className="text-2xl font-bold text-white mb-6 leading-tight tracking-tighter uppercase relative z-10">{p.title}</h3>
                         <p className="text-gray-400 text-lg font-light leading-relaxed mb-auto relative z-10">{p.desc}</p>
                         <div className="flex flex-wrap gap-2 mt-8 relative z-10">
                             {p.tags.map((tag, tIdx) => (
