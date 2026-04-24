@@ -12,11 +12,11 @@ function CursorLight() {
     const y = (state.pointer.y * state.viewport.height) / 2;
     lightRef.current.position.lerp(new THREE.Vector3(x, y, 2), 0.1);
   });
-  return <pointLight ref={lightRef} intensity={12} color="#00E5FF" distance={25} />;
+  return <pointLight ref={lightRef} intensity={15} color="#00E5FF" distance={25} />;
 }
 
-// --- 3D INTERACTIVE TEXT ---
-function FloatingWord({ children, position, rotation, scale = 1, baseColor = "#12121A" }) {
+// --- 3D INTERACTIVE GLOW TEXT ---
+function FloatingWord({ children, position, rotation, scale = 1, color = "#00E5FF" }) {
   const textRef = useRef();
   useFrame((state) => {
     textRef.current.position.y += Math.sin(state.clock.elapsedTime * 0.4 + position[0]) * 0.003;
@@ -29,7 +29,13 @@ function FloatingWord({ children, position, rotation, scale = 1, baseColor = "#1
         letterSpacing={0.15}
       >
         {children}
-        <meshStandardMaterial color={baseColor} roughness={0.5} metalness={0.5} />
+        <meshStandardMaterial 
+          color={color} 
+          emissive={color} 
+          emissiveIntensity={0.6} 
+          toneMapped={false} 
+          roughness={0}
+        />
       </Text>
     </Float>
   );
@@ -46,8 +52,6 @@ function CentralReactiveShape() {
     wireframeRef.current.rotation.y -= delta * 0.08;
     meshRef.current.position.x = THREE.MathUtils.lerp(meshRef.current.position.x, state.pointer.x * 0.8, 0.05);
     meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, state.pointer.y * 0.8, 0.05);
-    wireframeRef.current.position.x = THREE.MathUtils.lerp(wireframeRef.current.position.x, state.pointer.x * 0.8, 0.05);
-    wireframeRef.current.position.y = THREE.MathUtils.lerp(wireframeRef.current.position.y, state.pointer.y * 0.8, 0.05);
   });
   return (
     <Float speed={1.5} rotationIntensity={0.3} floatIntensity={0.4}>
@@ -63,7 +67,15 @@ function CentralReactiveShape() {
   );
 }
 
-// --- SHARED COMPONENTS ---
+const projects = [
+  { title: "E-Commerce Microservices", desc: "Highly scalable backend utilizing Docker containers, integrating Stripe API and JWT auth.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
+  { title: "Movie Watchlist Web App", desc: "Full-stack application for tracking user media via RESTful APIs and NoSQL architecture.", tags: ["MongoDB", "Express", "Node"], color: "#FF3366" },
+  { title: "Real-Time Collab Workspace", desc: "Live-syncing environment using WebSockets for real-time document editing.", tags: ["Socket.io", "Next.js", "Redis"], color: "#A855F7" },
+  { title: "Voice AI Chatbot", desc: "Emotion-aware chatbot integrating OpenAI and Voice APIs with a high-performance backend.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF" },
+  { title: "DevOps CI/CD Dashboard", desc: "Centralized command center for GitHub Actions and AWS deployment metrics.", tags: ["AWS", "Python", "GitHub"], color: "#EAB308" },
+  { title: "AI SaaS Image Generator", desc: "SaaS wrapping OpenAI API featuring user credits and asynchronous generation.", tags: ["Tailwind", "React", "DALL-E"], color: "#FF3366" }
+];
+
 const NavLink = ({ href, children }) => (
   <a href={href} className="group relative py-2 text-[10px] font-bold tracking-[0.3em] text-gray-500 uppercase transition-colors hover:text-white">
     {children}
@@ -84,7 +96,15 @@ export default function App() {
   return (
     <div className="bg-[#030305] text-gray-200 antialiased selection:bg-[#00E5FF] selection:text-black font-sans scroll-smooth relative min-h-screen overflow-x-hidden">
       
-      {/* 3D REACTIVE BACKGROUND (Pinned) */}
+      {/* --- LAYER 0: HTML DOM SPOTLIGHT (RESTORED) --- */}
+      <div 
+        className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-300 hidden md:block"
+        style={{
+          background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.07), transparent 80%)`
+        }}
+      />
+
+      {/* --- LAYER 1: 3D BACKGROUND --- */}
       <div className="fixed inset-0 z-0 pointer-events-auto">
         <Canvas camera={{ position: [0, 0, 12], fov: 45 }} shadows>
           <color attach="background" args={['#030305']} />
@@ -94,16 +114,17 @@ export default function App() {
           <CursorLight />
           <Environment preset="night" />
           <CentralReactiveShape />
-          <FloatingWord position={[-7, 4, -5]} rotation={[0, 0.2, 0]} scale={1.4}>ARCHITECTURE</FloatingWord>
-          <FloatingWord position={[7, 5, -8]} rotation={[0, -0.3, 0]} scale={1.1}>ENGINEERING</FloatingWord>
-          <FloatingWord position={[0, -6, -10]} rotation={[-0.2, 0, 0]} scale={2.5}>SHIVANG</FloatingWord>
+          
+          {/* Enhanced Visibility Floating Words */}
+          <FloatingWord position={[-7, 4, -5]} rotation={[0, 0.2, 0]} scale={1.4} color="#11111a">ARCHITECTURE</FloatingWord>
+          <FloatingWord position={[7, 5, -8]} rotation={[0, -0.3, 0]} scale={1.1} color="#11111a">ENGINEERING</FloatingWord>
+          <FloatingWord position={[0, -6, -10]} rotation={[-0.2, 0, 0]} scale={2.5} color="#11111a">SHIVANG</FloatingWord>
+
           <ContactShadows position={[0, -5, 0]} opacity={0.8} scale={25} blur={2.5} far={5} color="#00E5FF" />
         </Canvas>
       </div>
 
-      {/* SCROLLABLE CONTENT */}
       <div className="relative z-30 w-full flex flex-col">
-        
         {/* NAVBAR */}
         <nav className="fixed top-0 w-full z-50 bg-[#030305]/40 backdrop-blur-xl border-b border-white/5 h-20 md:h-24 flex items-center justify-between px-6">
           <div className="text-xl md:text-2xl font-black tracking-tighter text-white cursor-pointer" onClick={() => window.scrollTo(0,0)}>
@@ -115,23 +136,8 @@ export default function App() {
             <NavLink href="#projects">Builds</NavLink>
             <NavLink href="#contact">Connect</NavLink>
           </div>
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-gray-300 p-2 focus:outline-none">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}/></svg>
-          </button>
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-gray-300 p-2"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}/></svg></button>
         </nav>
-
-        {/* MOBILE MENU */}
-        <AnimatePresence>
-          {isMobileMenuOpen && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="md:hidden fixed inset-0 z-[60] bg-[#030305]/95 backdrop-blur-3xl flex flex-col items-center justify-center gap-12">
-              <button onClick={() => setIsMobileMenuOpen(false)} className="absolute top-8 right-8 text-gray-400"><svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12"/></svg></button>
-              <a href="#about" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black tracking-widest text-white uppercase">Journey</a>
-              <a href="#skills" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black tracking-widest text-white uppercase">Competencies</a>
-              <a href="#projects" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black tracking-widest text-white uppercase">Builds</a>
-              <a href="#contact" onClick={() => setIsMobileMenuOpen(false)} className="text-2xl font-black tracking-widest text-white uppercase">Connect</a>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* HERO */}
         <section className="max-w-7xl mx-auto px-6 min-h-screen flex items-center pointer-events-none relative w-full pt-20">
@@ -139,31 +145,31 @@ export default function App() {
             <h1 className="text-6xl sm:text-7xl md:text-[8.5rem] font-black text-white mb-4 tracking-tighter leading-[0.9]">Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#FF3366]">Ayar.</span></h1>
             <p className="text-lg md:text-2xl text-gray-400 mt-6 mb-10 leading-relaxed font-light max-w-2xl">Full-Stack Architect specializing in high-performance digital systems and precision backends.</p>
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-              <a href="#projects" className="bg-[#00E5FF] text-black px-10 py-5 text-xs font-bold tracking-[0.3em] uppercase hover:bg-white transition-all duration-500">Execute builds</a>
+              <a href="#projects" className="bg-[#00E5FF] text-black px-10 py-5 text-xs font-bold tracking-[0.3em] uppercase hover:bg-white transition-all duration-500 shadow-[0_0_20px_rgba(0,229,255,0.3)]">Execute builds</a>
               <a href="/resume.pdf" target="_blank" className="bg-transparent border border-white/20 text-white px-10 py-5 text-xs font-bold tracking-[0.3em] uppercase hover:bg-white hover:text-black transition-all duration-500">Get Resume</a>
             </div>
           </motion.div>
         </section>
 
-        {/* ABOUT & JOURNEY ( Split Layout ) */}
+        {/* ABOUT & JOURNEY */}
         <section id="about" className="max-w-7xl mx-auto px-6 py-32 pointer-events-none w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 pointer-events-auto">
             <motion.div initial={{ opacity: 0, x: -40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="lg:col-span-5 flex flex-col justify-center">
               <h2 className="text-5xl font-black text-white mb-8 tracking-tighter">About <span className="text-[#00E5FF]">Me.</span></h2>
               <p className="text-gray-400 mb-6 text-lg leading-relaxed font-light">Born and raised in Zambia, I brought my drive across the globe to engineer high-performance software in Canada. Currently based in Ottawa, pushing boundaries.</p>
               <div className="flex gap-4">
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 w-1/2 rounded-2xl text-center shadow-xl"><h3 className="text-4xl font-black text-[#00E5FF]">3+</h3><p className="text-[10px] text-gray-500 uppercase tracking-widest mt-2">Years Coding</p></div>
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 w-1/2 rounded-2xl text-center shadow-xl"><h3 className="text-4xl font-black text-[#FF3366]">10+</h3><p className="text-[10px] text-gray-500 uppercase tracking-widest mt-2">System Builds</p></div>
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 w-1/2 rounded-2xl text-center shadow-xl"><h3 className="text-4xl font-black text-[#00E5FF]">3+</h3><p className="text-[10px] text-gray-500 uppercase tracking-widest mt-2 font-bold">Years Coding</p></div>
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 p-6 w-1/2 rounded-2xl text-center shadow-xl"><h3 className="text-4xl font-black text-[#FF3366]">10+</h3><p className="text-[10px] text-gray-500 uppercase tracking-widest mt-2 font-bold">System Builds</p></div>
               </div>
             </motion.div>
             
             <motion.div initial={{ opacity: 0, x: 40 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="lg:col-span-7 space-y-12 border-l-2 border-white/5 ml-4 relative">
-              {[ {i:"🎓", y:"2024 - Present", t:"Algonquin College | Ottawa", p:"Advanced Diploma in Computer Programming & Analysis. Systems focus.", c:"cyan"},
-                 {i:"💻", y:"2021 - 2023", t:"Fraser International College | BC", p:"Computer Science Pathway. Specializing in algorithm engineering.", c:"purple"}
+              {[ {i:"🎓", y:"2024 - Present", t:"Algonquin College | Ottawa", p:"Advanced Diploma in Computer Programming & Analysis. Systems focus."},
+                 {i:"💻", y:"2021 - 2023", t:"Fraser International College | BC", p:"Computer Science Pathway. Specializing in algorithm engineering."}
               ].map((step, idx) => (
                 <div key={idx} className="relative pl-10 group">
                   <div className={`absolute -left-[18px] top-2 w-8 h-8 rounded-full bg-[#030305] border flex items-center justify-center transition-all ${idx === 0 ? "border-[#00E5FF] shadow-[0_0_15px_rgba(0,229,255,0.5)]": "border-purple-500"}`}>{step.i}</div>
-                  <div className={`bg-white/5 backdrop-blur-xl border border-white/5 p-8 rounded-2xl transition-all shadow-2xl ${idx === 0 ? "hover:border-[#00E5FF]/30" : "hover:border-purple-500/30"}`}>
+                  <div className={`bg-white/5 backdrop-blur-xl border border-white/5 p-8 rounded-2xl hover:border-white/20 transition-all shadow-2xl`}>
                     <span className={`text-[10px] font-bold uppercase tracking-widest ${idx === 0 ? "text-cyan-400": "text-purple-400"}`}>{step.y}</span>
                     <h3 className="text-2xl font-bold text-white mt-2 tracking-tight">{step.t}</h3>
                     <p className="text-gray-400 text-sm mt-3 leading-relaxed">{step.p}</p>
@@ -174,10 +180,9 @@ export default function App() {
           </div>
         </section>
 
-        {/* CORE COMPETENCIES (6-Card Grid & Animations) */}
+        {/* CORE COMPETENCIES */}
         <section id="skills" className="max-w-7xl mx-auto px-6 py-20 pointer-events-none w-full relative">
-            <div className="absolute top-1/4 right-0 w-64 h-64 bg-[#FF3366]/10 rounded-full blur-[100px] -z-10"></div>
-            <h2 className="text-5xl md:text-6xl font-black text-white mb-12 tracking-tighter">Core <span className="text-[#00E5FF]">Competencies.</span></h2>
+            <h2 className="text-6xl font-black text-white mb-12 tracking-tighter">Core <span className="text-[#00E5FF]">Competencies.</span></h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pointer-events-auto">
                 {[ { t: "Programming", i: "💻", s: [{n: "Java", v: "90%"}, {n: "Python", v: "85%"}, {n: "JavaScript", v: "85%"}] },
                    { t: "Frontend Dev", i: "🖥️", s: [{n: "React.js", v: "90%"}, {n: "HTML/CSS", v: "95%"}, {n: "Tailwind", v: "85%"}] },
@@ -188,8 +193,7 @@ export default function App() {
                 ].map((card, idx) => (
                     <div key={idx} className="bg-[#0A0A12]/60 backdrop-blur-xl p-8 rounded-3xl border border-white/5 hover:border-[#00E5FF]/40 transition-all duration-500 shadow-2xl group flex flex-col">
                         <h3 className="text-xl font-bold text-white mb-8 tracking-tight uppercase tracking-widest flex items-center gap-3">
-                            <span className="text-2xl">{card.i}</span>
-                            {card.t}
+                            <span className="text-2xl">{card.i}</span> {card.t}
                         </h3>
                         <div className="space-y-6 mt-auto">
                             {card.s.map((skill, i) => (
@@ -206,53 +210,36 @@ export default function App() {
             </div>
         </section>
 
-        {/* PROJECTS SECTION (6 Total with Ultra-Reactivity) */}
+        {/* PROJECTS (FIXED TAGS & MAGNETIC GLARE) */}
         <section id="projects" className="max-w-7xl mx-auto px-6 py-20 pointer-events-none w-full relative">
-            <div className="absolute top-1/2 left-0 w-80 h-80 bg-purple-500/10 rounded-full blur-[120px] -z-10 mix-blend-screen pointer-events-none"></div>
             <h2 className="text-6xl font-black text-white mb-16 tracking-tighter">System <span className="text-[#A855F7]">Builds.</span></h2>
-            {/* Added perspective to grid for better tilt effect */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pointer-events-auto [perspective:1500px]">
-                {[ { t: "E-Commerce Microservices", d: "High-scale backend with Docker, Stripe API, and JWT authentication.", c: "#00E5FF" },
-                   { t: "Movie Watchlist App", d: "Full-stack media tracker via RESTful APIs and NoSQL architecture.", c: "#FF3366" },
-                   { t: "Real-Time Collab", d: "Live-syncing environment using WebSockets for document editing.", c: "#A855F7" },
-                   { t: "Voice AI Chatbot", d: "Emotion-aware chatbot integrating Voice APIs with high performance.", c: "#00E5FF" },
-                   { t: "DevOps Dashboard", d: "Centralized hub for GitHub Actions and AWS deployment metrics.", c: "#EAB308" },
-                   { t: "AI SaaS Generator", d: "SaaS wrapping OpenAI featuring user credits and image generation.", c: "#FF3366" }
-                ].map((p, i) => (
+                {projects.map((p, i) => (
                     <motion.div 
                         key={i} 
-                        className="bg-white/5 backdrop-blur-xl p-10 rounded-[2.5rem] border transition-all shadow-2xl relative overflow-hidden h-[340px] flex flex-col group"
-                        style={{ borderColor: `${p.c}10`, transformStyle: "preserve-3d" }}
-                        // ADVANCED REACTIVE TILT & GLOW
-                        whileHover={{ 
-                            y: -15,
-                            rotateX: -7,
-                            rotateY: 7,
-                            borderColor: `${p.c}40`,
-                            boxShadow: `0 25px 50px ${p.c}15, 0 0 30px ${p.c}05`,
-                        }}
+                        className="bg-[#0A0A12]/40 backdrop-blur-xl p-10 rounded-[2.5rem] border border-white/5 transition-all shadow-2xl relative overflow-hidden h-[360px] flex flex-col group"
+                        style={{ transformStyle: "preserve-3d" }}
+                        whileHover={{ y: -15, rotateX: -5, rotateY: 5, borderColor: `${p.color}40`, boxShadow: `0 25px 50px ${p.color}15` }}
                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
-                        {/* Hover Gradient Overlay */}
-                        <div className="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 -z-10" style={{ background: `radial-gradient(circle at top right, ${p.c}, transparent 70%)` }} />
-                        {/* Static Corner Accent (increased opacity on hover) */}
-                        <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-5 group-hover:opacity-20 transition-all duration-500" style={{ background: p.c }}></div>
+                        <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-5 group-hover:opacity-20 transition-all duration-500" style={{ background: p.color }}></div>
+                        <h3 className="text-2xl font-bold text-white mb-4 leading-tight [transform:translateZ(30px)] tracking-tight">{p.title}</h3>
+                        <p className="text-gray-400 text-sm font-light leading-relaxed mb-auto [transform:translateZ(10px)]">{p.desc}</p>
                         
-                        <h3 className="text-2xl font-bold text-white mb-4 leading-tight tracking-tight [transform:translateZ(30px)]">{p.t}</h3>
-                        <p className="text-gray-400 text-sm font-light leading-relaxed mb-auto [transform:translateZ(10px)]">{p.d}</p>
-                        
-                        <div className="flex gap-2 mt-auto [transform:translateZ(20px)] pt-6">
-                            <span className="text-[9px] font-black border px-3 py-1 rounded-full uppercase text-gray-500" style={{ borderColor: `${p.c}30`, color: p.c }}>Node.js</span>
-                            <span className="text-[9px] font-black border px-3 py-1 rounded-full uppercase text-gray-500" style={{ borderColor: `${p.c}30`, color: p.c }}>Systems</span>
+                        <div className="flex flex-wrap gap-2 mt-auto [transform:translateZ(20px)]">
+                            {p.tags.map((tag, tIdx) => (
+                                <span key={tIdx} className="text-[9px] font-black border border-white/10 px-3 py-1 rounded-full uppercase text-gray-500 group-hover:text-white transition-colors">
+                                    {tag}
+                                </span>
+                            ))}
                         </div>
                     </motion.div>
                 ))}
             </div>
         </section>
 
-        {/* OFFLINE PROTOCOL (3-Column) */}
-        <section className="max-w-7xl mx-auto px-6 py-32 flex flex-col items-center w-full relative">
-            <div className="absolute inset-x-0 bottom-0 h-96 bg-gradient-to-t from-[#00E5FF]/5 to-transparent -z-10 blur-[100px]"></div>
+        {/* OFFLINE PROTOCOL */}
+        <section className="max-w-7xl mx-auto px-6 py-32 flex flex-col items-center w-full">
             <h2 className="text-5xl font-black text-white mb-12 tracking-tighter text-center">Offline <span className="text-[#FF3366]">Protocol.</span></h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full pointer-events-auto">
               {[ {i:"🏋️‍♂️",t:"Iron & Discipline",d:"6-day splits focusing on heavy compound progression."},
@@ -268,20 +255,17 @@ export default function App() {
             </div>
         </section>
 
-        {/* CONTACT (Floating Card - No Opaque Background) */}
-        <section id="contact" className="w-full pt-20 pb-16 flex items-center justify-center relative z-30 min-h-[70vh]">
-          <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#030305] to-transparent pointer-events-none"></div>
-          <div className="max-w-4xl mx-auto px-6 pointer-events-auto flex flex-col items-center w-full relative z-10">
+        {/* TERMINAL CONTACT (FLOATING CARD - NO CUTOFF) */}
+        <section id="contact" className="w-full py-40 flex items-center justify-center relative z-30 min-h-[70vh]">
+          <div className="max-w-4xl mx-auto px-6 pointer-events-auto flex flex-col items-center w-full">
             <div className="bg-[#030305]/60 backdrop-blur-3xl border border-white/10 p-12 md:p-16 rounded-[3.5rem] shadow-[0_0_80px_rgba(0,0,0,0.8)] text-center relative overflow-hidden group w-full">
               <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-[#00E5FF] via-[#A855F7] to-[#FF3366]"></div>
               <h2 className="text-5xl font-black text-white mb-6 tracking-tighter">Terminal <span className="text-[#00E5FF]">Ready.</span></h2>
               <p className="text-gray-400 mb-12 text-xl font-light">Available for Internships. Initialize a secure ping via link.</p>
-              
               <div className="flex items-center justify-center gap-3 mb-14 bg-white/5 w-max mx-auto px-10 py-4 rounded-full border border-white/10">
                 <span className="relative flex h-3 w-3"><span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative h-3 w-3 rounded-full bg-green-500"></span></span>
                 <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-green-400">Available For New Projects</span>
               </div>
-
               <div className="flex flex-col sm:flex-row justify-center gap-6">
                 <a href="https://github.com" target="_blank" rel="noreferrer" className="flex items-center justify-center gap-3 bg-white/5 border border-white/10 px-10 py-5 rounded-2xl text-white font-bold transition-all duration-500 hover:bg-white hover:text-black hover:-translate-y-1">GitHub ↗</a>
                 <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="flex items-center justify-center gap-3 bg-white/5 border border-white/10 px-10 py-5 rounded-2xl text-white font-bold transition-all duration-500 hover:bg-[#00E5FF] hover:text-black hover:-translate-y-1">LinkedIn ↗</a>
