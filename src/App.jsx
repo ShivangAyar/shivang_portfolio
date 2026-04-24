@@ -1,10 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Text, Environment, ContactShadows } from '@react-three/drei';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- REACTIVE CURSOR LIGHT (3D) ---
 function CursorLight() {
   const lightRef = useRef();
   useFrame((state) => {
@@ -15,7 +14,6 @@ function CursorLight() {
   return <pointLight ref={lightRef} intensity={8} color="#00E5FF" distance={15} />;
 }
 
-// --- 3D INTERACTIVE TEXT ---
 function FloatingWord({ children, position, rotation, scale = 1, baseColor = "#1A1A24" }) {
   const textRef = useRef();
   useFrame((state) => {
@@ -35,13 +33,11 @@ function FloatingWord({ children, position, rotation, scale = 1, baseColor = "#1
   );
 }
 
-// --- CENTRAL REACTIVE GEOMETRY ---
 function CentralReactiveShape() {
   const meshRef = useRef();
   useFrame((state, delta) => {
     meshRef.current.rotation.x += delta * 0.1;
     meshRef.current.rotation.y += delta * 0.15;
-    
     meshRef.current.position.x = THREE.MathUtils.lerp(meshRef.current.position.x, state.pointer.x * 0.5, 0.05);
     meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, state.pointer.y * 0.5, 0.05);
   });
@@ -63,8 +59,8 @@ function CentralReactiveShape() {
 export default function App() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Track mouse for the HTML DOM Spotlight
   useEffect(() => {
     const handleMouseMove = (e) => {
       setMousePos({ x: e.clientX, y: e.clientY });
@@ -78,18 +74,18 @@ export default function App() {
     alert('Message transmitted securely.');
   };
 
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
   return (
     <div className="bg-[#05050A] text-gray-200 antialiased selection:bg-[#FF3366] selection:text-white font-sans scroll-smooth relative">
       
-      {/* --- LAYER 0: HTML DOM SPOTLIGHT --- */}
       <div 
-        className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-300"
+        className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-300 hidden md:block"
         style={{
           background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.06), transparent 80%)`
         }}
       />
 
-      {/* --- LAYER 1: HIGHLY REACTIVE 3D BACKGROUND --- */}
       <div className="fixed inset-0 z-0 pointer-events-auto">
         <Canvas camera={{ position: [0, 0, 10], fov: 50 }} shadows>
           <color attach="background" args={['#05050A']} />
@@ -111,33 +107,53 @@ export default function App() {
         </Canvas>
       </div>
 
-      {/* --- LAYER 2: HTML UI OVERLAY --- */}
       <div className="relative z-30 w-full">
-        
-        {/* Sleek Minimalist Navbar */}
         <nav className="fixed top-0 w-full z-50 bg-[#05050A]/70 backdrop-blur-xl border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xl font-bold tracking-widest text-white">
+            <div className="flex items-center gap-2 text-xl font-bold tracking-widest text-white cursor-pointer" onClick={() => window.scrollTo(0,0)}>
               <span className="text-[#FF3366]">SHIVANG<span className="text-[#00E5FF]">.</span></span>
             </div>
+            
             <div className="hidden md:flex gap-8 text-xs font-bold tracking-[0.2em] text-gray-500 uppercase">
               <a href="#about" className="hover:text-[#00E5FF] transition-colors">Journey</a>
               <a href="#skills" className="hover:text-[#FF3366] transition-colors">Competencies</a>
               <a href="#projects" className="hover:text-[#00E5FF] transition-colors">Builds</a>
               <a href="#contact" className="hover:text-[#FF3366] transition-colors">Connect</a>
             </div>
+
+            <div className="md:hidden flex items-center">
+              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-gray-300 hover:text-white focus:outline-none">
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  {isMobileMenuOpen ? (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
+              </button>
+            </div>
           </div>
+
+          <AnimatePresence>
+            {isMobileMenuOpen && (
+              <motion.div 
+                initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+                className="md:hidden absolute top-20 left-0 w-full bg-[#05050A]/95 backdrop-blur-xl border-b border-white/5 flex flex-col items-center py-8 gap-8"
+              >
+                <a href="#about" onClick={closeMobileMenu} className="text-sm font-bold tracking-[0.2em] text-gray-300 uppercase hover:text-[#00E5FF] transition-colors">Journey</a>
+                <a href="#skills" onClick={closeMobileMenu} className="text-sm font-bold tracking-[0.2em] text-gray-300 uppercase hover:text-[#FF3366] transition-colors">Competencies</a>
+                <a href="#projects" onClick={closeMobileMenu} className="text-sm font-bold tracking-[0.2em] text-gray-300 uppercase hover:text-[#00E5FF] transition-colors">Builds</a>
+                <a href="#contact" onClick={closeMobileMenu} className="text-sm font-bold tracking-[0.2em] text-gray-300 uppercase hover:text-[#FF3366] transition-colors">Connect</a>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </nav>
 
-        {/* HERO SECTION */}
         <section className="max-w-7xl mx-auto px-6 pt-40 pb-20 min-h-screen flex items-center pointer-events-none">
           <motion.div 
             initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
             className="flex flex-col items-start pointer-events-auto max-w-2xl"
           >
-            <div className="px-4 py-2 bg-[#00E5FF]/10 border border-[#00E5FF]/30 text-[#00E5FF] rounded-none text-xs font-bold tracking-[0.2em] mb-8 uppercase">
-              Available for Internships
-            </div>
             <h1 className="text-6xl md:text-8xl font-black text-white mb-2 tracking-tighter leading-none">
               Shivang <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#FF3366]">Ayar.</span>
@@ -151,54 +167,80 @@ export default function App() {
           </motion.div>
         </section>
 
-        {/* JOURNEY & OFFLINE PROTOCOL */}
         <section id="about" className="max-w-7xl mx-auto px-6 py-32 min-h-screen flex flex-col justify-center pointer-events-none">
-          <div className="pointer-events-auto">
+          <div className="pointer-events-auto grid grid-cols-1 lg:grid-cols-12 gap-16">
             
-            <div className="mb-20">
-              <h2 className="text-4xl font-black text-white mb-4 tracking-tighter">The <span className="text-[#FF3366]">Journey.</span></h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                <div className="bg-[#0A0A10]/80 p-8 border-l-2 border-[#00E5FF] backdrop-blur-md">
-                  <p className="text-xs text-[#00E5FF] font-bold tracking-widest uppercase mb-2">2024 - Present</p>
-                  <h3 className="text-2xl font-bold text-white mb-2">Algonquin College</h3>
-                  <p className="text-gray-400 font-light">Advanced Diploma in Computer Programming and Analysis. Mastering enterprise-level database systems, advanced Java, and business intelligence.</p>
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
+              className="lg:col-span-5 flex flex-col justify-center"
+            >
+              <h2 className="text-5xl font-black text-white mb-6 tracking-tighter">About <span className="text-[#00E5FF]">Me.</span></h2>
+              <p className="text-gray-400 mb-6 leading-relaxed font-light text-lg">
+                Born and raised in Zambia, I brought my drive across the globe to engineer high-performance software in Canada. Currently, I am based in Ottawa, pushing the boundaries of web architecture.
+              </p>
+              <p className="text-gray-400 mb-10 leading-relaxed font-light text-lg">
+                I approach code with the same rigid discipline I apply to my 6-day gym splits—focused entirely on heavy lifting, optimization, and constant progression. Whether I am building a MERN application, tuning my hardware, or hiking unfamiliar trails, the objective is always mastery.
+              </p>
+              <div className="flex gap-6">
+                <div className="bg-[#0A0A10]/80 border border-[#00E5FF]/20 p-6 w-1/2 flex flex-col items-center justify-center text-center hover:border-[#00E5FF]/60 transition-colors">
+                  <h3 className="text-4xl font-black text-[#00E5FF] mb-1">10+</h3>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">System Builds</p>
                 </div>
-                <div className="bg-[#0A0A10]/80 p-8 border-l-2 border-gray-800 backdrop-blur-md hover:border-[#FF3366] transition-colors">
-                  <p className="text-xs text-gray-500 font-bold tracking-widest uppercase mb-2">2021 - 2023</p>
-                  <h3 className="text-2xl font-bold text-white mb-2">Fraser International College (SFU)</h3>
-                  <p className="text-gray-400 font-light">Computer Science Pathway. Built a rigorous foundation in algorithms, systems analysis, and core software engineering principles.</p>
+                <div className="bg-[#0A0A10]/80 border border-[#FF3366]/20 p-6 w-1/2 flex flex-col items-center justify-center text-center hover:border-[#FF3366]/60 transition-colors">
+                  <h3 className="text-4xl font-black text-[#FF3366] mb-1">4.0</h3>
+                  <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">GPA</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            <div>
-              <h2 className="text-4xl font-black text-white mb-8 tracking-tighter">Offline <span className="text-[#00E5FF]">Protocol.</span></h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <motion.div 
+              initial={{ opacity: 0, x: 30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
+              className="lg:col-span-7"
+            >
+              <h2 className="text-4xl font-black text-white mb-10 tracking-tighter">My <span className="text-[#FF3366]">Journey.</span></h2>
+              <div className="border-l border-gray-800 ml-4 space-y-10">
                 
-                <div className="bg-[#0A0A10]/60 border border-white/5 p-8 hover:border-[#FF3366]/50 transition-all group">
-                  <div className="text-4xl mb-4 grayscale group-hover:grayscale-0 transition-all">🏋️‍♂️</div>
-                  <h3 className="text-xl font-bold text-white mb-2">Iron & Discipline</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">Dedicated to a heavy 6-day split. Focusing strictly on compound movements and dialing in a cutting phase to hit that 10-11% target.</p>
-                </div>
-                
-                <div className="bg-[#0A0A10]/60 border border-white/5 p-8 hover:border-[#00E5FF]/50 transition-all group">
-                  <div className="text-4xl mb-4 grayscale group-hover:grayscale-0 transition-all">💻</div>
-                  <h3 className="text-xl font-bold text-white mb-2">Gaming & Coding</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">Immersed in digital worlds and logic. Whether I am exploring immersive gaming mechanics or engineering personal side-projects late into the night.</p>
+                <div className="relative pl-8 group">
+                  <div className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-[#05050A] border-2 border-[#00E5FF] group-hover:bg-[#00E5FF] transition-colors shadow-[0_0_10px_rgba(0,229,255,0.5)]"></div>
+                  <div className="bg-[#0A0A10]/60 border border-white/5 p-6 hover:border-[#00E5FF]/30 transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-xl font-bold text-white">Computer Programming & Analysis</h3>
+                      <span className="text-xs text-[#00E5FF] font-bold tracking-widest uppercase bg-[#00E5FF]/10 px-3 py-1 rounded">2024 - Present</span>
+                    </div>
+                    <p className="text-[#00E5FF] font-medium text-sm mb-3">Algonquin College | Ottawa, ON</p>
+                    <p className="text-gray-400 font-light text-sm leading-relaxed">Specializing in full-stack architecture, advanced object-oriented design, and database systems engineering.</p>
+                  </div>
                 </div>
 
-                <div className="bg-[#0A0A10]/60 border border-white/5 p-8 hover:border-purple-500/50 transition-all group">
-                  <div className="text-4xl mb-4 grayscale group-hover:grayscale-0 transition-all">🌍</div>
-                  <h3 className="text-xl font-bold text-white mb-2">Hiking & Travelling</h3>
-                  <p className="text-sm text-gray-400 leading-relaxed">Always seeking new perspectives. Traveling to new destinations and hiking unfamiliar trails to maintain balance outside the terminal.</p>
+                <div className="relative pl-8 group">
+                  <div className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-[#05050A] border-2 border-gray-600 group-hover:border-[#FF3366] transition-colors"></div>
+                  <div className="bg-[#0A0A10]/60 border border-white/5 p-6 hover:border-[#FF3366]/30 transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-xl font-bold text-white">Computer Science Pathway</h3>
+                      <span className="text-xs text-gray-500 font-bold tracking-widest uppercase bg-white/5 px-3 py-1 rounded">2021 - 2023</span>
+                    </div>
+                    <p className="text-[#FF3366] font-medium text-sm mb-3">Fraser International College (SFU) | Vancouver, BC</p>
+                    <p className="text-gray-400 font-light text-sm leading-relaxed">Built a rigorous foundation in algorithms, computation theory, and core software engineering principles.</p>
+                  </div>
+                </div>
+
+                <div className="relative pl-8 group">
+                  <div className="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-[#05050A] border-2 border-gray-700 transition-colors"></div>
+                  <div className="bg-[#0A0A10]/60 border border-white/5 p-6 hover:border-gray-600/30 transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-xl font-bold text-gray-300">Operations Leadership</h3>
+                      <span className="text-xs text-gray-600 font-bold tracking-widest uppercase bg-white/5 px-3 py-1 rounded">2020 - 2021</span>
+                    </div>
+                    <p className="text-gray-500 font-medium text-sm mb-3">Industrial Linings Ltd. | Chingola, Zambia</p>
+                    <p className="text-gray-500 font-light text-sm leading-relaxed">Supervised teams and modernized inventory tracking databases prior to relocating for software engineering.</p>
+                  </div>
                 </div>
 
               </div>
-            </div>
+            </motion.div>
           </div>
         </section>
 
-        {/* KEY ACHIEVEMENTS & CORE COMPETENCIES */}
         <section id="skills" className="max-w-7xl mx-auto px-6 py-32 pointer-events-none">
           <div className="pointer-events-auto">
             
@@ -236,10 +278,8 @@ export default function App() {
 
             <h2 className="text-4xl font-black text-white mb-8 tracking-tighter">Core <span className="text-[#00E5FF]">Competencies.</span></h2>
             
-            {/* Animated Skill Bars */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               
-              {/* Frontend & Languages */}
               <div className="bg-[#0A0A10]/60 p-8 border border-white/5 hover:border-[#00E5FF]/50 transition-all shadow-xl group">
                 <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><span className="text-[#00E5FF] text-2xl">&lt;/&gt;</span> Languages & UI</h3>
                 <div className="space-y-5">
@@ -262,7 +302,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Backend & Architecture */}
               <div className="bg-[#0A0A10]/60 p-8 border border-white/5 hover:border-[#FF3366]/50 transition-all shadow-xl group">
                 <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><span className="text-[#FF3366] text-2xl">⚙️</span> Server & Architecture</h3>
                 <div className="space-y-5">
@@ -285,7 +324,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Tools & Cloud */}
               <div className="bg-[#0A0A10]/60 p-8 border border-white/5 hover:border-purple-500/50 transition-all shadow-xl group">
                 <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><span className="text-purple-400 text-2xl">☁️</span> Data & Cloud</h3>
                 <div className="space-y-5">
@@ -309,11 +347,9 @@ export default function App() {
               </div>
 
             </div>
-
           </div>
         </section>
 
-        {/* PROJECTS SECTION */}
         <section id="projects" className="max-w-7xl mx-auto px-6 py-32 min-h-screen flex flex-col justify-center pointer-events-none">
           <div className="pointer-events-auto">
             <h2 className="text-4xl font-black text-white mb-12 tracking-tighter">System <span className="text-[#FF3366]">Builds.</span></h2>
