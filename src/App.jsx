@@ -1,123 +1,135 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Float, Text, ContactShadows, Points, PointMaterial, Edges, PerspectiveCamera, MeshDistortMaterial } from '@react-three/drei';
+import { Float, Text, ContactShadows, Edges, PerspectiveCamera, MeshDistortMaterial } from '@react-three/drei';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- THE FUSION REACTOR (Assembling Logic) ---
-function FusionReactor({ isHovered }) {
+// --- THE MECHANICAL SNAP CORE ---
+function MechanicalCore({ isHovered }) {
+  const meshRef = useRef();
   const groupRef = useRef();
-  const shardCount = 50; 
-  
-  const shards = useMemo(() => {
-    const temp = [];
-    for (let i = 0; i < shardCount; i++) {
-      // Structure: Panels forming a technical sphere shell
-      const phi = Math.acos(-1 + (2 * i) / shardCount);
-      const theta = Math.sqrt(shardCount * Math.PI) * phi;
-      const targetPos = new THREE.Vector3().setFromSphericalCoords(3.2, phi, theta);
-      const targetRot = new THREE.Euler(phi, theta, 0);
+  const gridSize = 4; // 4x4x4 = 64 cubes
+  const count = gridSize ** 3;
 
-      // Chaos: Blown out into a wide field
-      const randomPos = new THREE.Vector3(
-        (Math.random() - 0.5) * 22,
-        (Math.random() - 0.5) * 22,
-        (Math.random() - 0.5) * 18
-      );
-      const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, 0);
-      
-      temp.push({ targetPos, targetRot, randomPos, randomRot, speed: 0.2 + Math.random() * 0.4 });
+  // Pre-calculate positions
+  const cubeData = useMemo(() => {
+    const temp = [];
+    let i = 0;
+    for (let x = 0; x < gridSize; x++) {
+      for (let y = 0; y < gridSize; y++) {
+        for (let z = 0; z < gridSize; z++) {
+          // Target Grid Position (Centered)
+          const targetPos = new THREE.Vector3(
+            x - (gridSize - 1) / 2,
+            y - (gridSize - 1) / 2,
+            z - (gridSize - 1) / 2
+          ).multiplyScalar(1.05); // Tiny gap for light leakage
+
+          // Chaotic Start Position
+          const randomPos = new THREE.Vector3(
+            (Math.random() - 0.5) * 20,
+            (Math.random() - 0.5) * 20,
+            (Math.random() - 0.5) * 15
+          );
+          
+          const randomRot = new THREE.Euler(
+            Math.random() * Math.PI,
+            Math.random() * Math.PI,
+            Math.random() * Math.PI
+          );
+
+          temp.push({ targetPos, randomPos, randomRot, index: i++ });
+        }
+      }
     }
     return temp;
   }, []);
 
-  const shardRefs = useRef([]);
-  const wordRefs = useRef([]);
+  const dummy = new THREE.Object3D();
+  const currentPositions = useMemo(() => cubeData.map(d => d.randomPos.clone()), [cubeData]);
+  const currentRotations = useMemo(() => cubeData.map(d => new THREE.Quaternion().setFromEuler(d.randomRot)), [cubeData]);
 
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
-    groupRef.current.rotation.y += delta * (isHovered ? 0.3 : 0.05);
+    groupRef.current.rotation.y += delta * (isHovered ? 0.5 : 0.1);
+    groupRef.current.rotation.z += delta * (isHovered ? 0.2 : 0.05);
 
-    shardRefs.current.forEach((mesh, i) => {
-      if (!mesh) return;
-      const s = shards[i];
-      const destPos = isHovered ? s.targetPos : s.randomPos;
-      const destRot = isHovered ? s.targetRot : s.randomRot;
+    cubeData.forEach((data, i) => {
+      const targetP = isHovered ? data.targetPos : data.randomPos;
+      const targetR = isHovered ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
 
-      mesh.position.lerp(destPos, 0.05);
-      mesh.quaternion.slerp(new THREE.Quaternion().setFromEuler(destRot), 0.05);
-      
+      // Smooth mechanical snapping animation
+      currentPositions[i].lerp(targetP, isHovered ? 0.12 : 0.03);
+      currentRotations[i].slerp(targetR, isHovered ? 0.12 : 0.03);
+
+      dummy.position.copy(currentPositions[i]);
       if (!isHovered) {
-        mesh.position.y += Math.sin(t * s.speed) * 0.004;
+        // Add subtle drifting in idle mode
+        dummy.position.y += Math.sin(t + i) * 0.01;
       }
+      dummy.quaternion.copy(currentRotations[i]);
+      dummy.updateMatrix();
+      meshRef.current.setMatrixAt(i, dummy.matrix);
     });
-
-    // Words reaction logic
-    wordRefs.current.forEach((word, i) => {
-        if (!word) return;
-        const targetPos = isHovered ? word.userData.lockPos : word.userData.idlePos;
-        word.position.lerp(targetPos, 0.05);
-        word.lookAt(state.camera.position);
-    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
   });
 
   return (
     <group ref={groupRef}>
-      {shards.map((_, i) => (
-        <mesh key={i} ref={(el) => (shardRefs.current[i] = el)}>
-          <planeGeometry args={[0.6, 0.4]} />
-          <meshStandardMaterial 
-            color={isHovered ? "#00E5FF" : "#11111a"} 
-            emissive={isHovered ? "#00E5FF" : "#FF8C00"}
-            emissiveIntensity={isHovered ? 3 : 0.2}
-            transparent 
-            opacity={isHovered ? 0.8 : 0.3}
-            side={THREE.DoubleSide}
-          />
-          <Edges color={isHovered ? "#fff" : "#00E5FF"} opacity={0.5} />
-        </mesh>
-      ))}
+      <instancedMesh ref={meshRef} args={[null, null, count]}>
+        <boxGeometry args={[0.9, 0.9, 0.9]} />
+        <meshStandardMaterial 
+          color={isHovered ? "#050505" : "#11111a"} 
+          roughness={0.1} 
+          metalness={0.8}
+        />
+      </instancedMesh>
 
-      {/* REACTIVE HUD WORDS */}
-      <AssemblableText ref={(el) => (wordRefs.current[0] = el)} text="SHIVANG" lockPos={[0, 4.5, 0]} idlePos={[-8, 6, -5]} isHovered={isHovered} />
-      <AssemblableText ref={(el) => (wordRefs.current[1] = el)} text="ARCHITECTURE" lockPos={[4.5, 0, 0]} idlePos={[10, -5, -5]} isHovered={isHovered} />
-      <AssemblableText ref={(el) => (wordRefs.current[2] = el)} text="MERN STACK" lockPos={[-4.5, 0, 0]} idlePos={[-10, -8, -5]} isHovered={isHovered} />
-      <AssemblableText ref={(el) => (wordRefs.current[3] = el)} text="FULL-STACK" lockPos={[0, -4.5, 0]} idlePos={[8, 4, -5]} isHovered={isHovered} />
-
-      {/* The Central Energy Core */}
-      <mesh scale={isHovered ? 1.8 : 0.4}>
-        <sphereGeometry args={[1, 32, 32]} />
-        <MeshDistortMaterial 
+      {/* Internal "Reactor" Light - leaks through the gaps of the cubes */}
+      <mesh scale={isHovered ? 3.5 : 0.1}>
+        <sphereGeometry args={[1, 16, 16]} />
+        <meshStandardMaterial 
           color="#FF8C00" 
           emissive="#FF8C00" 
-          emissiveIntensity={isHovered ? 8 : 1} 
-          distort={isHovered ? 0.4 : 0.2} 
-          speed={3}
+          emissiveIntensity={isHovered ? 15 : 0} 
+          transparent 
+          opacity={isHovered ? 0.4 : 0}
         />
       </mesh>
+
+      {/* Floating HUD Labels */}
+      <HudLabel position={[0, 5, 0]} text="ARCHITECTURE" isVisible={isHovered} />
+      <HudLabel position={[5, 0, 0]} text="MERN STACK" isVisible={isHovered} />
+      <HudLabel position={[-5, 0, 0]} text="FULL-STACK" isVisible={isHovered} />
     </group>
   );
 }
 
-const AssemblableText = React.forwardRef(({ text, lockPos, idlePos, isHovered }, ref) => {
-    return (
-        <Text
-            ref={ref}
-            userData={{ lockPos: new THREE.Vector3(...lockPos), idlePos: new THREE.Vector3(...idlePos) }}
-            font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf"
-            fontSize={isHovered ? 0.5 : 1.2}
-            color="white"
-            emissive="white"
-            emissiveIntensity={isHovered ? 2 : 0.1}
-            transparent
-            opacity={isHovered ? 1 : 0.2}
-        >
-            {text}
-        </Text>
-    );
-});
+function HudLabel({ position, text, isVisible }) {
+  const ref = useRef();
+  useFrame((state) => {
+    if (ref.current) {
+        ref.current.lookAt(state.camera.position);
+    }
+  });
+  return (
+    <Text
+      ref={ref}
+      position={position}
+      fontSize={0.5}
+      font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf"
+      color="#00E5FF"
+      emissive="#00E5FF"
+      emissiveIntensity={isVisible ? 2 : 0}
+      transparent
+      opacity={isVisible ? 1 : 0}
+    >
+      {text}
+    </Text>
+  );
+}
 
-// --- DATA ---
+// --- FULL COMPONENT LOGIC (Restoring all Sections) ---
 const projects = [
   { title: "E-Commerce Microservices", desc: "Scaleable backend utilizing Docker, Stripe API, and JWT auth.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
   { title: "Movie Watchlist App", desc: "Full-stack media tracker via RESTful APIs and NoSQL architecture.", tags: ["MongoDB", "Express", "Node"], color: "#FF8C00" },
@@ -150,7 +162,7 @@ export default function App() {
       
       {/* 2D LIGHT TRACKER */}
       <div className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-300 hidden md:block"
-        style={{ background: `radial-gradient(800px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.05), transparent 85%)` }} />
+        style={{ background: `radial-gradient(700px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.06), transparent 85%)` }} />
 
       {/* 3D SCENE */}
       <div className="fixed inset-0 z-0 pointer-events-auto">
@@ -158,8 +170,8 @@ export default function App() {
           <PerspectiveCamera makeDefault position={[0, 0, 18]} fov={40} />
           <color attach="background" args={['#010102']} />
           <ambientLight intensity={0.4} />
-          <pointLight position={[mousePos.x / 100, -mousePos.y / 100, 10]} intensity={1.5} color="#00E5FF" />
-          <FusionReactor isHovered={isHovered} />
+          <pointLight position={[mousePos.x / 100, -mousePos.y / 100, 10]} intensity={2} color="#00E5FF" />
+          <MechanicalCore isHovered={isHovered} />
           <ContactShadows position={[0, -10, 0]} opacity={0.4} scale={40} blur={2} far={20} color="#00E5FF" />
         </Canvas>
       </div>
@@ -176,7 +188,9 @@ export default function App() {
             <NavLink href="#projects">Builds</NavLink>
             <NavLink href="#contact">Connect</NavLink>
           </div>
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-gray-300 p-2"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}/></svg></button>
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-gray-300 p-2 focus:outline-none">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}/></svg>
+          </button>
         </nav>
 
         {/* HERO */}
@@ -186,17 +200,17 @@ export default function App() {
           onMouseLeave={() => setIsHovered(false)}
         >
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }} className="flex flex-col items-start max-w-4xl z-40">
-            <div className="mb-8 px-4 py-1.5 border border-[#00E5FF]/20 bg-[#00E5FF]/5 text-[#00E5FF] text-[10px] font-black tracking-[0.5em] uppercase">Architecture & Systems</div>
+            <div className="mb-8 px-4 py-1.5 border border-[#00E5FF]/20 bg-[#00E5FF]/5 text-[#00E5FF] text-[10px] font-black tracking-[0.5em] uppercase">Architecture & Logic</div>
             <h1 className="text-6xl sm:text-8xl md:text-[9rem] font-black text-white mb-6 tracking-tighter leading-[0.9]">Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Ayar.</span></h1>
             <p className="text-lg md:text-2xl text-gray-400 mt-6 mb-12 font-light max-w-2xl border-l border-white/10 pl-8 leading-relaxed">Designing high-performance full-stack architectures and resilient digital systems.</p>
             <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto">
-              <a href="#projects" className="bg-white text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-[#00E5FF] hover:text-white transition-all duration-500 shadow-xl">Execute Builds</a>
+              <a href="#projects" className="bg-white text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-[#00E5FF] hover:text-white transition-all duration-500">Execute Builds</a>
               <a href="/resume.pdf" target="_blank" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all duration-500">Resume ↓</a>
             </div>
           </motion.div>
         </section>
 
-        {/* ABOUT & JOURNEY (RESTORED SPLIT LAYOUT) */}
+        {/* ABOUT SECTION (Restored) */}
         <section id="about" className="max-w-7xl mx-auto px-6 py-40 w-full relative">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-5">
@@ -209,8 +223,8 @@ export default function App() {
             </motion.div>
             
             <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-7 space-y-12 border-l-2 border-[#00E5FF]/20 ml-4 relative">
-              {[ {i:"🎓", y:"2024 - Present", t:"Algonquin College", p:"Advanced Diploma in Computer Programming. Systems focus.", c:"#00E5FF"},
-                 {i:"💻", y:"2021 - 2023", t:"Fraser International College", p:"Computer Science Pathway. Algorithmic foundations.", c:"#A855F7"}
+              {[ {i:"🎓", y:"2024 - Present", t:"Algonquin College", p:"Advanced Diploma in Computer Programming. Enterprise focus.", c:"#00E5FF"},
+                 {i:"💻", y:"2021 - 2023", t:"Fraser International College", p:"Computer Science Pathway. specialized expertise in algorithm design.", c:"#A855F7"}
               ].map((step, idx) => (
                 <div key={idx} className="relative pl-12 group">
                   <div className={`absolute -left-[18px] top-2 w-8 h-8 rounded-full bg-[#030305] border flex items-center justify-center transition-all duration-500 shadow-[0_0_15px_rgba(0,229,255,0.2)]`} style={{ borderColor: step.c }}>{step.i}</div>
@@ -225,7 +239,7 @@ export default function App() {
           </div>
         </section>
 
-        {/* CORE COMPETENCIES (RESTORED 6-CARD GRID) */}
+        {/* SKILLS (Restored) */}
         <section id="skills" className="max-w-7xl mx-auto px-6 py-20 w-full">
             <h2 className="text-6xl md:text-7xl font-black text-white mb-16 tracking-tighter">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -255,7 +269,7 @@ export default function App() {
             </div>
         </section>
 
-        {/* PROJECTS (RESTORED 6 PROJECTS + HOVER) */}
+        {/* PROJECTS (Restored) */}
         <section id="projects" className="max-w-7xl mx-auto px-6 py-40">
             <h2 className="text-7xl font-black text-white mb-20 tracking-tighter text-right">System <span className="text-[#FF8C00]">Builds.</span></h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 [perspective:2000px]">
@@ -283,12 +297,8 @@ export default function App() {
         <footer id="contact" className="w-full py-60 flex items-center justify-center relative z-30">
           <div className="max-w-5xl mx-auto px-6 flex flex-col items-center w-full">
             <div className="bg-[#010102]/80 backdrop-blur-3xl border border-white/10 p-16 md:p-24 rounded-[4rem] shadow-[0_0_100px_rgba(0,0,0,1)] text-center relative overflow-hidden group w-full">
-              <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" />
+              <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00] shadow-[0_0_20px_#00E5FF]" />
               <h2 className="text-6xl md:text-8xl font-black text-white mb-10 tracking-tighter leading-tight">Terminal <br/><span className="text-[#00E5FF]">Ready.</span></h2>
-              <div className="flex items-center justify-center gap-4 mb-20 bg-white/5 w-max mx-auto px-12 py-5 rounded-full border border-white/10">
-                <span className="relative flex h-4 w-4"><span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative h-4 w-4 rounded-full bg-green-500 shadow-[0_0_15px_#4ade80]"></span></span>
-                <span className="text-[10px] font-black tracking-[0.5em] uppercase text-green-400">Secure Transmission Line</span>
-              </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <a href="https://github.com" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all duration-500 hover:-translate-y-2">GitHub</a>
                 <a href="https://linkedin.com" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all duration-500 hover:-translate-y-2">LinkedIn</a>
