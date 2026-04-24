@@ -5,13 +5,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 
 // --- THE MECHANICAL SNAP CORE ---
-function MechanicalCore({ isHovered }) {
+function MechanicalCore({ isActive }) {
   const meshRef = useRef();
   const groupRef = useRef();
-  const gridSize = 4; // 4x4x4 = 64 high-poly cubes
+  const gridSize = 4; // 4x4x4 = 64 cubes
   const count = gridSize ** 3;
+  const { viewport } = useThree();
+  const isMobile = viewport.width < 6;
 
-  // Pre-calculate positions for the snap effect
+  // Pre-calculate positions
   const cubeData = useMemo(() => {
     const temp = [];
     let i = 0;
@@ -25,9 +27,9 @@ function MechanicalCore({ isHovered }) {
           ).multiplyScalar(1.05);
 
           const randomPos = new THREE.Vector3(
-            (Math.random() - 0.5) * 30,
-            (Math.random() - 0.5) * 30,
-            (Math.random() - 0.5) * 25
+            (Math.random() - 0.5) * (isMobile ? 15 : 35),
+            (Math.random() - 0.5) * (isMobile ? 15 : 35),
+            (Math.random() - 0.5) * 20
           );
           
           const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
@@ -36,131 +38,107 @@ function MechanicalCore({ isHovered }) {
       }
     }
     return temp;
-  }, []);
-
-  // NEW: Pre-calculate word drift fields
-  const textMotionData = useMemo(() => {
-    const names = ["SHIVANG", "ARCHITECTURE", "MERN STACK", "FULL-STACK"];
-    return names.map((name, i) => {
-      // Final structured orbit positions around the core (Large Orbit)
-      const phi = Math.PI / 2; // Fixed on the equator
-      const theta = (i / names.length) * (Math.PI * 2); // Spread around
-      const structuredPos = new THREE.Vector3().setFromSphericalCoords(9, phi, theta);
-
-      // Chaotic page-wide positions (Idle drift field)
-      const scatteredPos = new THREE.Vector3(
-        (Math.random() - 0.5) * 50, // Massive spread for 'page drift'
-        (Math.random() - 0.5) * 35,
-        (Math.random() - 0.5) * 25
-      );
-      
-      const structuredRot = new THREE.Euler(0, 0, 0); // HUD Facing camera
-      const scatteredRot = new THREE.Euler(
-        (Math.random() - 0.5) * Math.PI / 2,
-        (Math.random() - 0.5) * Math.PI,
-        0
-      );
-
-      return { name, structuredPos, scatteredPos, structuredRot, scatteredRot, speed: 0.1 + Math.random() * 0.2 };
-    });
-  }, []);
+  }, [isMobile]);
 
   const dummy = new THREE.Object3D();
   const currentPositions = useMemo(() => cubeData.map(d => d.randomPos.clone()), [cubeData]);
   const currentRotations = useMemo(() => cubeData.map(d => new THREE.Quaternion().setFromEuler(d.randomRot)), [cubeData]);
-  
-  const wordRefs = useRef([]);
-  const currentTextPositions = useMemo(() => textMotionData.map(d => d.scatteredPos.clone()), [textMotionData]);
-  const currentTextRotations = useMemo(() => textMotionData.map(d => new THREE.Quaternion().setFromEuler(d.scatteredRot)), [textMotionData]);
+
+  // Words Data with unique phases for natural floating
+  const words = useMemo(() => [
+    { text: "SHIVANG", phase: Math.random() * 10, offset: [0, 4, 0] },
+    { text: "ARCHITECTURE", phase: Math.random() * 10, offset: [5, 2, 2] },
+    { text: "MERN STACK", phase: Math.random() * 10, offset: [-5, -2, 2] },
+    { text: "FULL-STACK", phase: Math.random() * 10, offset: [2, -4, -2] },
+    { text: "SYSTEMS", phase: Math.random() * 10, offset: [-3, 3, -4] }
+  ], []);
 
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
-    groupRef.current.rotation.y += delta * (isHovered ? 0.3 : 0.05);
+    groupRef.current.rotation.y += delta * (isActive ? 0.25 : 0.05);
     
     cubeData.forEach((data, i) => {
-      const targetP = isHovered ? data.targetPos : data.randomPos;
-      const targetR = isHovered ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
+      const targetP = isActive ? data.targetPos : data.randomPos;
+      const targetR = isActive ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
 
-      currentPositions[i].lerp(targetP, isHovered ? 0.1 : 0.02);
-      currentRotations[i].slerp(targetR, isHovered ? 0.1 : 0.02);
+      currentPositions[i].lerp(targetP, isActive ? 0.08 : 0.015);
+      currentRotations[i].slerp(targetR, isActive ? 0.08 : 0.01);
 
       dummy.position.copy(currentPositions[i]);
+      // Natural idle drift
+      if (!isActive) {
+        dummy.position.y += Math.sin(t + i) * 0.005;
+        dummy.position.x += Math.cos(t * 0.5 + i) * 0.005;
+      }
       dummy.quaternion.copy(currentRotations[i]);
-      const s = isHovered ? 1.0 : 0.7;
-      dummy.scale.set(s, s, s);
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
     });
     meshRef.current.instanceMatrix.needsUpdate = true;
-
-    // Text Drift & Reaction Logic
-    textMotionData.forEach((data, i) => {
-        if (!wordRefs.current[i]) return;
-        const targetP = isHovered ? data.structuredPos : data.scatteredPos;
-        const targetR = isHovered ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.scatteredRot);
-
-        // Smooth drift lerping
-        currentTextPositions[i].lerp(targetP, isHovered ? 0.08 : 0.02);
-        currentTextRotations[i].slerp(targetR, isHovered ? 0.08 : 0.01);
-
-        wordRefs.current[i].position.copy(currentTextPositions[i]);
-        // Face camera on hover, chaotic rotate in idle
-        if (isHovered) {
-            wordRefs.current[i].lookAt(state.camera.position);
-        } else {
-            wordRefs.current[i].quaternion.copy(currentTextRotations[i]);
-        }
-        
-        // Add subtle drifting effect always
-        wordRefs.current[i].position.y += Math.sin(t * data.speed) * 0.005;
-        wordRefs.current[i].position.x += Math.cos(t * data.speed) * 0.005;
-    });
   });
 
   return (
-    <group ref={groupRef} position={[2, 0, 0]}>
+    <group ref={groupRef} position={[isMobile ? 0 : 2.5, 0, 0]}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        {/* NEW: Material updated for visibility (Dark Cyan Metal) and matches the theme */}
-        <meshStandardMaterial color={isHovered ? "#002222" : "#020202"} roughness={0.1} metalness={0.9} />
+        <meshStandardMaterial color={isActive ? "#002222" : "#020202"} roughness={0.1} metalness={0.9} />
       </instancedMesh>
 
-      {/* Point Light for Internal Glow (leak between seams) */}
-      {isHovered && <pointLight intensity={15} color="#FF8C00" distance={8} />}
+      {isActive && <pointLight intensity={20} color="#FF8C00" distance={10} />}
 
-      {/* DYNAMIC HUW DRIFT WORDS */}
-      {textMotionData.map((data, i) => (
-        <HUDText key={i} ref={(el) => (wordRefs.current[i] = el)} text={data.name} isVisible={isHovered} size={data.name === "SHIVANG" ? 0.7 : 0.5} />
+      {words.map((w, i) => (
+        <FloatingHUDText key={i} text={w.text} isActive={isActive} offset={w.offset} phase={w.phase} />
       ))}
     </group>
   );
 }
 
-const HUDText = React.forwardRef(({ text, isVisible, size = 0.5 }, ref) => {
-    return (
-        <Text
-            ref={ref}
-            fontSize={size}
-            font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf"
-            color="white"
-            emissive={isVisible ? "#00E5FF" : "#11111a"}
-            emissiveIntensity={isVisible ? 3 : 0.5}
-            transparent
-            opacity={isVisible ? 0.9 : 0.3}
-        >
-            {text}
-        </Text>
-    );
-});
+function FloatingHUDText({ text, isActive, offset, phase }) {
+  const ref = useRef();
+  const { viewport } = useThree();
+  const isMobile = viewport.width < 6;
 
-// --- DATA ---
+  useFrame((state) => {
+    const t = state.clock.getElapsedTime();
+    if (ref.current) {
+      // Natural Float Logic (Perlin-like Sine drift)
+      const driftX = Math.sin(t * 0.4 + phase) * (isActive ? 1.5 : 8);
+      const driftY = Math.cos(t * 0.3 + phase) * (isActive ? 1.5 : 8);
+      const driftZ = Math.sin(t * 0.2 + phase) * (isActive ? 1 : 5);
+
+      const targetX = isActive ? offset[0] + driftX : driftX * 2;
+      const targetY = isActive ? offset[1] + driftY : driftY * 2;
+      const targetZ = isActive ? offset[2] + driftZ : driftZ;
+
+      ref.current.position.lerp(new THREE.Vector3(targetX, targetY, targetZ), 0.03);
+      ref.current.lookAt(state.camera.position);
+    }
+  });
+
+  return (
+    <Text
+      ref={ref}
+      fontSize={isMobile ? 0.4 : 0.6}
+      font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf"
+      color="#00E5FF"
+      emissive="#00E5FF"
+      emissiveIntensity={isActive ? 4 : 0.2}
+      transparent
+      opacity={isActive ? 0.9 : 0.25}
+    >
+      {text}
+    </Text>
+  );
+}
+
+// --- APP SECTIONS DATA ---
 const projects = [
-  { title: "E-Commerce Microservices", desc: "Highly scalable backend utilizing Docker containers, integrating Stripe API and JWT auth.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
-  { title: "Movie Watchlist Web App", desc: "Full-stack application for tracking user media via RESTful APIs and NoSQL.", tags: ["MongoDB", "Express", "Node"], color: "#FF8C00" },
-  { title: "Real-Time Collab Workspace", desc: "Live-syncing environment using WebSockets for real-time document editing.", tags: ["Socket.io", "Next.js", "Redis"], color: "#A855F7" },
+  { title: "E-Commerce Microservices", desc: "Scaleable backend utilizing Docker, Stripe API, and JWT auth.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
+  { title: "Movie Watchlist App", desc: "Full-stack media tracker via RESTful APIs and NoSQL architecture.", tags: ["MongoDB", "Express", "Node"], color: "#FF8C00" },
+  { title: "Real-Time Collab Workspace", desc: "Live-syncing environment using WebSockets for real-time editing.", tags: ["Socket.io", "Next.js", "Redis"], color: "#A855F7" },
   { title: "Voice AI Chatbot", desc: "Emotion-aware chatbot integrating OpenAI and Voice APIs.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF" },
-  { title: "DevOps CI/CD Dashboard", desc: "Centralized command center for GitHub Actions and AWS deployment metrics.", tags: ["AWS", "Python", "GitHub"], color: "#FF8C00" },
-  { title: "AI SaaS Image Generator", desc: "SaaS wrapping OpenAI API featuring user credits and asynchronous generation.", tags: ["Tailwind", "React", "DALL-E"], color: "#FF8C00" }
+  { title: "DevOps CI/CD Dashboard", desc: "Command center for GitHub Actions and AWS deployment metrics.", tags: ["AWS", "Python", "GitHub"], color: "#FF8C00" },
+  { title: "AI SaaS Image Generator", desc: "SaaS wrapping OpenAI featuring user credits and async generation.", tags: ["Tailwind", "React", "DALL-E"], color: "#FF8C00" }
 ];
 
 const NavLink = ({ href, children }) => (
@@ -173,31 +151,44 @@ const NavLink = ({ href, children }) => (
 export default function App() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
     const handleMouseMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
   }, []);
+
+  // For Mobile: Active if hero is visible. For Desktop: Active on Hover.
+  const activeState = isMobile ? true : isHovered;
 
   return (
     <div className="bg-[#010102] text-gray-200 antialiased selection:bg-[#00E5FF] selection:text-black font-sans scroll-smooth relative min-h-screen overflow-x-hidden">
       
       {/* 2D LIGHT TRACKER */}
-      <div className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-300 hidden md:block"
-        style={{ background: `radial-gradient(800px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.04), transparent 85%)` }} />
+      {!isMobile && (
+        <div className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-300"
+          style={{ background: `radial-gradient(800px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.04), transparent 85%)` }} />
+      )}
 
       {/* 3D SCENE */}
       <div className="fixed inset-0 z-0 pointer-events-auto">
         <Canvas dpr={[1, 2]}>
-          <PerspectiveCamera makeDefault position={[0, 0, 16]} fov={40} />
+          <PerspectiveCamera makeDefault position={[0, 0, isMobile ? 22 : 16]} fov={isMobile ? 55 : 40} />
           <color attach="background" args={['#010102']} />
-          <ambientLight intensity={0.4} />
+          <ambientLight intensity={0.5} />
           <pointLight position={[10, 10, 10]} intensity={1.5} color="#00E5FF" />
           <Environment preset="night" />
-          <MechanicalCore isHovered={isHovered} />
-          <ContactShadows position={[0, -10, 0]} opacity={0.4} scale={50} blur={2.5} far={20} color="#00E5FF" />
+          <MechanicalCore isActive={activeState} />
+          <ContactShadows position={[0, -10, 0]} opacity={0.4} scale={40} blur={2} far={20} color="#00E5FF" />
         </Canvas>
       </div>
 
@@ -222,12 +213,12 @@ export default function App() {
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
         >
-          <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1 }} className="flex flex-col items-start max-w-4xl z-40">
-            <div className="mb-8 px-4 py-1.5 border border-[#00E5FF]/20 bg-[#00E5FF]/5 text-[#00E5FF] text-[10px] font-black tracking-[0.5em] uppercase">Architecture & Systems</div>
-            <h1 className="text-6xl sm:text-8xl md:text-[9.5rem] font-black text-white mb-4 tracking-tighter leading-[0.9]">Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Ayar.</span></h1>
-            <p className="text-lg md:text-2xl text-gray-400 mt-6 mb-12 font-light max-w-2xl border-l border-white/10 pl-8 leading-relaxed">Designing high-performance full-stack architectures and resilient digital ecosystems.</p>
+          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1 }} className="flex flex-col items-start max-w-4xl z-40">
+            <div className="mb-8 px-4 py-1.5 border border-[#00E5FF]/20 bg-[#00E5FF]/5 text-[#00E5FF] text-[10px] font-black tracking-[0.5em] uppercase">Architecture & Logic</div>
+            <h1 className="text-6xl sm:text-8xl md:text-[9rem] font-black text-white mb-6 tracking-tighter leading-[0.9]">Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Ayar.</span></h1>
+            <p className="text-lg md:text-2xl text-gray-400 mt-6 mb-12 font-light max-w-2xl border-l border-white/10 pl-8 leading-relaxed">Designing high-performance full-stack architectures and resilient digital systems.</p>
             <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto">
-              <a href="#projects" className="bg-white text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-[#00E5FF] hover:text-white transition-all duration-500 shadow-xl">Execute Builds</a>
+              <a href="#projects" className="bg-white text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-[#00E5FF] hover:text-white transition-all duration-500">Execute Builds</a>
               <a href="/resume.pdf" target="_blank" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all duration-500">Resume ↓</a>
             </div>
           </motion.div>
@@ -238,7 +229,7 @@ export default function App() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-5">
               <h2 className="text-5xl md:text-6xl font-black text-white mb-10 tracking-tighter">About <span className="text-[#00E5FF]">Me.</span></h2>
-              <p className="text-gray-400 mb-8 text-xl font-light leading-relaxed">Born and raised in Zambia, now operating in Ottawa. Engineering precision, progression, and mastery.</p>
+              <p className="text-gray-400 mb-8 text-xl font-light leading-relaxed">Born and raised in Zambia, now operating in Ottawa. My approach to engineering is purely objective: Build, Optimize, and Master.</p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-[#0A0A12]/60 border border-white/5 p-8 rounded-2xl text-center"><h3 className="text-4xl font-black text-white">3+</h3><p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2 font-black">Years</p></div>
                 <div className="bg-[#0A0A12]/60 border border-white/5 p-8 rounded-2xl text-center"><h3 className="text-4xl font-black text-white">10+</h3><p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2 font-black">Builds</p></div>
@@ -262,16 +253,16 @@ export default function App() {
           </div>
         </section>
 
-        {/* CORE COMPETENCIES (RESTORED 6-CARD GRID) */}
+        {/* COMPETENCIES */}
         <section id="skills" className="max-w-7xl mx-auto px-6 py-20 w-full">
             <h2 className="text-6xl md:text-7xl font-black text-white mb-16 tracking-tighter">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[ { t: "Programming", i: "💻", s: [{n: "Java", v: "90%"}, {n: "Python", v: "85%"}, {n: "JavaScript", v: "85%"}, {n: "C#", v: "70%"}] },
-                   { t: "Frontend Dev", i: "🖥️", s: [{n: "React.js", v: "90%"}, {n: "HTML5/CSS3", v: "95%"}, {n: "Tailwind", v: "85%"}, {n: "Bootstrap", v: "80%"}] },
-                   { t: "Backend & APIs", i: "⚙️", s: [{n: "Node.js", v: "85%"}, {n: "Express.js", v: "85%"}, {n: "REST APIs", v: "90%"}, {n: "WebSockets", v: "75%"}] },
-                   { t: "Databases", i: "🗄️", s: [{n: "MongoDB", v: "85%"}, {n: "MySQL", v: "90%"}, {n: "PostgreSQL", v: "75%"}, {n: "NoSQL", v: "85%"}] },
-                   { t: "Data Arch", i: "📊", s: [{n: "Power BI", v: "90%"}, {n: "DAX", v: "85%"}, {n: "Star Schema", v: "85%"}, {n: "ETL", v: "80%"}] },
-                   { t: "Cloud & DevOps", i: "☁️", s: [{n: "Git / GitHub", v: "95%"}, {n: "AWS", v: "80%"}, {n: "Docker", v: "75%"}, {n: "CI/CD", v: "85%"}] }
+                {[ { t: "Programming", i: "💻", s: [{n: "Java", v: "90%"}, {n: "Python", v: "85%"}, {n: "JavaScript", v: "85%"}] },
+                   { t: "Frontend Dev", i: "🖥️", s: [{n: "React.js", v: "90%"}, {n: "HTML5/CSS3", v: "95%"}, {n: "Tailwind", v: "85%"}] },
+                   { t: "Backend & APIs", i: "⚙️", s: [{n: "Node.js", v: "85%"}, {n: "Express.js", v: "85%"}, {n: "REST APIs", v: "90%"}] },
+                   { t: "Databases", i: "🗄️", s: [{n: "MongoDB", v: "85%"}, {n: "MySQL", v: "90%"}, {n: "PostgreSQL", v: "75%"}] },
+                   { t: "Data Arch", i: "📊", s: [{n: "Power BI", v: "90%"}, {n: "DAX", v: "85%"}, {n: "Star Schema", v: "85%"}] },
+                   { t: "Cloud & DevOps", i: "☁️", s: [{n: "Git / GitHub", v: "95%"}, {n: "AWS", v: "80%"}, {n: "Docker", v: "75%"}] }
                 ].map((card, idx) => (
                     <div key={idx} className="bg-[#0A0A12]/40 border border-white/5 p-10 rounded-3xl hover:border-[#00E5FF]/40 transition-all shadow-2xl group flex flex-col">
                         <h3 className="text-xl font-bold text-white mb-8 tracking-tighter uppercase flex items-center gap-4">
@@ -324,7 +315,7 @@ export default function App() {
                  {i:"🎮",t:"Logic",d:"Competitive strategy and hardware optimization."},
                  {i:"🌍",t:"Equilibrium",d:"Hiking and trail exploration to maintain technical focus."}
               ].map((h,x)=>(
-                <div key={x} className="bg-[#0A0A12]/40 backdrop-blur-xl border border-white/5 p-12 rounded-[2.5rem] text-center hover:border-white/20 transition-all shadow-2xl group">
+                <div key={x} className="bg-[#0A0A12]/40 border border-white/5 p-12 rounded-[2.5rem] text-center hover:border-white/20 transition-all shadow-2xl group">
                   <div className="text-7xl mb-8 grayscale opacity-20 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105">{h.i}</div>
                   <h3 className="text-xl font-black text-white mb-4 uppercase tracking-[0.3em]">{h.t}</h3>
                   <p className="text-gray-500 font-light leading-relaxed text-lg">{h.d}</p>
@@ -344,9 +335,9 @@ export default function App() {
                 <span className="text-[10px] font-black tracking-[0.5em] uppercase text-green-400">Secure Protocol Active</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <a href="https://github.com" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all duration-500 hover:-translate-y-2">GitHub</a>
-                <a href="https://linkedin.com" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all duration-500 hover:-translate-y-2">LinkedIn</a>
-                <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#FF8C00] hover:text-black transition-all duration-500 hover:-translate-y-2">Email</a>
+                <a href="https://github.com" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all duration-500">GitHub</a>
+                <a href="https://linkedin.com" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all duration-500">LinkedIn</a>
+                <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#FF8C00] hover:text-black transition-all duration-500">Email</a>
               </div>
             </div>
             <p className="mt-32 text-center text-[11px] font-black tracking-[0.8em] text-gray-700 uppercase">© 2026 SHIVANG AYAR. ARCHITECTED WITH INTENT.</p>
