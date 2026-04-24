@@ -134,8 +134,6 @@ const CompCard = ({ title, icon, skills }) => {
 const ReactiveFooter = () => {
   const [logs, setLogs] = useState(["> Uplink Established", "> Syncing Ottawa_Node..."]);
   
-  // FIX: Memoizing the background data stops React from recalculating 
-  // Math.random() every time the terminal logs update, which caused the glitching.
   const backgroundBits = useMemo(() => Array.from({length: 40}).map(() => ({
     text: Math.random() > 0.5 ? '10110' : 'SHIVANG',
     duration: Math.random() * 5 + 3,
@@ -215,12 +213,12 @@ const ReactiveFooter = () => {
 
 // --- SIMPLIFIED PROJECTS DATA (All 6 Included) ---
 const projectsData = [
-  { title: "E-Commerce Microservices", desc: "A scalable backend system for an online store, handling secure payments and managing user accounts smoothly.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
-  { title: "Movie Watchlist App", desc: "A full-stack web platform where users can search, add, and track their favorite movies using a custom database.", tags: ["MongoDB", "Express", "Node"], color: "#7B61FF" },
-  { title: "Real-Time Collab Workspace", desc: "A live document-editing platform where multiple users can type and collaborate at the exact same time.", tags: ["Socket.io", "Next.js", "Redis"], color: "#FF8C00" },
-  { title: "Voice AI Chatbot", desc: "An intelligent chatbot you can speak to, built with AI to understand and respond naturally to human emotions.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF" },
-  { title: "DevOps CI/CD Dashboard", desc: "A control center that automatically tests and deploys code updates to live servers without breaking the site.", tags: ["AWS", "Python", "GitHub"], color: "#7B61FF" },
-  { title: "AI SaaS Image Generator", desc: "A subscription website where users can generate custom images using AI by spending purchased credits.", tags: ["Tailwind", "React", "DALL-E"], color: "#FF8C00" }
+  { title: "E-Commerce Microservices", desc: "A scalable backend system for an online store, handling secure payments and managing user accounts smoothly.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF", icon: "🛒" },
+  { title: "Movie Watchlist App", desc: "A full-stack web platform where users can search, add, and track their favorite movies using a custom database.", tags: ["MongoDB", "Express", "Node"], color: "#7B61FF", icon: "🎬" },
+  { title: "Real-Time Collab Workspace", desc: "A live document-editing platform where multiple users can type and collaborate at the exact same time.", tags: ["Socket.io", "Next.js", "Redis"], color: "#FF8C00", icon: "⚡" },
+  { title: "Voice AI Chatbot", desc: "An intelligent chatbot you can speak to, built with AI to understand and respond naturally to human emotions.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF", icon: "🤖" },
+  { title: "DevOps CI/CD Dashboard", desc: "A control center that automatically tests and deploys code updates to live servers without breaking the site.", tags: ["AWS", "Python", "GitHub"], color: "#7B61FF", icon: "🚀" },
+  { title: "Financial Ledger Engine", desc: "Developed a tailored tracking application in Visual Studio to monitor cash flow, recurring API subscriptions, and optimize utility expenses.", tags: ["C#", "Visual Studio", ".NET"], color: "#FF8C00", icon: "📈" }
 ];
 
 export default function MobileView() {
@@ -239,7 +237,6 @@ export default function MobileView() {
   return (
     <div className="min-h-screen bg-[#010102] text-gray-200 overflow-x-hidden selection:bg-[#00E5FF]">
       
-      {/* OVERFLOW FIX */}
       <style dangerouslySetInnerHTML={{__html: `
         html, body { background-color: #010102 !important; overscroll-behavior-y: none; overflow-x: hidden; }
       `}} />
@@ -372,9 +369,13 @@ export default function MobileView() {
           ))}
         </section>
 
-        {/* TECHNICAL ARSENAL */}
+        {/* TECHNICAL ARSENAL (PREMIUM HEADER) */}
         <section id="skills" className="px-6 py-32 space-y-8">
-          <h2 className="text-6xl font-black text-white mb-16 tracking-tighter uppercase text-center">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
+          <div className="flex flex-col items-center mb-16 text-center">
+            <h2 className="text-6xl font-black text-white tracking-tighter uppercase">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
+            <p className="text-gray-400 mt-6 max-w-xl text-lg font-light leading-relaxed">A comprehensive overview of my technical skills, tools, and technologies I work with to bring ideas to life.</p>
+            <div className="h-[3px] w-20 bg-gradient-to-r from-[#00E5FF] to-[#7B61FF] mt-8 rounded-full" />
+          </div>
           <CompCard title="Languages" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"}]} />
           <CompCard title="Frontend Dev" icon="🖥️" skills={[{n:"React.js",v:"90%"},{n:"HTML5/CSS3",v:"95%"},{n:"Tailwind",v:"85%"}]} />
           <CompCard title="Backend & APIs" icon="⚙️" skills={[{n:"Node.js",v:"85%"},{n:"Express.js",v:"85%"},{n:"REST APIs",v:"90%"}]} />
@@ -383,13 +384,20 @@ export default function MobileView() {
           <CompCard title="DevOps" icon="☁️" skills={[{n:"Git / GitHub",v:"95%"},{n:"AWS",v:"80%"},{n:"Docker",v:"75%"}]} />
         </section>
 
-        {/* SYSTEM BUILDS */}
+        {/* SYSTEM BUILDS (PREMIUM HEADER) */}
         <section id="builds" className="px-6 py-40 space-y-10">
-          <h2 className="text-6xl font-black text-white mb-16 tracking-tighter uppercase text-right">System <span className="text-[#FF8C00]">Builds.</span></h2>
+          <div className="flex flex-col items-end mb-16 text-right">
+            <h2 className="text-6xl font-black text-white tracking-tighter uppercase">System <span className="text-[#FF8C00]">Builds.</span></h2>
+            <p className="text-gray-400 mt-6 max-w-xl text-lg font-light leading-relaxed">From enterprise microservices to real-time sync engines—here's a showcase of my diverse technical expertise and passion for building resilient systems.</p>
+            <div className="h-[3px] w-20 bg-gradient-to-l from-[#FF8C00] to-[#7B61FF] mt-8 rounded-full" />
+          </div>
           {projectsData.map((p, i) => (
           <div key={i} className="bg-[#0A0A15]/80 backdrop-blur-xl p-10 rounded-[3rem] border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col">
             <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 m-6" style={{ borderColor: p.color }} />
-            <h3 className="text-3xl font-black text-white mb-6 uppercase leading-tight tracking-tighter">{p.title}</h3>
+            <div className="flex items-center gap-3 mb-6">
+              <span className="text-3xl relative z-10">{p.icon}</span>
+              <h3 className="text-2xl font-black text-white leading-tight tracking-tighter uppercase relative z-10">{p.title}</h3>
+            </div>
             <p className="text-gray-400 text-lg mb-8 leading-relaxed font-light flex-grow">{p.desc}</p>
             <div className="flex flex-wrap gap-2 mt-auto">
               {p.tags.map((tag, tIdx) => (
@@ -399,17 +407,24 @@ export default function MobileView() {
           </div>
         ))}</section>
 
-        {/* OFFLINE PROTOCOL */}
+        {/* OFFLINE PROTOCOL (6 ITEMS) */}
         <section id="offline" className="px-6 py-32 space-y-8 text-center">
-          <h2 className="text-5xl font-black text-white mb-16 tracking-tighter uppercase italic">Offline <span className="text-[#FF8C00]">Protocol.</span></h2>
-          {[ {i:"🏋️‍♂️",t:"Discipline",d:"6-day compound split focus, applying progressive overload."},
-             {i:"🎮",t:"Logic",d:"Hardware tuning and competitive tactical shooters."},
-             {i:"🌍",t:"Equilibrium",d:"Hiking and exploration of terrain to reset the digital buffer."}
+          <div className="flex flex-col items-center mb-16 text-center">
+            <h2 className="text-5xl font-black text-white tracking-tighter uppercase italic">Offline <span className="text-[#FF8C00]">Protocol.</span></h2>
+            <p className="text-gray-400 mt-6 max-w-xl text-lg font-light leading-relaxed">Life's about balance! Here are the activities that keep me energized and inspired outside of tech.</p>
+            <div className="h-[3px] w-20 bg-gradient-to-r from-[#FF8C00] to-[#00E5FF] mt-8 rounded-full" />
+          </div>
+          {[ {i:"🥊",t:"Gym",d:"Strength & discipline. 6-day split focusing on progressive overload."},
+             {i:"💻",t:"Coding",d:"Always building, innovating, & exploring new side quests."},
+             {i:"✈️",t:"Travelling",d:"Exploring new terrains, cultures, and resetting the digital buffer."},
+             {i:"🏐",t:"Volleyball",d:"Team strategy, agility, and maintaining peak athletic flow."},
+             {i:"⛳",t:"Golf",d:"Precision, patience, and mastering the physical mechanics."},
+             {i:"🍽️",t:"Food Tasting",d:"Culinary exploration and discovering unique fine dining."}
           ].map((h,x)=>(
             <motion.div key={x} initial={{scale:0.9, opacity: 0}} whileInView={{scale:1, opacity: 1}} transition={{duration: 0.6}} viewport={{once: true}} className="bg-[#0A0A15]/80 backdrop-blur-xl p-12 rounded-[3.5rem] border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
               <div className="text-7xl mb-10">{h.i}</div>
               <h3 className="text-2xl font-black text-white uppercase tracking-widest">{h.t}</h3>
-              <p className="text-gray-400 text-lg mt-6 font-light leading-relaxed">{h.d}</p>
+              <p className="text-gray-400 text-base mt-4 font-light leading-relaxed">{h.d}</p>
             </motion.div>
           ))}</section>
 

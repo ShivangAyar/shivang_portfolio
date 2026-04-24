@@ -96,7 +96,6 @@ function MechanicalCore({ scrollY }) {
     <group ref={groupRef} position={[0, 0, 0]}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        {/* Synced with mobile: Dark base with faint neutral silver reflection */}
         <meshStandardMaterial 
           color={isActive ? "#002222" : "#020202"} 
           roughness={0.1} 
@@ -220,12 +219,14 @@ const NavLink = ({ href, children }) => (
   </a>
 );
 
-// --- TAILORED PROJECTS DATA (Synced with mobile) ---
+// --- ALL 6 PROJECTS DATA ---
 const projectsData = [
-  { title: "Watchlist Architecture", desc: "Engineered a full-stack media tracker utilizing Pug templates for dynamic UI, pure JavaScript client-side interactivity, and a robust NoSQL backend system.", tags: ["MongoDB", "Express", "JS", "Pug"], color: "#FF8C00", icon: "🎬" },
-  { title: "Financial Ledger Engine", desc: "Developed a tailored tracking application in Visual Studio to monitor cash flow, recurring API subscriptions, and optimize utility expenses live.", tags: ["C#", "Visual Studio", ".NET"], color: "#00E5FF", icon: "📈" },
-  { title: "E-Commerce Microservices", desc: "A scalable backend ecosystem for digital commerce, seamlessly handling secure Stripe payments and managing user authentication across nodes.", tags: ["Node.js", "Docker", "Stripe"], color: "#7B61FF", icon: "🛒" },
-  { title: "Real-Time Collab Sync", desc: "A high-performance live document-editing platform allowing multiple concurrent users to type and collaborate without state conflicts.", tags: ["Socket.io", "Next.js", "Redis"], color: "#00E5FF", icon: "⚡" }
+  { title: "E-Commerce Microservices", desc: "A scalable backend system for an online store, handling secure payments and managing user accounts smoothly.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF", icon: "🛒" },
+  { title: "Movie Watchlist App", desc: "A full-stack web platform where users can search, add, and track their favorite movies using a custom database.", tags: ["MongoDB", "Express", "Node"], color: "#7B61FF", icon: "🎬" },
+  { title: "Real-Time Collab Workspace", desc: "A live document-editing platform where multiple users can type and collaborate at the exact same time.", tags: ["Socket.io", "Next.js", "Redis"], color: "#FF8C00", icon: "⚡" },
+  { title: "Voice AI Chatbot", desc: "An intelligent chatbot you can speak to, built with AI to understand and respond naturally to human emotions.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF", icon: "🤖" },
+  { title: "DevOps CI/CD Dashboard", desc: "A control center that automatically tests and deploys code updates to live servers without breaking the site.", tags: ["AWS", "Python", "GitHub"], color: "#7B61FF", icon: "🚀" },
+  { title: "Financial Ledger Engine", desc: "Developed a tailored tracking application in Visual Studio to monitor cash flow, recurring API subscriptions, and optimize utility expenses.", tags: ["C#", "Visual Studio", ".NET"], color: "#FF8C00", icon: "📈" }
 ];
 
 export default function DesktopView() {
@@ -293,7 +294,7 @@ export default function DesktopView() {
           </div>
         </section>
 
-        {/* PAGE 2: NAME TRANSITION (Hero) */}
+        {/* PAGE 2: NAME TRANSITION */}
         <section id="hero" className="px-10 min-h-[80vh] flex items-center pt-10 z-40 max-w-7xl mx-auto w-full">
           <motion.div 
             initial={{ opacity: 0, y: 50 }} 
@@ -347,9 +348,14 @@ export default function DesktopView() {
           </div>
         </section>
 
-        {/* COMPETENCIES (HOVER REACTIVE) */}
+        {/* COMPETENCIES (PREMIUM HEADER + HOVER SKILLS) */}
         <section id="skills" className="max-w-7xl mx-auto px-10 py-32 w-full">
-            <h2 className="text-7xl font-black text-white mb-16 tracking-tighter text-center uppercase">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
+            <div className="flex flex-col items-center mb-20 text-center">
+              <h2 className="text-7xl font-black text-white tracking-tighter uppercase">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
+              <p className="text-gray-400 mt-6 max-w-2xl text-xl font-light">A comprehensive overview of my technical skills, tools, and technologies I work with to bring ideas to life.</p>
+              <div className="h-[3px] w-24 bg-gradient-to-r from-[#00E5FF] to-[#7B61FF] mt-8 rounded-full" />
+            </div>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <CompCard title="Languages" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"}]} />
                 <CompCard title="Frontend Dev" icon="🖥️" skills={[{n:"React.js",v:"90%"},{n:"HTML5/CSS3",v:"95%"},{n:"Tailwind",v:"85%"}]} />
@@ -360,34 +366,37 @@ export default function DesktopView() {
             </div>
         </section>
 
-        {/* SYSTEM BUILDS (PREMIUM DESKTOP CARDS) */}
+        {/* PROJECTS (PREMIUM HEADER + 6 PROJECTS GRID) */}
         <section id="projects" className="max-w-7xl mx-auto px-10 py-40 w-full">
-            <h2 className="text-7xl font-black text-white mb-20 tracking-tighter text-right uppercase">System <span className="text-[#FF8C00]">Builds.</span></h2>
-            {/* Switched to 2-column grid since we have exactly 4 premium projects */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 [perspective:2000px]">
+            <div className="flex flex-col items-end mb-20 text-right">
+              <h2 className="text-7xl font-black text-white tracking-tighter uppercase">System <span className="text-[#FF8C00]">Builds.</span></h2>
+              <p className="text-gray-400 mt-6 max-w-2xl text-xl font-light">From enterprise microservices to real-time sync engines—here's a showcase of my diverse technical expertise and passion for building resilient systems.</p>
+              <div className="h-[3px] w-24 bg-gradient-to-l from-[#FF8C00] to-[#7B61FF] mt-8 rounded-full" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 [perspective:2000px]">
                 {projectsData.map((p, i) => (
                     <motion.div 
                         key={i} 
-                        className="bg-[#0A0A15]/80 backdrop-blur-xl p-12 rounded-[2.5rem] border border-white/10 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col group cursor-pointer min-h-[400px]"
+                        className="bg-[#0A0A15]/80 backdrop-blur-xl p-12 rounded-[2.5rem] border border-white/10 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col group cursor-pointer min-h-[420px]"
                         whileHover={{ y: -15, rotateX: -4, rotateY: 4, borderColor: `${p.color}50`, boxShadow: `0 30px 60px ${p.color}20` }}
                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
                         <div className="absolute top-0 right-0 w-48 h-48 rounded-bl-full opacity-5 group-hover:opacity-20 transition-all duration-700" style={{ background: p.color }}></div>
                         
                         <div className="flex items-center gap-4 mb-6">
-                            <span className="text-4xl relative z-10">{p.icon}</span>
-                            <h3 className="text-3xl font-bold text-white leading-tight tracking-tighter uppercase relative z-10">{p.title}</h3>
+                            <span className="text-3xl relative z-10">{p.icon}</span>
+                            <h3 className="text-2xl font-bold text-white leading-tight tracking-tighter uppercase relative z-10">{p.title}</h3>
                         </div>
                         
-                        <p className="text-gray-400 text-lg font-light leading-relaxed mb-auto relative z-10">{p.desc}</p>
+                        <p className="text-gray-400 text-base font-light leading-relaxed mb-auto relative z-10">{p.desc}</p>
                         
                         <div className="flex flex-wrap gap-2 mt-8 relative z-10">
                             {p.tags.map((tag, tIdx) => (
-                                <span key={tIdx} className="text-[11px] font-black border border-white/10 px-5 py-2 rounded-full uppercase text-gray-400 group-hover:text-white transition-colors">{tag}</span>
+                                <span key={tIdx} className="text-[10px] font-black border border-white/10 px-4 py-2 rounded-full uppercase text-gray-400 group-hover:text-white transition-colors">{tag}</span>
                             ))}
                         </div>
 
-                        {/* Hover Reveal Actions */}
                         <div className="flex gap-4 relative z-10 mt-8 w-full opacity-0 group-hover:opacity-100 transition-opacity duration-500">
                             <button className="flex-1 bg-white/[0.05] border border-white/10 py-3 rounded-xl text-[10px] font-bold text-white uppercase tracking-widest hover:bg-white hover:text-black transition-all text-center">Execute</button>
                             <button className="flex-1 border border-white/10 py-3 rounded-xl text-[10px] font-bold text-gray-400 uppercase tracking-widest hover:border-white/30 hover:text-white transition-all text-center">&lt;/&gt; Source</button>
@@ -397,25 +406,33 @@ export default function DesktopView() {
             </div>
         </section>
 
-        {/* OFFLINE PROTOCOL */}
+        {/* OFFLINE PROTOCOL (PREMIUM HEADER + 6 ITEMS) */}
         <section className="max-w-7xl mx-auto px-10 py-40 flex flex-col items-center w-full">
-            <h2 className="text-6xl font-black text-white mb-16 tracking-tighter text-center uppercase italic">Offline <span className="text-[#FF8C00]">Protocol.</span></h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full pointer-events-auto">
-              {[ {i:"🏋️‍♂️",t:"Discipline",d:"6-day compound split focusing on progressive overload."},
-                 {i:"🎮",t:"Logic",d:"Competitive strategy and hardware optimization."},
-                 {i:"🌍",t:"Equilibrium",d:"Hiking and trail exploration to maintain technical focus."}
+            <div className="flex flex-col items-center mb-20 text-center">
+              <h2 className="text-6xl font-black text-white tracking-tighter uppercase italic">Offline <span className="text-[#FF8C00]">Protocol.</span></h2>
+              <p className="text-gray-400 mt-6 max-w-xl text-xl font-light">Life's about balance! Here are the activities that keep me energized and inspired outside of tech.</p>
+              <div className="h-[3px] w-24 bg-gradient-to-r from-[#FF8C00] to-[#00E5FF] mt-8 rounded-full" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full pointer-events-auto">
+              {[ 
+                 {i:"🥊",t:"Gym",d:"Strength & discipline. 6-day split focusing on progressive overload."},
+                 {i:"💻",t:"Coding",d:"Always building, innovating, & exploring new side quests."},
+                 {i:"✈️",t:"Travelling",d:"Exploring new terrains, cultures, and resetting the digital buffer."},
+                 {i:"🏐",t:"Volleyball",d:"Team strategy, agility, and maintaining peak athletic flow."},
+                 {i:"⛳",t:"Golf",d:"Precision, patience, and mastering the physical mechanics."},
+                 {i:"🍽️",t:"Food Tasting",d:"Culinary exploration and discovering unique fine dining."}
               ].map((h,x)=>(
-                <div key={x} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-14 rounded-[3rem] text-center hover:border-white/30 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] group">
-                  <div className="text-7xl mb-10 grayscale opacity-30 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110">{h.i}</div>
-                  <h3 className="text-2xl font-black text-white mb-5 uppercase tracking-[0.3em]">{h.t}</h3>
-                  <p className="text-gray-400 font-light leading-relaxed text-lg">{h.d}</p>
+                <div key={x} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-10 rounded-[3rem] text-center hover:border-white/30 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] group">
+                  <div className="text-6xl mb-8 grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110">{h.i}</div>
+                  <h3 className="text-xl font-black text-white mb-4 uppercase tracking-[0.2em]">{h.t}</h3>
+                  <p className="text-gray-400 font-light leading-relaxed text-base">{h.d}</p>
                 </div>
               ))}
             </div>
         </section>
 
         <ReactiveFooter />
-
       </div>
     </div>
   );
