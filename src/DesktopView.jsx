@@ -4,7 +4,7 @@ import { ContactShadows, PerspectiveCamera, Environment } from '@react-three/dre
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- CUSTOM AESTHETIC LOADING PROTOCOL ---
+// --- CUSTOM HACKER LOADING PROTOCOL ---
 const LoadingScreen = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
 
@@ -23,23 +23,12 @@ const LoadingScreen = ({ onComplete }) => {
   }, [onComplete]);
 
   return (
-    <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
-      
-      {/* --- AESTHETIC BACKGROUND ANIMATION --- */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Animated Tech Grid */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,229,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,229,255,0.05)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_40%,transparent_100%)] opacity-40" />
-        
-        {/* Pulsing Ambient Orbs */}
-        <motion.div animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-[#00E5FF] rounded-full blur-[140px]" />
-        <motion.div animate={{ scale: [1, 1.3, 1], rotate: [0, -90, 0], opacity: [0.1, 0.4, 0.1] }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-[#7B61FF] rounded-full blur-[140px]" />
-      </div>
-
-      <div className="w-full max-w-md space-y-8 relative z-10">
+    <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center">
+      <div className="w-full max-w-md space-y-8">
         <h2 className="text-[#00E5FF] font-mono text-3xl tracking-[0.2em] font-black uppercase flex items-center justify-center gap-3">
           <span>&lt;/&gt;</span> Shivang Ayar
         </h2>
-        <div className="h-[2px] w-full bg-white/5 rounded-full overflow-hidden shadow-[0_0_20px_rgba(0,229,255,0.2)]">
+        <div className="h-[2px] w-full bg-white/5 rounded-full overflow-hidden">
           <motion.div className="h-full bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" style={{ width: progress + "%" }} />
         </div>
         <p className="text-gray-400 font-black text-sm tracking-widest uppercase leading-relaxed">
@@ -50,7 +39,7 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (FIXED: Massive Desktop Spread) ---
+// --- MECHANICAL SNAP CORE (With Enhanced Background Glow) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
@@ -66,14 +55,7 @@ function MechanicalCore({ scrollY }) {
       for (let y = 0; y < gridSize; y++) {
         for (let z = 0; z < gridSize; z++) {
           const targetPos = new THREE.Vector3(x - 1.5, y - 1.5, z - 1.5).multiplyScalar(1.05);
-          
-          // FIX: Massively expanded X and Y to completely fill ultra-wide desktop monitors
-          const randomPos = new THREE.Vector3(
-            (Math.random() - 0.5) * 100, // Massive X spread (Fixes empty right side)
-            (Math.random() - 0.5) * 60,  // Massive Y spread
-            (Math.random() - 0.5) * 60 - 15 // Pushed back slightly so they don't clip the camera
-          );
-          
+          const randomPos = new THREE.Vector3((Math.random() - 0.5) * 45, (Math.random() - 0.5) * 35, (Math.random() - 0.5) * 20);
           const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
           temp.push({ targetPos, randomPos, randomRot, index: i++ });
         }
@@ -114,12 +96,13 @@ function MechanicalCore({ scrollY }) {
     <group ref={groupRef} position={[0, 0, 0]}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
+        {/* Subtle Edge Glow added so cubes are visible in the background without changing their core obsidian color */}
         <meshStandardMaterial 
           color={isActive ? "#002222" : "#020202"} 
           roughness={0.1} 
           metalness={0.9} 
-          emissive={isActive ? "#000000" : "#1a1a1a"}
-          emissiveIntensity={isActive ? 0 : 0.3}
+          emissive={isActive ? "#000000" : "#00E5FF"}
+          emissiveIntensity={isActive ? 0 : 0.15}
         />
       </instancedMesh>
       {isActive && <pointLight intensity={30} color="#FF8C00" distance={20} />}
@@ -237,7 +220,7 @@ const NavLink = ({ href, children }) => (
   </a>
 );
 
-// --- ALL 6 PROJECTS DATA ---
+// --- DATA ---
 const projectsData = [
   { title: "E-Commerce Microservices", desc: "A scalable backend system for an online store, handling secure payments and managing user accounts smoothly.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF", icon: "🛒" },
   { title: "Movie Watchlist App", desc: "A full-stack web platform where users can search, add, and track their favorite movies using a custom database.", tags: ["MongoDB", "Express", "Node"], color: "#7B61FF", icon: "🎬" },
@@ -245,6 +228,15 @@ const projectsData = [
   { title: "Voice AI Chatbot", desc: "An intelligent chatbot you can speak to, built with AI to understand and respond naturally to human emotions.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF", icon: "🤖" },
   { title: "DevOps CI/CD Dashboard", desc: "A control center that automatically tests and deploys code updates to live servers without breaking the site.", tags: ["AWS", "Python", "GitHub"], color: "#7B61FF", icon: "🚀" },
   { title: "Financial Ledger Engine", desc: "Developed a tailored tracking application in Visual Studio to monitor cash flow, recurring API subscriptions, and optimize utility expenses.", tags: ["C#", "Visual Studio", ".NET"], color: "#FF8C00", icon: "📈" }
+];
+
+const techStack = ["Java", "Python", "C#", "JavaScript", "HTML5", "CSS3", "React", "Node.js", "MySQL", "PostgreSQL", "MongoDB", "Git", "GitHub", "AWS", "Docker", "Power BI", "REST APIs"];
+
+const achievements = [
+  { icon: "🏆", title: "3rd Place in Tech Hackathon", desc: "Demonstrated rapid problem-solving and flawless full-stack execution under extreme time constraints." },
+  { icon: "💼", title: "Full-Stack Dev Experience", desc: "Architecting, developing, and deploying resilient end-to-end web applications using modern stacks." },
+  { icon: "🔧", title: "IT Support Specialist", desc: "Optimized technical operations, diagnosed system criticalities, and elevated end-user digital experiences." },
+  { icon: "🎓", title: "Academic Excellence", desc: "Maintaining top-tier academic performance while architecting enterprise-grade applications." }
 ];
 
 export default function DesktopView() {
@@ -275,7 +267,7 @@ export default function DesktopView() {
         <Canvas dpr={[1, 2]}>
           <color attach="background" args={['#010102']} />
           <PerspectiveCamera makeDefault position={[0, 0, 18]} fov={40} />
-          <ambientLight intensity={1.5} />
+          <ambientLight intensity={2} />
           <Environment preset="night" />
           <MechanicalCore scrollY={scrollY} />
           <ContactShadows position={[0, -10, 0]} opacity={0.4} scale={50} blur={2.5} color="#00E5FF" />
@@ -283,7 +275,7 @@ export default function DesktopView() {
       </div>
 
       <div className="relative z-30 w-full flex flex-col">
-        {/* PREMIUM DESKTOP NAVBAR */}
+        {/* PREMIUM NAVBAR */}
         <nav className="fixed top-0 left-0 w-full z-[100] bg-[#010102]/60 backdrop-blur-3xl border-b border-white/5 h-24 flex items-center justify-between px-10">
           <div className="text-2xl font-black text-white cursor-pointer flex items-center" onClick={() => window.scrollTo(0,0)}>
             <span className="text-[#00E5FF] font-mono mr-3 tracking-tighter">&lt;/&gt;</span>
@@ -291,6 +283,7 @@ export default function DesktopView() {
           </div>
           <div className="hidden md:flex gap-10 items-center">
             <NavLink href="#about">Journey</NavLink>
+            <NavLink href="#achievements">Milestones</NavLink>
             <NavLink href="#skills">Competencies</NavLink>
             <NavLink href="#projects">Builds</NavLink>
             <NavLink href="#contact">Connect</NavLink>
@@ -312,7 +305,7 @@ export default function DesktopView() {
           </div>
         </section>
 
-        {/* PAGE 2: NAME TRANSITION */}
+        {/* PAGE 2: WELCOMING HERO */}
         <section id="hero" className="px-10 min-h-[80vh] flex items-center pt-10 z-40 max-w-7xl mx-auto w-full">
           <motion.div 
             initial={{ opacity: 0, y: 50 }} 
@@ -321,15 +314,22 @@ export default function DesktopView() {
             viewport={{ once: true, amount: 0.3 }}
             className="flex flex-col items-start"
           >
-            <h1 className="text-8xl md:text-[9rem] font-black text-white mb-6 tracking-tighter uppercase leading-[0.85]">
-              Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Ayar.</span>
+            <div className="inline-block px-5 py-2 rounded-full border border-[#00E5FF]/30 bg-[#00E5FF]/10 text-[#00E5FF] text-[11px] font-bold tracking-widest mb-8 shadow-[0_0_15px_rgba(0,229,255,0.15)] backdrop-blur-md">
+              HELLO WORLD 👋
+            </div>
+            <h1 className="text-7xl md:text-9xl font-black text-white mb-4 tracking-tighter uppercase leading-none">
+              Hey, I'm <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Shivang.</span>
             </h1>
-            <p className="text-2xl text-gray-400 mt-6 mb-12 font-light max-w-2xl border-l border-[#FF8C00] pl-8 leading-relaxed">
-              Designing high-performance full-stack architectures and resilient digital systems.
+            <h2 className="text-3xl md:text-5xl font-bold text-gray-300 mb-8 tracking-tight">Full-Stack Architect</h2>
+            
+            <p className="text-xl md:text-2xl text-gray-400 max-w-3xl font-light leading-relaxed mb-6 border-l-2 border-[#FF8C00] pl-8">
+              A Computer Programming student at Algonquin College specializing in building scalable web apps, robust APIs, and immersive digital experiences. If it involves code, I'm in.
             </p>
-            <div className="flex gap-6">
-              <a href="#projects" className="bg-white text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-[#00E5FF] hover:text-white transition-all shadow-[0_0_20px_rgba(255,255,255,0.2)]">Execute Builds</a>
-              <a href="/resume.pdf" target="_blank" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all">Resume ↓</a>
+            <p className="text-[#00E5FF] font-medium tracking-widest uppercase text-sm mb-12 pl-8">Whatever you imagine, I can build it.</p>
+            
+            <div className="flex gap-6 pl-8">
+              <a href="#projects" className="bg-[#00E5FF] text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all shadow-[0_0_20px_rgba(0,229,255,0.4)] rounded-xl">Explore Builds</a>
+              <a href="/resume.pdf" target="_blank" className="bg-white/5 border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white/10 hover:text-white transition-all rounded-xl">Resume ↓</a>
             </div>
           </motion.div>
         </section>
@@ -342,10 +342,6 @@ export default function DesktopView() {
               <p className="text-gray-400 mb-10 text-xl font-light leading-relaxed">
                 Currently pursuing a degree in Computer Programming and translating the skills learned so far into practical, real-world applications. My approach to engineering is purely objective: Build, Optimize, and Master.
               </p>
-              <div className="grid grid-cols-2 gap-6">
-                <div className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-10 rounded-3xl text-center shadow-xl"><h3 className="text-5xl font-black text-white">3+</h3><p className="text-xs text-gray-500 uppercase tracking-widest mt-3 font-black">Years</p></div>
-                <div className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-10 rounded-3xl text-center shadow-xl"><h3 className="text-5xl font-black text-white">10+</h3><p className="text-xs text-gray-500 uppercase tracking-widest mt-3 font-black">Builds</p></div>
-              </div>
             </motion.div>
             
             <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-7 space-y-12 border-l-2 border-[#00E5FF]/20 ml-4 relative">
@@ -363,6 +359,33 @@ export default function DesktopView() {
                 </div>
               ))}
             </motion.div>
+          </div>
+        </section>
+
+        {/* TECH STACK & ACHIEVEMENTS */}
+        <section id="achievements" className="max-w-7xl mx-auto px-10 py-32 w-full relative z-30">
+          <div className="mb-24">
+             <h3 className="text-3xl font-black text-white text-center mb-8 uppercase tracking-widest">Tech <span className="text-[#00E5FF]">Stack</span></h3>
+             <div className="flex flex-wrap justify-center gap-4 max-w-5xl mx-auto">
+                {techStack.map((tech, i) => (
+                   <span key={i} className="px-6 py-3 rounded-full bg-white/[0.03] border border-white/10 text-gray-300 text-sm font-bold tracking-wider hover:border-[#00E5FF]/50 hover:text-white transition-all cursor-default shadow-lg">{tech}</span>
+                ))}
+             </div>
+          </div>
+
+          <div>
+             <h3 className="text-3xl font-black text-white text-center mb-12 uppercase tracking-widest">Key <span className="text-[#FF8C00]">Achievements</span></h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {achievements.map((ach, i) => (
+                   <div key={i} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-8 rounded-3xl flex items-start gap-6 hover:bg-white/[0.03] transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
+                      <div className="text-4xl">{ach.icon}</div>
+                      <div>
+                         <h4 className="text-xl font-bold text-white mb-2">{ach.title}</h4>
+                         <p className="text-gray-400 text-sm leading-relaxed">{ach.desc}</p>
+                      </div>
+                   </div>
+                ))}
+             </div>
           </div>
         </section>
 
@@ -451,7 +474,6 @@ export default function DesktopView() {
         </section>
 
         <ReactiveFooter />
-
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { ContactShadows, PerspectiveCamera, Environment } from '@react-three/dre
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- CUSTOM AESTHETIC LOADING PROTOCOL ---
+// --- CUSTOM HACKER LOADING PROTOCOL ---
 const LoadingScreen = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
 
@@ -23,20 +23,12 @@ const LoadingScreen = ({ onComplete }) => {
   }, [onComplete]);
 
   return (
-    <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
-      
-      {/* Animated Background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,229,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,229,255,0.05)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_40%,transparent_100%)] opacity-40" />
-        <motion.div animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} className="absolute top-[-20%] left-[-10%] w-[80%] h-[60%] bg-[#00E5FF] rounded-full blur-[120px]" />
-        <motion.div animate={{ scale: [1, 1.3, 1], rotate: [0, -90, 0], opacity: [0.1, 0.4, 0.1] }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} className="absolute bottom-[-20%] right-[-10%] w-[80%] h-[60%] bg-[#7B61FF] rounded-full blur-[120px]" />
-      </div>
-
-      <div className="w-full max-w-xs space-y-8 relative z-10">
+    <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center">
+      <div className="w-full max-w-xs space-y-8">
         <h2 className="text-[#00E5FF] font-mono text-2xl tracking-[0.2em] font-black uppercase flex items-center justify-center gap-2">
           <span>&lt;/&gt;</span> Shivang Ayar
         </h2>
-        <div className="h-[1.5px] w-full bg-white/5 rounded-full overflow-hidden shadow-[0_0_20px_rgba(0,229,255,0.2)]">
+        <div className="h-[1.5px] w-full bg-white/5 rounded-full overflow-hidden">
           <motion.div className="h-full bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" style={{ width: progress + "%" }} />
         </div>
         <p className="text-gray-400 font-black text-[10px] tracking-widest uppercase leading-relaxed">
@@ -47,7 +39,7 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (Original Colors + Visibility Fix) ---
+// --- MECHANICAL SNAP CORE (With Enhanced Background Glow) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
@@ -101,12 +93,13 @@ function MechanicalCore({ scrollY }) {
     <group ref={groupRef}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
+        {/* Subtle Edge Glow for better background visibility */}
         <meshStandardMaterial 
           color={isActive ? "#002222" : "#020202"} 
           roughness={0.1} 
           metalness={0.9} 
-          emissive={isActive ? "#000000" : "#1a1a1a"}
-          emissiveIntensity={isActive ? 0 : 0.3}
+          emissive={isActive ? "#000000" : "#00E5FF"}
+          emissiveIntensity={isActive ? 0 : 0.15}
         />
       </instancedMesh>
       {isActive && <pointLight intensity={25} color="#FF8C00" distance={15} />}
@@ -229,6 +222,15 @@ const projectsData = [
   { title: "Financial Ledger Engine", desc: "Developed a tailored tracking application in Visual Studio to monitor cash flow, recurring API subscriptions, and optimize utility expenses.", tags: ["C#", "Visual Studio", ".NET"], color: "#FF8C00", icon: "📈" }
 ];
 
+const techStack = ["Java", "Python", "C#", "JavaScript", "HTML5", "CSS3", "React", "Node.js", "MySQL", "PostgreSQL", "MongoDB", "Git", "GitHub", "AWS", "Docker", "Power BI", "REST APIs"];
+
+const achievements = [
+  { icon: "🏆", title: "3rd Place in Tech Hackathon", desc: "Demonstrated rapid problem-solving and flawless full-stack execution under extreme time constraints." },
+  { icon: "💼", title: "Full-Stack Dev Experience", desc: "Architecting, developing, and deploying resilient end-to-end web applications using modern stacks." },
+  { icon: "🔧", title: "IT Support Specialist", desc: "Optimized technical operations, diagnosed system criticalities, and elevated end-user digital experiences." },
+  { icon: "🎓", title: "Academic Excellence", desc: "Maintaining top-tier academic performance while architecting enterprise-grade applications." }
+];
+
 export default function MobileView() {
   const [isLoading, setIsLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -251,7 +253,7 @@ export default function MobileView() {
 
       <AnimatePresence>{isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}</AnimatePresence>
       
-      {/* 3D BACKGROUND (Stays fixed) */}
+      {/* 3D BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <Canvas dpr={[1, 2]}>
           <color attach="background" args={['#010102']} />
@@ -293,7 +295,7 @@ export default function MobileView() {
 
               <div className="flex flex-col gap-8 text-center relative z-10 w-full max-w-sm">
                 <div className="text-[#00E5FF] font-mono text-xs tracking-[0.5em] uppercase mb-4 opacity-50">System Navigation</div>
-                {['About', 'Skills', 'Builds', 'Offline'].map((t, i) => (
+                {['About', 'Achievements', 'Skills', 'Builds'].map((t, i) => (
                   <motion.a 
                     key={t} 
                     href={`#${t.toLowerCase()}`} 
@@ -337,7 +339,7 @@ export default function MobileView() {
           </div>
         </section>
 
-        {/* PAGE 2: NAME TRANSITION (Hero) */}
+        {/* PAGE 2: WELCOMING HERO */}
         <section id="hero" className="px-6 min-h-[80vh] flex items-center pt-10 z-40">
           <motion.div 
             initial={{ opacity: 0, y: 50 }} 
@@ -346,15 +348,22 @@ export default function MobileView() {
             viewport={{ once: true, amount: 0.3 }}
             className="flex flex-col items-start"
           >
-            <h1 className="text-6xl font-black text-white mb-6 leading-none tracking-tighter uppercase leading-[0.85]">
-              Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#FF8C00]">Ayar.</span>
+            <div className="inline-block px-4 py-1.5 rounded-full border border-[#00E5FF]/30 bg-[#00E5FF]/10 text-[#00E5FF] text-[10px] font-bold tracking-widest mb-6 shadow-[0_0_15px_rgba(0,229,255,0.15)] backdrop-blur-md">
+              HELLO WORLD 👋
+            </div>
+            <h1 className="text-6xl font-black text-white mb-4 leading-none tracking-tighter uppercase leading-[0.85]">
+              Hey, I'm <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#FF8C00]">Shivang.</span>
             </h1>
-            <p className="text-lg text-gray-400 mb-12 border-l-2 border-[#FF8C00] pl-6 leading-relaxed font-light text-left">
-              Designing high-performance full-stack architectures and resilient digital systems.
+            <h2 className="text-2xl font-bold text-gray-300 mb-6 tracking-tight">Full-Stack Architect</h2>
+            
+            <p className="text-lg text-gray-400 mb-6 border-l-2 border-[#FF8C00] pl-6 leading-relaxed font-light text-left">
+              A Computer Programming student at Algonquin College specializing in building scalable web apps, robust APIs, and immersive digital experiences. If it involves code, I'm in.
             </p>
-            <div className="flex flex-col gap-6 w-full">
-              <a href="#builds" className="bg-white text-black px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest shadow-2xl">Execute Builds</a>
-              <a href="/resume.pdf" target="_blank" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest">Resume ↓</a>
+            <p className="text-[#00E5FF] font-medium tracking-widest uppercase text-xs mb-10 pl-6">Whatever you imagine, I can build it.</p>
+            
+            <div className="flex flex-col gap-6 w-full pl-6">
+              <a href="#projects" className="bg-[#00E5FF] text-black px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest shadow-[0_0_20px_rgba(0,229,255,0.4)] rounded-xl">Explore Builds</a>
+              <a href="/resume.pdf" target="_blank" className="bg-white/5 border border-white/10 text-white px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest rounded-xl">Resume ↓</a>
             </div>
           </motion.div>
         </section>
@@ -377,7 +386,34 @@ export default function MobileView() {
           ))}
         </section>
 
-        {/* TECHNICAL ARSENAL */}
+        {/* TECH STACK & ACHIEVEMENTS */}
+        <section id="achievements" className="px-6 py-32 w-full relative z-30">
+          <div className="mb-24">
+             <h3 className="text-3xl font-black text-white text-center mb-8 uppercase tracking-widest">Tech <span className="text-[#00E5FF]">Stack</span></h3>
+             <div className="flex flex-wrap justify-center gap-3">
+                {techStack.map((tech, i) => (
+                   <span key={i} className="px-5 py-2.5 rounded-full bg-white/[0.03] border border-white/10 text-gray-300 text-xs font-bold tracking-wider shadow-lg">{tech}</span>
+                ))}
+             </div>
+          </div>
+
+          <div>
+             <h3 className="text-3xl font-black text-white text-center mb-10 uppercase tracking-widest">Key <span className="text-[#FF8C00]">Achievements</span></h3>
+             <div className="grid grid-cols-1 gap-6">
+                {achievements.map((ach, i) => (
+                   <div key={i} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-6 rounded-3xl flex items-start gap-5 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
+                      <div className="text-3xl">{ach.icon}</div>
+                      <div>
+                         <h4 className="text-lg font-bold text-white mb-2 leading-tight">{ach.title}</h4>
+                         <p className="text-gray-400 text-sm leading-relaxed">{ach.desc}</p>
+                      </div>
+                   </div>
+                ))}
+             </div>
+          </div>
+        </section>
+
+        {/* COMPETENCIES */}
         <section id="skills" className="px-6 py-32 space-y-8">
           <div className="flex flex-col items-center mb-16 text-center">
             <h2 className="text-6xl font-black text-white tracking-tighter uppercase">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
@@ -433,7 +469,7 @@ export default function MobileView() {
             <motion.div key={x} initial={{scale:0.9, opacity: 0}} whileInView={{scale:1, opacity: 1}} transition={{duration: 0.6}} viewport={{once: true}} className="bg-[#0A0A15]/80 backdrop-blur-xl p-12 rounded-[3.5rem] border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
               <div className="text-7xl mb-10">{h.i}</div>
               <h3 className="text-2xl font-black text-white uppercase tracking-widest">{h.t}</h3>
-              <p className="text-gray-400 text-lg mt-6 font-light leading-relaxed">{h.d}</p>
+              <p className="text-gray-400 text-base mt-4 font-light leading-relaxed">{h.d}</p>
             </motion.div>
           ))}</section>
 
