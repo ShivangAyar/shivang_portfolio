@@ -25,13 +25,13 @@ const LoadingScreen = ({ onComplete }) => {
   return (
     <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center">
       <div className="w-full max-w-xs space-y-8">
-        <h2 className="text-[#00E5FF] font-mono text-2xl tracking-[0.2em] font-black uppercase">
-          &lt;/&gt; Shivang Ayar
+        <h2 className="text-[#00E5FF] font-mono text-2xl tracking-[0.2em] font-black uppercase flex items-center justify-center gap-2">
+          <span>&lt;/&gt;</span> Shivang Ayar
         </h2>
         <div className="h-[1.5px] w-full bg-white/5 rounded-full overflow-hidden">
           <motion.div className="h-full bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" style={{ width: progress + "%" }} />
         </div>
-        <p className="text-gray-400 font-black text-xs tracking-widest uppercase leading-relaxed">
+        <p className="text-gray-400 font-black text-[10px] tracking-widest uppercase leading-relaxed">
           Welcome to my realm <br /> hope you enjoy it 🚀
         </p>
       </div>
@@ -39,7 +39,7 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (Cinematic First-Page Logic) ---
+// --- MECHANICAL SNAP CORE (EXACT Desktop Logic & Colors) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
@@ -73,7 +73,7 @@ function MechanicalCore({ scrollY }) {
     const t = state.clock.getElapsedTime();
     groupRef.current.rotation.y += delta * (isActive ? 0.25 : 0.05);
     
-    // Scale group to make the initial cube larger on screen
+    // Scale up the cube when it's the centerpiece on load
     const targetScale = isActive ? 1.4 : 1;
     groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.08);
 
@@ -95,14 +95,15 @@ function MechanicalCore({ scrollY }) {
     <group ref={groupRef}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        {/* Exact Desktop Colors, adjusted lighting below for visibility */}
+        {/* EXACT DESKTOP MATERIAL: No neon emissive hack, just pure metalness */}
         <meshStandardMaterial 
           color={isActive ? "#002222" : "#020202"} 
           roughness={0.1} 
           metalness={0.9} 
         />
       </instancedMesh>
-      {isActive && <pointLight intensity={30} color="#FF8C00" distance={15} />}
+      {/* EXACT DESKTOP LIGHTING */}
+      {isActive && <pointLight intensity={25} color="#FF8C00" distance={15} />}
     </group>
   );
 }
@@ -162,6 +163,7 @@ const ReactiveFooter = () => {
         ))}
       </div>
 
+      {/* Terminal Container */}
       <div className="w-full bg-[#020203] border-2 border-[#00E5FF]/30 p-12 rounded-[4rem] shadow-[0_0_80px_rgba(0,229,255,0.08)] relative z-10 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#00E5FF]/5 to-transparent h-4 w-full animate-scanline pointer-events-none" />
         <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" />
@@ -193,6 +195,7 @@ const ReactiveFooter = () => {
         </div>
       </div>
 
+      {/* Split Copyright Outside Container */}
       <div className="w-full flex justify-between items-center mt-12 px-2 text-[8px] sm:text-[10px] font-black tracking-[0.2em] sm:tracking-[0.4em] text-gray-600 uppercase z-20 relative">
         <span className="text-left">© 2026 SHIVANG AYAR</span>
         <span className="text-right">MADE WITH INTENT</span>
@@ -206,7 +209,7 @@ const ReactiveFooter = () => {
   );
 };
 
-// --- DATA ---
+// --- FULL PROJECTS DATA ---
 const projectsData = [
   { title: "E-Commerce Microservices", desc: "Scaleable backend utilizing Docker, Stripe API, and JWT auth.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
   { title: "Movie Watchlist App", desc: "Full-stack media tracker via RESTful APIs and NoSQL architecture.", tags: ["MongoDB", "Express", "Node"], color: "#FF8C00" },
@@ -239,13 +242,12 @@ export default function MobileView() {
 
       <AnimatePresence>{isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}</AnimatePresence>
       
-      {/* 3D BACKGROUND (Stays fixed) */}
+      {/* 3D BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <Canvas dpr={[1, 2]}>
           <color attach="background" args={['#010102']} />
           <PerspectiveCamera makeDefault position={[0, 0, 22]} fov={55} />
-          {/* Boosted ambient light for darker materials */}
-          <ambientLight intensity={1.2} />
+          <ambientLight intensity={1.5} />
           <Environment preset="night" />
           <MechanicalCore scrollY={scrollY} />
           <ContactShadows position={[0, -10, 0]} opacity={0.4} scale={40} blur={2} color="#00E5FF" />
@@ -253,17 +255,61 @@ export default function MobileView() {
       </div>
 
       <div className="relative z-30 w-full flex flex-col">
-        {/* NAVBAR */}
-        <nav className="fixed top-0 w-full z-50 bg-[#010102]/60 backdrop-blur-xl border-b border-white/5 h-20 flex items-center justify-between px-6">
-          <div className="text-xl font-black text-white cursor-pointer" onClick={() => window.scrollTo(0,0)}>SHIVANG<span className="text-[#00E5FF]">.</span></div>
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-gray-300 p-2 z-[110]"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}/></svg></button>
+        {/* ENHANCED NAVBAR */}
+        <nav className="fixed top-0 left-0 w-full z-[100] bg-[#010102]/70 backdrop-blur-3xl border-b border-white/5 h-20 flex items-center justify-between px-6">
+          <div className="text-xl font-black text-white cursor-pointer flex items-center" onClick={() => window.scrollTo(0,0)}>
+            <span className="text-[#00E5FF] font-mono mr-2 tracking-tighter">&lt;/&gt;</span>
+            SHIVANG<span className="text-[#00E5FF]">.</span>
+          </div>
+          <button onClick={() => setIsMenuOpen(true)} className="text-[#00E5FF] p-2 focus:outline-none">
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
         </nav>
 
-        {/* MOBILE MENU */}
+        {/* PREMIUM MOBILE MENU */}
         <AnimatePresence>
           {isMenuOpen && (
-            <motion.div initial={{ opacity: 0, x: '100%' }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: '100%' }} className="fixed inset-0 z-[105] bg-[#010102] flex flex-col items-center justify-center gap-10">
-              {['About', 'Skills', 'Builds', 'Connect'].map(t => <a key={t} href={`#${t.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="text-4xl font-black uppercase tracking-widest">{t}</a>)}
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }} 
+              animate={{ opacity: 1, scale: 1 }} 
+              exit={{ opacity: 0, scale: 0.95 }} 
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[200] bg-[#010102]/95 backdrop-blur-3xl flex flex-col items-center justify-center p-6"
+            >
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#00E5FF]/10 via-transparent to-transparent pointer-events-none" />
+              
+              {/* Menu Close Button */}
+              <button onClick={() => setIsMenuOpen(false)} className="absolute top-6 right-6 text-white p-3 bg-white/5 hover:bg-[#00E5FF] hover:text-black transition-colors rounded-full border border-white/10 z-50">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+
+              <div className="flex flex-col gap-8 text-center relative z-10 w-full max-w-sm">
+                <div className="text-[#00E5FF] font-mono text-xs tracking-[0.5em] uppercase mb-4 opacity-50">System Navigation</div>
+                {['About', 'Skills', 'Builds', 'Offline'].map((t, i) => (
+                  <motion.a 
+                    key={t} 
+                    href={`#${t.toLowerCase()}`} 
+                    onClick={() => setIsMenuOpen(false)}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.1 + 0.1 }}
+                    className="text-4xl font-black uppercase tracking-widest text-white border-b border-white/5 pb-4 w-full text-left flex justify-between items-center group"
+                  >
+                    <span>{t}</span>
+                    <span className="text-[#00E5FF] opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                  </motion.a>
+                ))}
+                <motion.a 
+                    href="#connect"
+                    onClick={() => setIsMenuOpen(false)}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                    className="mt-8 bg-[#00E5FF]/10 border border-[#00E5FF] text-[#00E5FF] py-5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-[0_0_20px_rgba(0,229,255,0.2)]"
+                >
+                  Initialize Contact
+                </motion.a>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -289,7 +335,6 @@ export default function MobileView() {
             viewport={{ once: true, amount: 0.3 }}
             className="flex flex-col items-start"
           >
-            {/* The "Architecture & Logic" tag is REMOVED as requested */}
             <h1 className="text-6xl font-black text-white mb-6 leading-none tracking-tighter uppercase leading-[0.85]">
               Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#FF8C00]">Ayar.</span>
             </h1>
@@ -298,7 +343,7 @@ export default function MobileView() {
             </p>
             <div className="flex flex-col gap-6 w-full">
               <a href="#builds" className="bg-white text-black px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest shadow-2xl">Execute Builds</a>
-              <a href="/resume.pdf" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest">Resume ↓</a>
+              <a href="/resume.pdf" target="_blank" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest">Resume ↓</a>
             </div>
           </motion.div>
         </section>
