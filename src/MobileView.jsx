@@ -39,14 +39,13 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (EXACT Desktop Logic & Colors) ---
+// --- MECHANICAL SNAP CORE (Cinematic Intro & Scroll Disperse) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
   const gridSize = 4;
   const count = gridSize ** 3;
   
-  // Triggers shatter as soon as user starts scrolling past 50px
   const isActive = scrollY < 50;
 
   const cubeData = useMemo(() => {
@@ -73,7 +72,6 @@ function MechanicalCore({ scrollY }) {
     const t = state.clock.getElapsedTime();
     groupRef.current.rotation.y += delta * (isActive ? 0.25 : 0.05);
     
-    // Scale up the cube when it's the centerpiece on load
     const targetScale = isActive ? 1.4 : 1;
     groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.08);
 
@@ -95,14 +93,8 @@ function MechanicalCore({ scrollY }) {
     <group ref={groupRef}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        {/* EXACT DESKTOP MATERIAL: No neon emissive hack, just pure metalness */}
-        <meshStandardMaterial 
-          color={isActive ? "#002222" : "#020202"} 
-          roughness={0.1} 
-          metalness={0.9} 
-        />
+        <meshStandardMaterial color={isActive ? "#002222" : "#020202"} roughness={0.1} metalness={0.9} />
       </instancedMesh>
-      {/* EXACT DESKTOP LIGHTING */}
       {isActive && <pointLight intensity={25} color="#FF8C00" distance={15} />}
     </group>
   );
@@ -163,7 +155,6 @@ const ReactiveFooter = () => {
         ))}
       </div>
 
-      {/* Terminal Container */}
       <div className="w-full bg-[#020203] border-2 border-[#00E5FF]/30 p-12 rounded-[4rem] shadow-[0_0_80px_rgba(0,229,255,0.08)] relative z-10 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#00E5FF]/5 to-transparent h-4 w-full animate-scanline pointer-events-none" />
         <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" />
@@ -195,7 +186,6 @@ const ReactiveFooter = () => {
         </div>
       </div>
 
-      {/* Split Copyright Outside Container */}
       <div className="w-full flex justify-between items-center mt-12 px-2 text-[8px] sm:text-[10px] font-black tracking-[0.2em] sm:tracking-[0.4em] text-gray-600 uppercase z-20 relative">
         <span className="text-left">© 2026 SHIVANG AYAR</span>
         <span className="text-right">MADE WITH INTENT</span>
@@ -226,7 +216,7 @@ export default function MobileView() {
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     if (isMenuOpen) document.body.style.overflow = 'hidden';
     else document.body.style.overflow = 'unset';
     return () => { window.removeEventListener('scroll', handleScroll); document.body.style.overflow = 'unset'; };
@@ -314,20 +304,23 @@ export default function MobileView() {
           )}
         </AnimatePresence>
 
-        {/* PAGE 1: CUBE ONLY (Empty spacer so cube shows center stage) */}
-        <section className="h-[90vh] w-full flex flex-col items-center justify-end pb-12 z-10">
-          <motion.div 
-            animate={{ y: [0, 10, 0], opacity: [0.3, 0.8, 0.3] }} 
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="flex flex-col items-center gap-2 text-[#00E5FF] mix-blend-screen"
-          >
-            <span className="text-[10px] tracking-[0.4em] font-black uppercase">Initiate</span>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
-          </motion.div>
+        {/* PAGE 1: CUBE ONLY (With Scroll Arrow that Fades Out) */}
+        <section className="h-[90vh] w-full flex flex-col items-center justify-end pb-12 z-20">
+          <div style={{ opacity: Math.max(0, 1 - scrollY / 150) }} className="transition-opacity duration-100">
+            <motion.button 
+              onClick={() => document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' })}
+              animate={{ y: [0, 10, 0], opacity: [0.4, 1, 0.4] }} 
+              transition={{ repeat: Infinity, duration: 2 }}
+              className="flex flex-col items-center gap-2 text-[#00E5FF] mix-blend-screen cursor-pointer"
+            >
+              <span className="text-[10px] tracking-[0.3em] font-black uppercase text-center">Scroll to find out more</span>
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+            </motion.button>
+          </div>
         </section>
 
-        {/* PAGE 2: NAME TRANSITION (Scroll into view) */}
-        <section className="px-6 min-h-[80vh] flex items-center pt-10 z-40">
+        {/* PAGE 2: NAME TRANSITION (Hero) */}
+        <section id="hero" className="px-6 min-h-[80vh] flex items-center pt-10 z-40">
           <motion.div 
             initial={{ opacity: 0, y: 50 }} 
             whileInView={{ opacity: 1, y: 0 }} 
@@ -375,7 +368,7 @@ export default function MobileView() {
           <CompCard title="DevOps" icon="☁️" skills={[{n:"Git / GitHub",v:"95%"},{n:"AWS",v:"80%"},{n:"Docker",v:"75%"}]} />
         </section>
 
-        {/* SYSTEM BUILDS (ALL 6 PROJECTS) */}
+        {/* SYSTEM BUILDS */}
         <section id="builds" className="px-6 py-40 space-y-10">
           <h2 className="text-6xl font-black text-white mb-16 tracking-tighter uppercase text-right">System Builds.</h2>
           {projectsData.map((p, i) => (

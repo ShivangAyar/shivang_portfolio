@@ -46,7 +46,6 @@ function MechanicalCore({ scrollY }) {
   const gridSize = 4;
   const count = gridSize ** 3;
   
-  // Assembled on Page 1, Disperses on scroll down
   const isActive = scrollY < 150;
 
   const cubeData = useMemo(() => {
@@ -56,7 +55,6 @@ function MechanicalCore({ scrollY }) {
       for (let y = 0; y < gridSize; y++) {
         for (let z = 0; z < gridSize; z++) {
           const targetPos = new THREE.Vector3(x - 1.5, y - 1.5, z - 1.5).multiplyScalar(1.05);
-          // Desktop requires wider dispersion
           const randomPos = new THREE.Vector3((Math.random() - 0.5) * 45, (Math.random() - 0.5) * 35, (Math.random() - 0.5) * 20);
           const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
           temp.push({ targetPos, randomPos, randomRot, index: i++ });
@@ -74,7 +72,6 @@ function MechanicalCore({ scrollY }) {
     const t = state.clock.getElapsedTime();
     groupRef.current.rotation.y += delta * (isActive ? 0.25 : 0.05);
     
-    // Scale up the cube when it's the centerpiece on load
     const targetScale = isActive ? 1.5 : 1;
     groupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.08);
 
@@ -153,8 +150,7 @@ const ReactiveFooter = () => {
   }, []);
 
   return (
-    <footer id="contact" className="pt-60 pb-12 flex flex-col items-center justify-center relative overflow-hidden px-10">
-      {/* Background Binary Rain */}
+    <footer id="connect" className="pt-60 pb-12 flex flex-col items-center justify-center relative overflow-hidden px-10">
       <div className="absolute inset-0 opacity-10 pointer-events-none select-none overflow-hidden flex flex-wrap gap-8 text-[10px] font-mono text-[#00E5FF] justify-center">
         {Array.from({length: 80}).map((_,i) => (
           <motion.div key={i} animate={{ y: [0, 150, 0], opacity: [0, 1, 0] }} transition={{ duration: Math.random() * 5 + 3, repeat: Infinity, delay: Math.random() * 5 }}>
@@ -163,7 +159,6 @@ const ReactiveFooter = () => {
         ))}
       </div>
 
-      {/* Terminal Container */}
       <div className="w-full max-w-6xl mx-auto bg-[#020203] border-2 border-[#00E5FF]/30 p-16 md:p-24 rounded-[4rem] shadow-[0_0_100px_rgba(0,229,255,0.08)] relative z-10 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#00E5FF]/5 to-transparent h-8 w-full animate-scanline pointer-events-none" />
         <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" />
@@ -195,7 +190,6 @@ const ReactiveFooter = () => {
         </div>
       </div>
 
-      {/* Split Copyright */}
       <div className="w-full max-w-6xl mx-auto flex justify-between items-center mt-16 px-4 text-[10px] font-black tracking-[0.4em] text-gray-600 uppercase z-20 relative">
         <span className="text-left">© 2026 SHIVANG AYAR</span>
         <span className="text-right">MADE WITH INTENT</span>
@@ -241,7 +235,6 @@ export default function DesktopView() {
       
       <style dangerouslySetInnerHTML={{__html: `
         html, body { background-color: #010102 !important; }
-        /* Custom Scrollbar for Desktop */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #010102; }
         ::-webkit-scrollbar-thumb { background: #00E5FF40; border-radius: 10px; }
@@ -264,7 +257,7 @@ export default function DesktopView() {
 
       <div className="relative z-30 w-full flex flex-col">
         {/* PREMIUM DESKTOP NAVBAR */}
-        <nav className="fixed top-0 left-0 w-full z-[100] bg-[#010102]/60 backdrop-blur-xl border-b border-white/5 h-24 flex items-center justify-between px-10">
+        <nav className="fixed top-0 left-0 w-full z-[100] bg-[#010102]/60 backdrop-blur-3xl border-b border-white/5 h-24 flex items-center justify-between px-10">
           <div className="text-2xl font-black text-white cursor-pointer flex items-center" onClick={() => window.scrollTo(0,0)}>
             <span className="text-[#00E5FF] font-mono mr-3 tracking-tighter">&lt;/&gt;</span>
             SHIVANG<span className="text-[#00E5FF]">.</span>
@@ -277,20 +270,23 @@ export default function DesktopView() {
           </div>
         </nav>
 
-        {/* PAGE 1: CUBE ONLY (Centerpiece) */}
-        <section className="h-[100vh] w-full flex flex-col items-center justify-end pb-16 z-10 pointer-events-none">
-          <motion.div 
-            animate={{ y: [0, 10, 0], opacity: [0.3, 0.8, 0.3] }} 
-            transition={{ repeat: Infinity, duration: 2 }}
-            className="flex flex-col items-center gap-3 text-[#00E5FF] mix-blend-screen"
-          >
-            <span className="text-xs tracking-[0.5em] font-black uppercase">Initiate</span>
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
-          </motion.div>
+        {/* PAGE 1: CUBE ONLY (Centerpiece with Scroll Fade/Click) */}
+        <section className="h-[100vh] w-full flex flex-col items-center justify-end pb-16 z-20">
+          <div style={{ opacity: Math.max(0, 1 - scrollY / 200) }} className="transition-opacity duration-100">
+            <motion.button 
+              onClick={() => document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' })}
+              animate={{ y: [0, 10, 0], opacity: [0.4, 1, 0.4] }} 
+              transition={{ repeat: Infinity, duration: 2 }}
+              className="flex flex-col items-center gap-3 text-[#00E5FF] mix-blend-screen cursor-pointer hover:text-white transition-colors"
+            >
+              <span className="text-[10px] tracking-[0.4em] font-black uppercase text-center">Scroll to find out more</span>
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+            </motion.button>
+          </div>
         </section>
 
         {/* PAGE 2: NAME TRANSITION (Hero) */}
-        <section className="px-10 min-h-[80vh] flex items-center pt-10 z-40 max-w-7xl mx-auto w-full">
+        <section id="hero" className="px-10 min-h-[80vh] flex items-center pt-10 z-40 max-w-7xl mx-auto w-full">
           <motion.div 
             initial={{ opacity: 0, y: 50 }} 
             whileInView={{ opacity: 1, y: 0 }} 
