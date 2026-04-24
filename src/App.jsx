@@ -11,6 +11,7 @@ function MechanicalCore({ isHovered }) {
   const gridSize = 4; // 4x4x4 = 64 high-poly cubes
   const count = gridSize ** 3;
 
+  // Pre-calculate positions for the snap effect
   const cubeData = useMemo(() => {
     const temp = [];
     let i = 0;
@@ -37,9 +38,40 @@ function MechanicalCore({ isHovered }) {
     return temp;
   }, []);
 
+  // NEW: Pre-calculate word drift fields
+  const textMotionData = useMemo(() => {
+    const names = ["SHIVANG", "ARCHITECTURE", "MERN STACK", "FULL-STACK"];
+    return names.map((name, i) => {
+      // Final structured orbit positions around the core (Large Orbit)
+      const phi = Math.PI / 2; // Fixed on the equator
+      const theta = (i / names.length) * (Math.PI * 2); // Spread around
+      const structuredPos = new THREE.Vector3().setFromSphericalCoords(9, phi, theta);
+
+      // Chaotic page-wide positions (Idle drift field)
+      const scatteredPos = new THREE.Vector3(
+        (Math.random() - 0.5) * 50, // Massive spread for 'page drift'
+        (Math.random() - 0.5) * 35,
+        (Math.random() - 0.5) * 25
+      );
+      
+      const structuredRot = new THREE.Euler(0, 0, 0); // HUD Facing camera
+      const scatteredRot = new THREE.Euler(
+        (Math.random() - 0.5) * Math.PI / 2,
+        (Math.random() - 0.5) * Math.PI,
+        0
+      );
+
+      return { name, structuredPos, scatteredPos, structuredRot, scatteredRot, speed: 0.1 + Math.random() * 0.2 };
+    });
+  }, []);
+
   const dummy = new THREE.Object3D();
   const currentPositions = useMemo(() => cubeData.map(d => d.randomPos.clone()), [cubeData]);
   const currentRotations = useMemo(() => cubeData.map(d => new THREE.Quaternion().setFromEuler(d.randomRot)), [cubeData]);
+  
+  const wordRefs = useRef([]);
+  const currentTextPositions = useMemo(() => textMotionData.map(d => d.scatteredPos.clone()), [textMotionData]);
+  const currentTextRotations = useMemo(() => textMotionData.map(d => new THREE.Quaternion().setFromEuler(d.scatteredRot)), [textMotionData]);
 
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
@@ -60,61 +92,73 @@ function MechanicalCore({ isHovered }) {
       meshRef.current.setMatrixAt(i, dummy.matrix);
     });
     meshRef.current.instanceMatrix.needsUpdate = true;
+
+    // Text Drift & Reaction Logic
+    textMotionData.forEach((data, i) => {
+        if (!wordRefs.current[i]) return;
+        const targetP = isHovered ? data.structuredPos : data.scatteredPos;
+        const targetR = isHovered ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.scatteredRot);
+
+        // Smooth drift lerping
+        currentTextPositions[i].lerp(targetP, isHovered ? 0.08 : 0.02);
+        currentTextRotations[i].slerp(targetR, isHovered ? 0.08 : 0.01);
+
+        wordRefs.current[i].position.copy(currentTextPositions[i]);
+        // Face camera on hover, chaotic rotate in idle
+        if (isHovered) {
+            wordRefs.current[i].lookAt(state.camera.position);
+        } else {
+            wordRefs.current[i].quaternion.copy(currentTextRotations[i]);
+        }
+        
+        // Add subtle drifting effect always
+        wordRefs.current[i].position.y += Math.sin(t * data.speed) * 0.005;
+        wordRefs.current[i].position.x += Math.cos(t * data.speed) * 0.005;
+    });
   });
 
   return (
     <group ref={groupRef} position={[2, 0, 0]}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        <meshStandardMaterial color="#080808" roughness={0.1} metalness={0.9} />
+        {/* NEW: Material updated for visibility (Dark Cyan Metal) and matches the theme */}
+        <meshStandardMaterial color={isHovered ? "#002222" : "#020202"} roughness={0.1} metalness={0.9} />
       </instancedMesh>
 
-      {/* REPLACED YELLOW BALL WITH INTERNAL POINT LIGHT FOR SEAM GLOW */}
+      {/* Point Light for Internal Glow (leak between seams) */}
       {isHovered && <pointLight intensity={15} color="#FF8C00" distance={8} />}
 
-      {/* 3D HUD INTERFACE */}
-      <HUDText position={[0, 4.5, 0]} text="SHIVANG" isVisible={isHovered} size={0.6} />
-      <HUDText position={[4.5, 0, 0]} text="ARCHITECTURE" isVisible={isHovered} />
-      <HUDText position={[-4.5, 0, 0]} text="MERN STACK" isVisible={isHovered} />
-      <HUDText position={[0, -4.5, 0]} text="FULL-STACK" isVisible={isHovered} />
+      {/* DYNAMIC HUW DRIFT WORDS */}
+      {textMotionData.map((data, i) => (
+        <HUDText key={i} ref={(el) => (wordRefs.current[i] = el)} text={data.name} isVisible={isHovered} size={data.name === "SHIVANG" ? 0.7 : 0.5} />
+      ))}
     </group>
   );
 }
 
-function HUDText({ position, text, isVisible, size = 0.4 }) {
-  const ref = useRef();
-  useFrame((state) => {
-    if (ref.current) {
-      ref.current.lookAt(state.camera.position);
-      // Subtle HUD shake
-      if (isVisible) {
-        ref.current.position.y += Math.sin(state.clock.elapsedTime * 2) * 0.001;
-      }
-    }
-  });
-  return (
-    <Text
-      ref={ref}
-      position={position}
-      fontSize={size}
-      font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf"
-      color="#00E5FF"
-      emissive="#00E5FF"
-      emissiveIntensity={isVisible ? 3 : 0}
-      transparent
-      opacity={isVisible ? 0.9 : 0}
-    >
-      {text}
-    </Text>
-  );
-}
+const HUDText = React.forwardRef(({ text, isVisible, size = 0.5 }, ref) => {
+    return (
+        <Text
+            ref={ref}
+            fontSize={size}
+            font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf"
+            color="white"
+            emissive={isVisible ? "#00E5FF" : "#11111a"}
+            emissiveIntensity={isVisible ? 3 : 0.5}
+            transparent
+            opacity={isVisible ? 0.9 : 0.3}
+        >
+            {text}
+        </Text>
+    );
+});
 
-// --- PROJECT DATA ---
+// --- DATA ---
 const projects = [
-  { title: "E-Commerce Microservices", desc: "Highly scalable backend utilizing Docker, Stripe API, and JWT authentication.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
+  { title: "E-Commerce Microservices", desc: "Highly scalable backend utilizing Docker containers, integrating Stripe API and JWT auth.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
   { title: "Movie Watchlist Web App", desc: "Full-stack application for tracking user media via RESTful APIs and NoSQL.", tags: ["MongoDB", "Express", "Node"], color: "#FF8C00" },
   { title: "Real-Time Collab Workspace", desc: "Live-syncing environment using WebSockets for real-time document editing.", tags: ["Socket.io", "Next.js", "Redis"], color: "#A855F7" },
-  { title: "Voice AI Chatbot", desc: "Emotion-aware chatbot integrating OpenAI and Voice APIs with a Node backend.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF" },
+  { title: "Voice AI Chatbot", desc: "Emotion-aware chatbot integrating OpenAI and Voice APIs.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF" },
   { title: "DevOps CI/CD Dashboard", desc: "Centralized command center for GitHub Actions and AWS deployment metrics.", tags: ["AWS", "Python", "GitHub"], color: "#FF8C00" },
   { title: "AI SaaS Image Generator", desc: "SaaS wrapping OpenAI API featuring user credits and asynchronous generation.", tags: ["Tailwind", "React", "DALL-E"], color: "#FF8C00" }
 ];
@@ -180,16 +224,16 @@ export default function App() {
         >
           <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1 }} className="flex flex-col items-start max-w-4xl z-40">
             <div className="mb-8 px-4 py-1.5 border border-[#00E5FF]/20 bg-[#00E5FF]/5 text-[#00E5FF] text-[10px] font-black tracking-[0.5em] uppercase">Architecture & Systems</div>
-            <h1 className="text-6xl sm:text-8xl md:text-[9.5rem] font-black text-white mb-6 tracking-tighter leading-[0.9]">Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Ayar.</span></h1>
+            <h1 className="text-6xl sm:text-8xl md:text-[9.5rem] font-black text-white mb-4 tracking-tighter leading-[0.9]">Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Ayar.</span></h1>
             <p className="text-lg md:text-2xl text-gray-400 mt-6 mb-12 font-light max-w-2xl border-l border-white/10 pl-8 leading-relaxed">Designing high-performance full-stack architectures and resilient digital ecosystems.</p>
             <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto">
-              <a href="#projects" className="bg-white text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-[#00E5FF] hover:text-white transition-all duration-500">Execute Builds</a>
+              <a href="#projects" className="bg-white text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-[#00E5FF] hover:text-white transition-all duration-500 shadow-xl">Execute Builds</a>
               <a href="/resume.pdf" target="_blank" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all duration-500">Resume ↓</a>
             </div>
           </motion.div>
         </section>
 
-        {/* ABOUT & JOURNEY (RESTORED SPLIT LAYOUT) */}
+        {/* ABOUT & JOURNEY */}
         <section id="about" className="max-w-7xl mx-auto px-6 py-40 w-full relative">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-5">
@@ -203,7 +247,7 @@ export default function App() {
             
             <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-7 space-y-12 border-l-2 border-[#00E5FF]/20 ml-4 relative">
               {[ {i:"🎓", y:"2024 - Present", t:"Algonquin College", p:"Advanced Diploma in Computer Programming. Enterprise focus.", c:"#00E5FF"},
-                 {i:"💻", y:"2021 - 2023", t:"Fraser International College", p:"Computer Science Pathway. Algorithmic foundations.", c:"#A855F7"}
+                 {i:"💻", y:"2021 - 2023", t:"Fraser International College", p:"Computer Science Pathway. specialized expertise in algorithm design.", c:"#A855F7"}
               ].map((step, idx) => (
                 <div key={idx} className="relative pl-12 group">
                   <div className={`absolute -left-[18px] top-2 w-8 h-8 rounded-full bg-[#030305] border flex items-center justify-center transition-all duration-500 shadow-[0_0_15px_rgba(0,229,255,0.2)]`} style={{ borderColor: step.c }}>{step.i}</div>
@@ -230,7 +274,7 @@ export default function App() {
                    { t: "Cloud & DevOps", i: "☁️", s: [{n: "Git / GitHub", v: "95%"}, {n: "AWS", v: "80%"}, {n: "Docker", v: "75%"}, {n: "CI/CD", v: "85%"}] }
                 ].map((card, idx) => (
                     <div key={idx} className="bg-[#0A0A12]/40 border border-white/5 p-10 rounded-3xl hover:border-[#00E5FF]/40 transition-all shadow-2xl group flex flex-col">
-                        <h3 className="text-xl font-black text-white mb-8 tracking-tighter uppercase flex items-center gap-4">
+                        <h3 className="text-xl font-bold text-white mb-8 tracking-tighter uppercase flex items-center gap-4">
                             <span className="text-2xl">{card.i}</span> {card.t}
                         </h3>
                         <div className="space-y-6 mt-auto">
@@ -248,7 +292,7 @@ export default function App() {
             </div>
         </section>
 
-        {/* PROJECTS (RESTORED 6 PROJECTS) */}
+        {/* PROJECTS */}
         <section id="projects" className="max-w-7xl mx-auto px-6 py-40">
             <h2 className="text-7xl font-black text-white mb-20 tracking-tighter text-right">System <span className="text-[#FF8C00]">Builds.</span></h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 [perspective:2000px]">
@@ -280,7 +324,7 @@ export default function App() {
                  {i:"🎮",t:"Logic",d:"Competitive strategy and hardware optimization."},
                  {i:"🌍",t:"Equilibrium",d:"Hiking and trail exploration to maintain technical focus."}
               ].map((h,x)=>(
-                <div key={x} className="bg-[#0A0A12]/40 border border-white/5 p-12 rounded-[2.5rem] text-center hover:border-white/20 transition-all shadow-2xl group">
+                <div key={x} className="bg-[#0A0A12]/40 backdrop-blur-xl border border-white/5 p-12 rounded-[2.5rem] text-center hover:border-white/20 transition-all shadow-2xl group">
                   <div className="text-7xl mb-8 grayscale opacity-20 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105">{h.i}</div>
                   <h3 className="text-xl font-black text-white mb-4 uppercase tracking-[0.3em]">{h.t}</h3>
                   <p className="text-gray-500 font-light leading-relaxed text-lg">{h.d}</p>
@@ -291,7 +335,7 @@ export default function App() {
 
         {/* TERMINAL FOOTER */}
         <footer id="contact" className="w-full py-60 flex items-center justify-center relative z-30">
-          <div className="max-w-5xl mx-auto px-6 pointer-events-auto flex flex-col items-center w-full">
+          <div className="max-w-5xl mx-auto px-6 flex flex-col items-center w-full">
             <div className="bg-[#010102]/80 backdrop-blur-3xl border border-white/10 p-16 md:p-24 rounded-[4rem] shadow-[0_0_100px_rgba(0,0,0,1)] text-center relative overflow-hidden group w-full">
               <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00] shadow-[0_0_20px_#00E5FF]" />
               <h2 className="text-6xl md:text-8xl font-black text-white mb-10 tracking-tighter leading-tight">Terminal <br/><span className="text-[#00E5FF]">Ready.</span></h2>
@@ -300,9 +344,9 @@ export default function App() {
                 <span className="text-[10px] font-black tracking-[0.5em] uppercase text-green-400">Secure Protocol Active</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                <a href="https://github.com" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all duration-500">GitHub</a>
-                <a href="https://linkedin.com" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all duration-500">LinkedIn</a>
-                <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#FF8C00] hover:text-black transition-all duration-500">Email</a>
+                <a href="https://github.com" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all duration-500 hover:-translate-y-2">GitHub</a>
+                <a href="https://linkedin.com" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all duration-500 hover:-translate-y-2">LinkedIn</a>
+                <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#FF8C00] hover:text-black transition-all duration-500 hover:-translate-y-2">Email</a>
               </div>
             </div>
             <p className="mt-32 text-center text-[11px] font-black tracking-[0.8em] text-gray-700 uppercase">© 2026 SHIVANG AYAR. ARCHITECTED WITH INTENT.</p>
