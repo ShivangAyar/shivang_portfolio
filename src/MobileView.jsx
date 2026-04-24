@@ -4,7 +4,7 @@ import { ContactShadows, PerspectiveCamera, Environment } from '@react-three/dre
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- CUSTOM HACKER LOADING PROTOCOL ---
+// --- CUSTOM AESTHETIC LOADING PROTOCOL ---
 const LoadingScreen = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
 
@@ -23,12 +23,20 @@ const LoadingScreen = ({ onComplete }) => {
   }, [onComplete]);
 
   return (
-    <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center">
-      <div className="w-full max-w-xs space-y-8">
+    <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
+      
+      {/* Animated Background */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,229,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,229,255,0.05)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_40%,transparent_100%)] opacity-40" />
+        <motion.div animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} className="absolute top-[-20%] left-[-10%] w-[80%] h-[60%] bg-[#00E5FF] rounded-full blur-[120px]" />
+        <motion.div animate={{ scale: [1, 1.3, 1], rotate: [0, -90, 0], opacity: [0.1, 0.4, 0.1] }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} className="absolute bottom-[-20%] right-[-10%] w-[80%] h-[60%] bg-[#7B61FF] rounded-full blur-[120px]" />
+      </div>
+
+      <div className="w-full max-w-xs space-y-8 relative z-10">
         <h2 className="text-[#00E5FF] font-mono text-2xl tracking-[0.2em] font-black uppercase flex items-center justify-center gap-2">
           <span>&lt;/&gt;</span> Shivang Ayar
         </h2>
-        <div className="h-[1.5px] w-full bg-white/5 rounded-full overflow-hidden">
+        <div className="h-[1.5px] w-full bg-white/5 rounded-full overflow-hidden shadow-[0_0_20px_rgba(0,229,255,0.2)]">
           <motion.div className="h-full bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" style={{ width: progress + "%" }} />
         </div>
         <p className="text-gray-400 font-black text-[10px] tracking-widest uppercase leading-relaxed">
@@ -39,7 +47,7 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (With Enhanced Background Glow) ---
+// --- MECHANICAL SNAP CORE (Original Colors + Visibility Fix) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
@@ -98,8 +106,8 @@ function MechanicalCore({ scrollY }) {
           color={isActive ? "#002222" : "#020202"} 
           roughness={0.1} 
           metalness={0.9} 
-          emissive={isActive ? "#000000" : "#00E5FF"}
-          emissiveIntensity={isActive ? 0 : 0.15}
+          emissive={isActive ? "#000000" : "#2a3a3a"}
+          emissiveIntensity={isActive ? 0 : 0.4}
         />
       </instancedMesh>
       {isActive && <pointLight intensity={25} color="#FF8C00" distance={15} />}
@@ -231,6 +239,13 @@ const achievements = [
   { icon: "🎓", title: "Academic Excellence", desc: "Maintaining top-tier academic performance while architecting enterprise-grade applications." }
 ];
 
+const timelineData = [
+  {i: "🎓", y: "2024 - Present", t: "Adv. Dip. Computer Programming & Analysis", s: "Algonquin College", d: "Architecting enterprise-level APIs, full-stack applications, and object-oriented systems.", c: "#00E5FF"},
+  {i: "💻", y: "2022 - Present", t: "Full-Stack Developer", s: "Freelance", d: "Building scalable web architectures, custom financial trackers, and dynamic UI systems for clients.", c: "#00E5FF"},
+  {i: "📚", y: "2021 - 2023", t: "Computer Science Pathway", s: "Fraser International College", d: "Established a rigorous foundation in algorithm design, data structures, and computational logic.", c: "#7B61FF"},
+  {i: "🚀", y: "2026 Onwards", t: "Systems Architect", s: "The Next Chapter", d: "Building the next generation of resilient digital platforms. The future awaits!", c: "#7B61FF"}
+];
+
 export default function MobileView() {
   const [isLoading, setIsLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -253,7 +268,7 @@ export default function MobileView() {
 
       <AnimatePresence>{isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}</AnimatePresence>
       
-      {/* 3D BACKGROUND */}
+      {/* 3D BACKGROUND (Stays fixed) */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <Canvas dpr={[1, 2]}>
           <color attach="background" args={['#010102']} />
@@ -295,7 +310,7 @@ export default function MobileView() {
 
               <div className="flex flex-col gap-8 text-center relative z-10 w-full max-w-sm">
                 <div className="text-[#00E5FF] font-mono text-xs tracking-[0.5em] uppercase mb-4 opacity-50">System Navigation</div>
-                {['About', 'Achievements', 'Skills', 'Builds'].map((t, i) => (
+                {['About', 'Skills', 'Achievements', 'Builds', 'Offline'].map((t, i) => (
                   <motion.a 
                     key={t} 
                     href={`#${t.toLowerCase()}`} 
@@ -368,49 +383,35 @@ export default function MobileView() {
           </motion.div>
         </section>
 
-        {/* ABOUT ME */}
+        {/* ABOUT ME & TIMELINE */}
         <section id="about" className="px-6 py-32 flex flex-col gap-10"><div className="w-full text-left">
           <h2 className="text-5xl font-black text-white mb-8 tracking-tighter uppercase">About <span className="text-[#00E5FF]">Me.</span></h2>
           <p className="text-gray-400 text-lg font-light leading-relaxed">
             Currently pursuing a degree in Computer Programming and translating the skills learned so far into practical, real-world applications. My approach to engineering is purely objective: Build, Optimize, and Master.
           </p>
-        </div></section>
-
+        </div>
+        
         {/* TIMELINE */}
-        <section className="px-6 py-10 space-y-12 border-l-2 border-[#00E5FF]/20 ml-2">
-          {[{y:"2024 - PRES", t:"Algonquin College", d:"Computer Programming and Analysis."},
-            {y:"2021 - 2023", t:"Fraser International College", d:"Computer Science Pathway."}].map((item, idx) => (
-            <div key={idx} className="relative pl-10"><div className={`absolute -left-[11px] top-2 w-5 h-5 rounded-full shadow-[0_0_15px_#00E5FF] ${idx === 0 ? 'bg-[#00E5FF]' : 'bg-purple-500'}`} />
-              <div className="bg-[#0A0A15]/80 backdrop-blur-xl p-8 rounded-[3rem] border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.8)]"><span className="text-[10px] font-black text-gray-500 tracking-[0.3em]">{item.y}</span><h3 className="text-xl font-black text-white mt-4 tracking-tight">{item.t}</h3><p className="text-gray-400 text-sm mt-4 font-light leading-relaxed">{item.d}</p></div>
-            </div>
-          ))}
-        </section>
-
-        {/* TECH STACK & ACHIEVEMENTS */}
-        <section id="achievements" className="px-6 py-32 w-full relative z-30">
-          <div className="mb-24">
-             <h3 className="text-3xl font-black text-white text-center mb-8 uppercase tracking-widest">Tech <span className="text-[#00E5FF]">Stack</span></h3>
-             <div className="flex flex-wrap justify-center gap-3">
-                {techStack.map((tech, i) => (
-                   <span key={i} className="px-5 py-2.5 rounded-full bg-white/[0.03] border border-white/10 text-gray-300 text-xs font-bold tracking-wider shadow-lg">{tech}</span>
-                ))}
-             </div>
+        <div className="relative pl-10 md:pl-16 mt-8">
+          <div className="absolute left-[19px] md:left-[31px] top-6 bottom-6 w-[2px] bg-gradient-to-b from-[#00E5FF] via-[#7B61FF] to-transparent opacity-40" />
+          <div className="space-y-12">
+            {timelineData.map((item, idx) => (
+              <div key={idx} className="relative group">
+                <div className="absolute -left-[45px] md:-left-[58px] top-6 w-10 h-10 rounded-full bg-[#010102] border-2 flex items-center justify-center z-10 transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(0,229,255,0.4)]" style={{ borderColor: item.c }}>
+                  <span className="text-sm">{item.i}</span>
+                </div>
+                <div className="bg-[#0A0A15]/80 backdrop-blur-xl p-8 rounded-3xl border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.8)] transition-all hover:border-white/30">
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-xl font-bold text-white tracking-tight">{item.t}</h3>
+                      <span className="text-[10px] font-bold text-gray-500 tracking-[0.2em] uppercase border border-white/10 px-3 py-1 rounded-full">{item.y}</span>
+                    </div>
+                    <h4 className="text-xs font-bold tracking-widest uppercase mb-4" style={{ color: item.c }}>{item.s}</h4>
+                    <p className="text-gray-400 text-sm font-light leading-relaxed">{item.d}</p>
+                </div>
+              </div>
+            ))}
           </div>
-
-          <div>
-             <h3 className="text-3xl font-black text-white text-center mb-10 uppercase tracking-widest">Key <span className="text-[#FF8C00]">Achievements</span></h3>
-             <div className="grid grid-cols-1 gap-6">
-                {achievements.map((ach, i) => (
-                   <div key={i} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-6 rounded-3xl flex items-start gap-5 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
-                      <div className="text-3xl">{ach.icon}</div>
-                      <div>
-                         <h4 className="text-lg font-bold text-white mb-2 leading-tight">{ach.title}</h4>
-                         <p className="text-gray-400 text-sm leading-relaxed">{ach.desc}</p>
-                      </div>
-                   </div>
-                ))}
-             </div>
-          </div>
+        </div>
         </section>
 
         {/* COMPETENCIES */}
@@ -426,6 +427,33 @@ export default function MobileView() {
           <CompCard title="Databases" icon="🗄️" skills={[{n:"MongoDB",v:"85%"},{n:"MySQL",v:"90%"},{n:"PostgreSQL",v:"75%"}]} />
           <CompCard title="Analytics" icon="📊" skills={[{n:"Power BI",v:"90%"},{n:"DAX",v:"85%"},{n:"Star Schema",v:"85%"}]} />
           <CompCard title="DevOps" icon="☁️" skills={[{n:"Git / GitHub",v:"95%"},{n:"AWS",v:"80%"},{n:"Docker",v:"75%"}]} />
+        </section>
+
+        {/* TECH STACK & ACHIEVEMENTS */}
+        <section id="achievements" className="px-6 py-32 w-full relative z-30">
+          <div className="mb-24">
+             <h3 className="text-3xl font-black text-white text-center mb-10 uppercase tracking-widest">Tech <span className="text-[#00E5FF]">Stack</span></h3>
+             <div className="flex flex-wrap justify-center gap-3">
+                {techStack.map((tech, i) => (
+                   <span key={i} className="px-5 py-2.5 rounded-full bg-white/[0.03] border border-white/10 text-gray-300 text-xs font-bold tracking-wider shadow-lg">{tech}</span>
+                ))}
+             </div>
+          </div>
+
+          <div>
+             <h3 className="text-3xl font-black text-white text-center mb-12 uppercase tracking-widest">Key <span className="text-[#FF8C00]">Achievements</span></h3>
+             <div className="grid grid-cols-1 gap-6">
+                {achievements.map((ach, i) => (
+                   <div key={i} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-6 rounded-3xl flex items-start gap-5 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
+                      <div className="text-3xl">{ach.icon}</div>
+                      <div>
+                         <h4 className="text-lg font-bold text-white mb-2 leading-tight">{ach.title}</h4>
+                         <p className="text-gray-400 text-sm leading-relaxed">{ach.desc}</p>
+                      </div>
+                   </div>
+                ))}
+             </div>
+          </div>
         </section>
 
         {/* SYSTEM BUILDS */}

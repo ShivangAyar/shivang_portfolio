@@ -4,7 +4,7 @@ import { ContactShadows, PerspectiveCamera, Environment } from '@react-three/dre
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- CUSTOM HACKER LOADING PROTOCOL ---
+// --- CUSTOM AESTHETIC LOADING PROTOCOL ---
 const LoadingScreen = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
 
@@ -23,12 +23,20 @@ const LoadingScreen = ({ onComplete }) => {
   }, [onComplete]);
 
   return (
-    <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center">
-      <div className="w-full max-w-md space-y-8">
+    <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
+      
+      {/* --- AESTHETIC BACKGROUND ANIMATION --- */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,229,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,229,255,0.05)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_40%,transparent_100%)] opacity-40" />
+        <motion.div animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-[#00E5FF] rounded-full blur-[140px]" />
+        <motion.div animate={{ scale: [1, 1.3, 1], rotate: [0, -90, 0], opacity: [0.1, 0.4, 0.1] }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-[#7B61FF] rounded-full blur-[140px]" />
+      </div>
+
+      <div className="w-full max-w-md space-y-8 relative z-10">
         <h2 className="text-[#00E5FF] font-mono text-3xl tracking-[0.2em] font-black uppercase flex items-center justify-center gap-3">
           <span>&lt;/&gt;</span> Shivang Ayar
         </h2>
-        <div className="h-[2px] w-full bg-white/5 rounded-full overflow-hidden">
+        <div className="h-[2px] w-full bg-white/5 rounded-full overflow-hidden shadow-[0_0_20px_rgba(0,229,255,0.2)]">
           <motion.div className="h-full bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" style={{ width: progress + "%" }} />
         </div>
         <p className="text-gray-400 font-black text-sm tracking-widest uppercase leading-relaxed">
@@ -39,7 +47,7 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (With Enhanced Background Glow) ---
+// --- MECHANICAL SNAP CORE (Dark Colors + Visibility Fix) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
@@ -55,7 +63,7 @@ function MechanicalCore({ scrollY }) {
       for (let y = 0; y < gridSize; y++) {
         for (let z = 0; z < gridSize; z++) {
           const targetPos = new THREE.Vector3(x - 1.5, y - 1.5, z - 1.5).multiplyScalar(1.05);
-          const randomPos = new THREE.Vector3((Math.random() - 0.5) * 45, (Math.random() - 0.5) * 35, (Math.random() - 0.5) * 20);
+          const randomPos = new THREE.Vector3((Math.random() - 0.5) * 60, (Math.random() - 0.5) * 45, (Math.random() - 0.5) * 20);
           const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
           temp.push({ targetPos, randomPos, randomRot, index: i++ });
         }
@@ -96,13 +104,13 @@ function MechanicalCore({ scrollY }) {
     <group ref={groupRef} position={[0, 0, 0]}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        {/* Subtle Edge Glow added so cubes are visible in the background without changing their core obsidian color */}
+        {/* Dark base but with a faint cool-gray reflection so they don't glow cyan, but remain visible */}
         <meshStandardMaterial 
           color={isActive ? "#002222" : "#020202"} 
           roughness={0.1} 
           metalness={0.9} 
-          emissive={isActive ? "#000000" : "#00E5FF"}
-          emissiveIntensity={isActive ? 0 : 0.15}
+          emissive={isActive ? "#000000" : "#2a3a3a"}
+          emissiveIntensity={isActive ? 0 : 0.4}
         />
       </instancedMesh>
       {isActive && <pointLight intensity={30} color="#FF8C00" distance={20} />}
@@ -239,6 +247,13 @@ const achievements = [
   { icon: "🎓", title: "Academic Excellence", desc: "Maintaining top-tier academic performance while architecting enterprise-grade applications." }
 ];
 
+const timelineData = [
+  {i: "🎓", y: "2024 - Present", t: "Adv. Dip. Computer Programming & Analysis", s: "Algonquin College", d: "Architecting enterprise-level APIs, full-stack applications, and object-oriented systems.", c: "#00E5FF"},
+  {i: "💻", y: "2022 - Present", t: "Full-Stack Developer", s: "Freelance", d: "Building scalable web architectures, custom financial trackers, and dynamic UI systems for clients.", c: "#00E5FF"},
+  {i: "📚", y: "2021 - 2023", t: "Computer Science Pathway", s: "Fraser International College", d: "Established a rigorous foundation in algorithm design, data structures, and computational logic.", c: "#7B61FF"},
+  {i: "🚀", y: "2026 Onwards", t: "Systems Architect", s: "The Next Chapter", d: "Building the next generation of resilient digital platforms. The future awaits!", c: "#7B61FF"}
+];
+
 export default function DesktopView() {
   const [isLoading, setIsLoading] = useState(true);
   const [scrollY, setScrollY] = useState(0);
@@ -267,7 +282,7 @@ export default function DesktopView() {
         <Canvas dpr={[1, 2]}>
           <color attach="background" args={['#010102']} />
           <PerspectiveCamera makeDefault position={[0, 0, 18]} fov={40} />
-          <ambientLight intensity={2} />
+          <ambientLight intensity={1.5} />
           <Environment preset="night" />
           <MechanicalCore scrollY={scrollY} />
           <ContactShadows position={[0, -10, 0]} opacity={0.4} scale={50} blur={2.5} color="#00E5FF" />
@@ -275,16 +290,16 @@ export default function DesktopView() {
       </div>
 
       <div className="relative z-30 w-full flex flex-col">
-        {/* PREMIUM NAVBAR */}
+        {/* PREMIUM DESKTOP NAVBAR */}
         <nav className="fixed top-0 left-0 w-full z-[100] bg-[#010102]/60 backdrop-blur-3xl border-b border-white/5 h-24 flex items-center justify-between px-10">
           <div className="text-2xl font-black text-white cursor-pointer flex items-center" onClick={() => window.scrollTo(0,0)}>
             <span className="text-[#00E5FF] font-mono mr-3 tracking-tighter">&lt;/&gt;</span>
             SHIVANG<span className="text-[#00E5FF]">.</span>
           </div>
-          <div className="hidden md:flex gap-10 items-center">
+          <div className="hidden md:flex gap-8 items-center">
             <NavLink href="#about">Journey</NavLink>
-            <NavLink href="#achievements">Milestones</NavLink>
             <NavLink href="#skills">Competencies</NavLink>
+            <NavLink href="#achievements">Milestones</NavLink>
             <NavLink href="#projects">Builds</NavLink>
             <NavLink href="#contact">Connect</NavLink>
           </div>
@@ -317,86 +332,65 @@ export default function DesktopView() {
             <div className="inline-block px-5 py-2 rounded-full border border-[#00E5FF]/30 bg-[#00E5FF]/10 text-[#00E5FF] text-[11px] font-bold tracking-widest mb-8 shadow-[0_0_15px_rgba(0,229,255,0.15)] backdrop-blur-md">
               HELLO WORLD 👋
             </div>
-            <h1 className="text-7xl md:text-9xl font-black text-white mb-4 tracking-tighter uppercase leading-none">
-              Hey, I'm <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Shivang.</span>
+            <h1 className="text-8xl md:text-[9rem] font-black text-white mb-6 tracking-tighter uppercase leading-[0.85]">
+              Hey, I'm <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Shivang.</span>
             </h1>
-            <h2 className="text-3xl md:text-5xl font-bold text-gray-300 mb-8 tracking-tight">Full-Stack Architect</h2>
+            <h2 className="text-4xl font-bold text-gray-300 mb-8 tracking-tight">Full-Stack Architect</h2>
             
-            <p className="text-xl md:text-2xl text-gray-400 max-w-3xl font-light leading-relaxed mb-6 border-l-2 border-[#FF8C00] pl-8">
+            <p className="text-2xl text-gray-400 mt-6 mb-8 font-light max-w-2xl border-l-2 border-[#FF8C00] pl-8 leading-relaxed">
               A Computer Programming student at Algonquin College specializing in building scalable web apps, robust APIs, and immersive digital experiences. If it involves code, I'm in.
             </p>
             <p className="text-[#00E5FF] font-medium tracking-widest uppercase text-sm mb-12 pl-8">Whatever you imagine, I can build it.</p>
-            
+
             <div className="flex gap-6 pl-8">
               <a href="#projects" className="bg-[#00E5FF] text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all shadow-[0_0_20px_rgba(0,229,255,0.4)] rounded-xl">Explore Builds</a>
-              <a href="/resume.pdf" target="_blank" className="bg-white/5 border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white/10 hover:text-white transition-all rounded-xl">Resume ↓</a>
+              <a href="/resume.pdf" target="_blank" className="bg-white/5 border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all rounded-xl">Resume ↓</a>
             </div>
           </motion.div>
         </section>
 
-        {/* ABOUT & JOURNEY */}
+        {/* ABOUT & JOURNEY TIMELINE */}
         <section id="about" className="max-w-7xl mx-auto px-10 py-40 w-full relative">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
-            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-5">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
+            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-5 sticky top-40">
               <h2 className="text-6xl font-black text-white mb-10 tracking-tighter uppercase">About <span className="text-[#00E5FF]">Me.</span></h2>
               <p className="text-gray-400 mb-10 text-xl font-light leading-relaxed">
                 Currently pursuing a degree in Computer Programming and translating the skills learned so far into practical, real-world applications. My approach to engineering is purely objective: Build, Optimize, and Master.
               </p>
             </motion.div>
             
-            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-7 space-y-12 border-l-2 border-[#00E5FF]/20 ml-4 relative">
-              {[ 
-                {i:"🎓", y:"2024 - PRES", t:"Algonquin College", p:"Computer Programming and Analysis.", c:"#00E5FF"},
-                {i:"💻", y:"2021 - 2023", t:"Fraser International College", p:"Computer Science Pathway.", c:"#A855F7"}
-              ].map((step, idx) => (
-                <div key={idx} className="relative pl-12 group">
-                  <div className={`absolute -left-[18px] top-2 w-8 h-8 rounded-full bg-[#030305] border flex items-center justify-center transition-all duration-500 shadow-[0_0_15px_rgba(0,229,255,0.2)]`} style={{ borderColor: step.c }}>{step.i}</div>
-                  <div className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-10 rounded-3xl transition-all hover:border-white/30 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
-                    <span className="text-[10px] font-black uppercase tracking-[0.4em]" style={{ color: step.c }}>{step.y}</span>
-                    <h3 className="text-2xl font-bold text-white mt-4 tracking-tight">{step.t}</h3>
-                    <p className="text-gray-400 text-base mt-4 font-light leading-relaxed">{step.p}</p>
+            <div className="lg:col-span-7 relative mt-16">
+              {/* Vertical Line */}
+              <div className="absolute left-[31px] top-6 bottom-6 w-[2px] bg-gradient-to-b from-[#00E5FF] via-[#7B61FF] to-transparent opacity-40" />
+              
+              <div className="space-y-12 pl-20">
+                {timelineData.map((item, idx) => (
+                  <div key={idx} className="relative group">
+                    <div className="absolute -left-[69px] top-6 w-10 h-10 rounded-full bg-[#010102] border-2 flex items-center justify-center z-10 transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(0,229,255,0.4)]" style={{ borderColor: item.c }}>
+                      <span className="text-sm">{item.i}</span>
+                    </div>
+                    <div className="bg-[#0A0A15]/80 backdrop-blur-xl p-10 rounded-3xl border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.8)] transition-all hover:border-white/30">
+                        <div className="flex justify-between items-center mb-2">
+                          <h3 className="text-2xl font-bold text-white tracking-tight">{item.t}</h3>
+                          <span className="text-[10px] font-bold text-gray-500 tracking-[0.2em] uppercase border border-white/10 px-3 py-1 rounded-full">{item.y}</span>
+                        </div>
+                        <h4 className="text-sm font-bold tracking-widest uppercase mb-4" style={{ color: item.c }}>{item.s}</h4>
+                        <p className="text-gray-400 text-base font-light leading-relaxed">{item.d}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </motion.div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
-        {/* TECH STACK & ACHIEVEMENTS */}
-        <section id="achievements" className="max-w-7xl mx-auto px-10 py-32 w-full relative z-30">
-          <div className="mb-24">
-             <h3 className="text-3xl font-black text-white text-center mb-8 uppercase tracking-widest">Tech <span className="text-[#00E5FF]">Stack</span></h3>
-             <div className="flex flex-wrap justify-center gap-4 max-w-5xl mx-auto">
-                {techStack.map((tech, i) => (
-                   <span key={i} className="px-6 py-3 rounded-full bg-white/[0.03] border border-white/10 text-gray-300 text-sm font-bold tracking-wider hover:border-[#00E5FF]/50 hover:text-white transition-all cursor-default shadow-lg">{tech}</span>
-                ))}
-             </div>
-          </div>
-
-          <div>
-             <h3 className="text-3xl font-black text-white text-center mb-12 uppercase tracking-widest">Key <span className="text-[#FF8C00]">Achievements</span></h3>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {achievements.map((ach, i) => (
-                   <div key={i} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-8 rounded-3xl flex items-start gap-6 hover:bg-white/[0.03] transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
-                      <div className="text-4xl">{ach.icon}</div>
-                      <div>
-                         <h4 className="text-xl font-bold text-white mb-2">{ach.title}</h4>
-                         <p className="text-gray-400 text-sm leading-relaxed">{ach.desc}</p>
-                      </div>
-                   </div>
-                ))}
-             </div>
-          </div>
-        </section>
-
-        {/* COMPETENCIES */}
+        {/* COMPETENCIES (HOVER REACTIVE) */}
         <section id="skills" className="max-w-7xl mx-auto px-10 py-32 w-full">
             <div className="flex flex-col items-center mb-20 text-center">
               <h2 className="text-7xl font-black text-white tracking-tighter uppercase">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
               <p className="text-gray-400 mt-6 max-w-2xl text-xl font-light">A comprehensive overview of my technical skills, tools, and technologies I work with to bring ideas to life.</p>
               <div className="h-[3px] w-24 bg-gradient-to-r from-[#00E5FF] to-[#7B61FF] mt-8 rounded-full" />
             </div>
-            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 <CompCard title="Languages" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"}]} />
                 <CompCard title="Frontend Dev" icon="🖥️" skills={[{n:"React.js",v:"90%"},{n:"HTML5/CSS3",v:"95%"},{n:"Tailwind",v:"85%"}]} />
@@ -405,6 +399,33 @@ export default function DesktopView() {
                 <CompCard title="Analytics" icon="📊" skills={[{n:"Power BI",v:"90%"},{n:"DAX",v:"85%"},{n:"Star Schema",v:"85%"}]} />
                 <CompCard title="DevOps" icon="☁️" skills={[{n:"Git / GitHub",v:"95%"},{n:"AWS",v:"80%"},{n:"Docker",v:"75%"}]} />
             </div>
+        </section>
+
+        {/* TECH STACK & ACHIEVEMENTS */}
+        <section id="achievements" className="max-w-7xl mx-auto px-10 py-32 w-full relative z-30">
+          <div className="mb-24">
+             <h3 className="text-4xl font-black text-white text-center mb-10 uppercase tracking-widest">Tech <span className="text-[#00E5FF]">Stack</span></h3>
+             <div className="flex flex-wrap justify-center gap-4 max-w-5xl mx-auto">
+                {techStack.map((tech, i) => (
+                   <span key={i} className="px-6 py-3 rounded-full bg-white/[0.03] border border-white/10 text-gray-300 text-sm font-bold tracking-wider hover:border-[#00E5FF]/50 hover:text-white transition-all cursor-default shadow-lg">{tech}</span>
+                ))}
+             </div>
+          </div>
+
+          <div>
+             <h3 className="text-4xl font-black text-white text-center mb-12 uppercase tracking-widest">Key <span className="text-[#FF8C00]">Achievements</span></h3>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {achievements.map((ach, i) => (
+                   <div key={i} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-8 rounded-3xl flex items-start gap-6 hover:bg-white/[0.03] transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] group">
+                      <div className="text-5xl group-hover:scale-110 transition-transform">{ach.icon}</div>
+                      <div>
+                         <h4 className="text-xl font-bold text-white mb-2">{ach.title}</h4>
+                         <p className="text-gray-400 text-base leading-relaxed">{ach.desc}</p>
+                      </div>
+                   </div>
+                ))}
+             </div>
+          </div>
         </section>
 
         {/* PROJECTS */}
@@ -419,14 +440,14 @@ export default function DesktopView() {
                 {projectsData.map((p, i) => (
                     <motion.div 
                         key={i} 
-                        className="bg-[#0A0A15]/80 backdrop-blur-xl p-12 rounded-[2.5rem] border border-white/10 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col group cursor-pointer min-h-[420px]"
+                        className="bg-[#0A0A15]/80 backdrop-blur-xl p-12 rounded-[2.5rem] border border-white/10 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col group cursor-pointer min-h-[400px]"
                         whileHover={{ y: -15, rotateX: -4, rotateY: 4, borderColor: `${p.color}50`, boxShadow: `0 30px 60px ${p.color}20` }}
                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
                         <div className="absolute top-0 right-0 w-48 h-48 rounded-bl-full opacity-5 group-hover:opacity-20 transition-all duration-700" style={{ background: p.color }}></div>
                         
                         <div className="flex items-center gap-4 mb-6">
-                            <span className="text-3xl relative z-10">{p.icon}</span>
+                            <span className="text-4xl relative z-10">{p.icon}</span>
                             <h3 className="text-2xl font-bold text-white leading-tight tracking-tighter uppercase relative z-10">{p.title}</h3>
                         </div>
                         
@@ -434,7 +455,7 @@ export default function DesktopView() {
                         
                         <div className="flex flex-wrap gap-2 mt-8 relative z-10">
                             {p.tags.map((tag, tIdx) => (
-                                <span key={tIdx} className="text-[10px] font-black border border-white/10 px-4 py-2 rounded-full uppercase text-gray-400 group-hover:text-white transition-colors">{tag}</span>
+                                <span key={tIdx} className="text-[10px] font-black border border-white/10 px-5 py-2 rounded-full uppercase text-gray-400 group-hover:text-white transition-colors">{tag}</span>
                             ))}
                         </div>
 
@@ -474,6 +495,7 @@ export default function DesktopView() {
         </section>
 
         <ReactiveFooter />
+
       </div>
     </div>
   );
