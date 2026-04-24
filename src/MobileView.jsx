@@ -39,7 +39,7 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (Cinematic Intro & Scroll Disperse) ---
+// --- MECHANICAL SNAP CORE (Untouched - Perfect Mobile Version) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
@@ -100,7 +100,7 @@ function MechanicalCore({ scrollY }) {
   );
 }
 
-// --- DESKTOP SLIDER BARS (Continuous Gradient) ---
+// --- MOBILE SLIDER BARS (Scroll Reactive) ---
 const CompCard = ({ title, icon, skills }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { amount: 0.3, once: false });
@@ -199,14 +199,14 @@ const ReactiveFooter = () => {
   );
 };
 
-// --- FULL PROJECTS DATA ---
+// --- SIMPLIFIED PROJECTS DATA ---
 const projectsData = [
-  { title: "E-Commerce Microservices", desc: "Scaleable backend utilizing Docker, Stripe API, and JWT auth.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
-  { title: "Movie Watchlist App", desc: "Full-stack media tracker via RESTful APIs and NoSQL architecture.", tags: ["MongoDB", "Express", "Node"], color: "#FF8C00" },
-  { title: "Real-Time Collab Workspace", desc: "Live-syncing environment using WebSockets for real-time editing.", tags: ["Socket.io", "Next.js", "Redis"], color: "#A855F7" },
-  { title: "Voice AI Chatbot", desc: "Emotion-aware chatbot integrating OpenAI and Voice APIs.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF" },
-  { title: "DevOps CI/CD Dashboard", desc: "Command center for GitHub Actions and AWS deployment metrics.", tags: ["AWS", "Python", "GitHub"], color: "#FF8C00" },
-  { title: "AI SaaS Image Generator", desc: "SaaS wrapping OpenAI featuring user credits and async generation.", tags: ["Tailwind", "React", "DALL-E"], color: "#FF8C00" }
+  { title: "E-Commerce Microservices", desc: "A scalable backend system for an online store, handling secure payments and managing user accounts smoothly.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
+  { title: "Movie Watchlist App", desc: "A full-stack web platform where users can search, add, and track their favorite movies using a custom database.", tags: ["MongoDB", "Express", "Node"], color: "#FF8C00" },
+  { title: "Real-Time Collab Workspace", desc: "A live document-editing platform where multiple users can type and collaborate at the exact same time.", tags: ["Socket.io", "Next.js", "Redis"], color: "#A855F7" },
+  { title: "Voice AI Chatbot", desc: "An intelligent chatbot you can speak to, built with AI to understand and respond naturally to human emotions.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF" },
+  { title: "DevOps CI/CD Dashboard", desc: "A control center that automatically tests and deploys code updates to live servers without breaking the site.", tags: ["AWS", "Python", "GitHub"], color: "#FF8C00" },
+  { title: "AI SaaS Image Generator", desc: "A subscription website where users can generate custom images using AI by spending purchased credits.", tags: ["Tailwind", "React", "DALL-E"], color: "#FF8C00" }
 ];
 
 export default function MobileView() {
@@ -232,7 +232,7 @@ export default function MobileView() {
 
       <AnimatePresence>{isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}</AnimatePresence>
       
-      {/* 3D BACKGROUND */}
+      {/* 3D BACKGROUND (Stays fixed) */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <Canvas dpr={[1, 2]}>
           <color attach="background" args={['#010102']} />
@@ -268,7 +268,6 @@ export default function MobileView() {
             >
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#00E5FF]/10 via-transparent to-transparent pointer-events-none" />
               
-              {/* Menu Close Button */}
               <button onClick={() => setIsMenuOpen(false)} className="absolute top-6 right-6 text-white p-3 bg-white/5 hover:bg-[#00E5FF] hover:text-black transition-colors rounded-full border border-white/10 z-50">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
@@ -344,13 +343,15 @@ export default function MobileView() {
         {/* ABOUT ME */}
         <section id="about" className="px-6 py-32 flex flex-col gap-10"><div className="w-full text-left">
           <h2 className="text-5xl font-black text-white mb-8 tracking-tighter uppercase">About <span className="text-[#00E5FF]">Me.</span></h2>
-          <p className="text-gray-400 text-lg font-light leading-relaxed">Born and raised in Zambia, now operating in Ottawa. My approach to engineering is purely objective: Build, Optimize, and Master.</p>
+          <p className="text-gray-400 text-lg font-light leading-relaxed">
+            Currently pursuing a degree in Computer Programming and translating the skills learned so far into practical, real-world applications. My approach to engineering is purely objective: Build, Optimize, and Master.
+          </p>
         </div></section>
 
         {/* TIMELINE */}
         <section className="px-6 py-10 space-y-12 border-l-2 border-[#00E5FF]/20 ml-2">
-          {[{y:"2024 - PRES", t:"Algonquin College", d:"Advanced Diploma in Computer Programming. Enterprise focus."},
-            {y:"2021 - 2023", t:"Fraser International College", d:"Computer Science Pathway. Specialized algorithm design."}].map((item, idx) => (
+          {[{y:"2024 - PRES", t:"Algonquin College", d:"Computer Programming and Analysis."},
+            {y:"2021 - 2023", t:"Fraser International College", d:"Computer Science Pathway."}].map((item, idx) => (
             <div key={idx} className="relative pl-10"><div className={`absolute -left-[11px] top-2 w-5 h-5 rounded-full shadow-[0_0_15px_#00E5FF] ${idx === 0 ? 'bg-[#00E5FF]' : 'bg-purple-500'}`} />
               <div className="bg-[#0A0A15]/80 backdrop-blur-xl p-8 rounded-[3rem] border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.8)]"><span className="text-[10px] font-black text-gray-500 tracking-[0.3em]">{item.y}</span><h3 className="text-xl font-black text-white mt-4 tracking-tight">{item.t}</h3><p className="text-gray-400 text-sm mt-4 font-light leading-relaxed">{item.d}</p></div>
             </div>
