@@ -4,52 +4,60 @@ import { Float, Text, ContactShadows, Points, PointMaterial, Edges, PerspectiveC
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- THE NEURAL REACTOR CORE (Assembling Logic) ---
-function NeuralReactor({ isHovered }) {
+// --- THE FUSION REACTOR (Assembling Logic) ---
+function FusionReactor({ isHovered }) {
   const groupRef = useRef();
-  const shardCount = 60; // Increased density for "closed core" feeling
+  const shardCount = 50; 
   
   const shards = useMemo(() => {
     const temp = [];
     for (let i = 0; i < shardCount; i++) {
-      // Structured target: Forms a tight geometric cage
+      // Structure: Panels forming a technical sphere shell
       const phi = Math.acos(-1 + (2 * i) / shardCount);
       const theta = Math.sqrt(shardCount * Math.PI) * phi;
-      const targetPos = new THREE.Vector3().setFromSphericalCoords(2.8, phi, theta);
-      const targetRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+      const targetPos = new THREE.Vector3().setFromSphericalCoords(3.2, phi, theta);
+      const targetRot = new THREE.Euler(phi, theta, 0);
 
-      // Chaotic state: Shards are blown out into the void
+      // Chaos: Blown out into a wide field
       const randomPos = new THREE.Vector3(
-        (Math.random() - 0.5) * 20,
-        (Math.random() - 0.5) * 20,
-        (Math.random() - 0.5) * 15
+        (Math.random() - 0.5) * 22,
+        (Math.random() - 0.5) * 22,
+        (Math.random() - 0.5) * 18
       );
       const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, 0);
       
-      temp.push({ targetPos, targetRot, randomPos, randomRot, speed: 0.1 + Math.random() * 0.3 });
+      temp.push({ targetPos, targetRot, randomPos, randomRot, speed: 0.2 + Math.random() * 0.4 });
     }
     return temp;
   }, []);
 
   const shardRefs = useRef([]);
+  const wordRefs = useRef([]);
 
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
-    groupRef.current.rotation.y += delta * (isHovered ? 0.4 : 0.1); // Spins faster when active
-    
+    groupRef.current.rotation.y += delta * (isHovered ? 0.3 : 0.05);
+
     shardRefs.current.forEach((mesh, i) => {
       if (!mesh) return;
       const s = shards[i];
       const destPos = isHovered ? s.targetPos : s.randomPos;
       const destRot = isHovered ? s.targetRot : s.randomRot;
 
-      mesh.position.lerp(destPos, 0.06);
-      mesh.quaternion.slerp(new THREE.Quaternion().setFromEuler(destRot), 0.06);
+      mesh.position.lerp(destPos, 0.05);
+      mesh.quaternion.slerp(new THREE.Quaternion().setFromEuler(destRot), 0.05);
       
       if (!isHovered) {
-        mesh.position.y += Math.sin(t * s.speed) * 0.008;
-        mesh.position.x += Math.cos(t * s.speed) * 0.008;
+        mesh.position.y += Math.sin(t * s.speed) * 0.004;
       }
+    });
+
+    // Words reaction logic
+    wordRefs.current.forEach((word, i) => {
+        if (!word) return;
+        const targetPos = isHovered ? word.userData.lockPos : word.userData.idlePos;
+        word.position.lerp(targetPos, 0.05);
+        word.lookAt(state.camera.position);
     });
   });
 
@@ -57,73 +65,66 @@ function NeuralReactor({ isHovered }) {
     <group ref={groupRef}>
       {shards.map((_, i) => (
         <mesh key={i} ref={(el) => (shardRefs.current[i] = el)}>
-          <boxGeometry args={[0.3, 0.3, 0.3]} />
+          <planeGeometry args={[0.6, 0.4]} />
           <meshStandardMaterial 
             color={isHovered ? "#00E5FF" : "#11111a"} 
             emissive={isHovered ? "#00E5FF" : "#FF8C00"}
-            emissiveIntensity={isHovered ? 5 : 0.5}
+            emissiveIntensity={isHovered ? 3 : 0.2}
             transparent 
-            opacity={isHovered ? 1 : 0.3}
+            opacity={isHovered ? 0.8 : 0.3}
+            side={THREE.DoubleSide}
           />
-          <Edges color={isHovered ? "#fff" : "#FF8C00"} />
+          <Edges color={isHovered ? "#fff" : "#00E5FF"} opacity={0.5} />
         </mesh>
       ))}
 
-      {/* CORE LABELS (The "Crazy Idea") */}
-      <CoreLabel position={[0, 4, 0]} isHovered={isHovered} text="ARCHITECTURE" />
-      <CoreLabel position={[4, -2, 2]} isHovered={isHovered} text="MERN STACK" />
-      <CoreLabel position={[-4, -2, -2]} isHovered={isHovered} text="FULL-STACK" />
-      <CoreLabel position={[0, 0, 4]} isHovered={isHovered} text="SYSTEMS" />
+      {/* REACTIVE HUD WORDS */}
+      <AssemblableText ref={(el) => (wordRefs.current[0] = el)} text="SHIVANG" lockPos={[0, 4.5, 0]} idlePos={[-8, 6, -5]} isHovered={isHovered} />
+      <AssemblableText ref={(el) => (wordRefs.current[1] = el)} text="ARCHITECTURE" lockPos={[4.5, 0, 0]} idlePos={[10, -5, -5]} isHovered={isHovered} />
+      <AssemblableText ref={(el) => (wordRefs.current[2] = el)} text="MERN STACK" lockPos={[-4.5, 0, 0]} idlePos={[-10, -8, -5]} isHovered={isHovered} />
+      <AssemblableText ref={(el) => (wordRefs.current[3] = el)} text="FULL-STACK" lockPos={[0, -4.5, 0]} idlePos={[8, 4, -5]} isHovered={isHovered} />
 
-      {/* The Pulsing Reactor Heart */}
-      <mesh scale={isHovered ? 1.5 : 0.5}>
+      {/* The Central Energy Core */}
+      <mesh scale={isHovered ? 1.8 : 0.4}>
         <sphereGeometry args={[1, 32, 32]} />
         <MeshDistortMaterial 
           color="#FF8C00" 
           emissive="#FF8C00" 
-          emissiveIntensity={isHovered ? 10 : 2} 
-          distort={0.4} 
-          speed={4}
+          emissiveIntensity={isHovered ? 8 : 1} 
+          distort={isHovered ? 0.4 : 0.2} 
+          speed={3}
         />
       </mesh>
     </group>
   );
 }
 
-function CoreLabel({ position, text, isHovered }) {
-  const ref = useRef();
-  const targetPos = useMemo(() => new THREE.Vector3(...position), [position]);
-  const idlePos = useMemo(() => new THREE.Vector3(position[0] * 3, position[1] * 3, position[2] * 3), [position]);
+const AssemblableText = React.forwardRef(({ text, lockPos, idlePos, isHovered }, ref) => {
+    return (
+        <Text
+            ref={ref}
+            userData={{ lockPos: new THREE.Vector3(...lockPos), idlePos: new THREE.Vector3(...idlePos) }}
+            font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf"
+            fontSize={isHovered ? 0.5 : 1.2}
+            color="white"
+            emissive="white"
+            emissiveIntensity={isHovered ? 2 : 0.1}
+            transparent
+            opacity={isHovered ? 1 : 0.2}
+        >
+            {text}
+        </Text>
+    );
+});
 
-  useFrame(() => {
-    ref.current.position.lerp(isHovered ? targetPos : idlePos, 0.05);
-    ref.current.lookAt(0, 0, 0);
-  });
-
-  return (
-    <Text
-      ref={ref}
-      font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf"
-      fontSize={0.4}
-      color="white"
-      emissive="white"
-      emissiveIntensity={isHovered ? 2 : 0}
-      transparent
-      opacity={isHovered ? 1 : 0}
-    >
-      {text}
-    </Text>
-  );
-}
-
-// --- PROJECT DATA (RE-MAPPED) ---
+// --- DATA ---
 const projects = [
-  { title: "E-Commerce Microservices", desc: "Highly scalable backend utilizing Docker containers, integrating Stripe API and JWT auth.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
-  { title: "Movie Watchlist Web App", desc: "Full-stack application for tracking user media via RESTful APIs and NoSQL architecture.", tags: ["MongoDB", "Express", "Node"], color: "#FF8C00" },
-  { title: "Real-Time Collab Workspace", desc: "Live-syncing environment using WebSockets for real-time document editing.", tags: ["Socket.io", "Next.js", "Redis"], color: "#A855F7" },
-  { title: "Voice AI Chatbot", desc: "Emotion-aware chatbot integrating OpenAI and Voice APIs with a high-performance backend.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF" },
-  { title: "DevOps CI/CD Dashboard", desc: "Centralized command center for GitHub Actions and AWS deployment metrics.", tags: ["AWS", "Python", "GitHub"], color: "#FF8C00" },
-  { title: "AI SaaS Image Generator", desc: "SaaS wrapping OpenAI API featuring user credits and asynchronous generation.", tags: ["Tailwind", "React", "DALL-E"], color: "#FF8C00" }
+  { title: "E-Commerce Microservices", desc: "Scaleable backend utilizing Docker, Stripe API, and JWT auth.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
+  { title: "Movie Watchlist App", desc: "Full-stack media tracker via RESTful APIs and NoSQL architecture.", tags: ["MongoDB", "Express", "Node"], color: "#FF8C00" },
+  { title: "Real-Time Collab Workspace", desc: "Live-syncing environment using WebSockets for real-time editing.", tags: ["Socket.io", "Next.js", "Redis"], color: "#A855F7" },
+  { title: "Voice AI Chatbot", desc: "Emotion-aware chatbot integrating OpenAI and Voice APIs.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF" },
+  { title: "DevOps CI/CD Dashboard", desc: "Command center for GitHub Actions and AWS deployment metrics.", tags: ["AWS", "Python", "GitHub"], color: "#FF8C00" },
+  { title: "AI SaaS Image Generator", desc: "SaaS wrapping OpenAI featuring user credits and async generation.", tags: ["Tailwind", "React", "DALL-E"], color: "#FF8C00" }
 ];
 
 const NavLink = ({ href, children }) => (
@@ -149,16 +150,16 @@ export default function App() {
       
       {/* 2D LIGHT TRACKER */}
       <div className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-300 hidden md:block"
-        style={{ background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.06), transparent 85%)` }} />
+        style={{ background: `radial-gradient(800px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.05), transparent 85%)` }} />
 
       {/* 3D SCENE */}
       <div className="fixed inset-0 z-0 pointer-events-auto">
         <Canvas>
           <PerspectiveCamera makeDefault position={[0, 0, 18]} fov={40} />
           <color attach="background" args={['#010102']} />
-          <ambientLight intensity={0.5} />
-          <pointLight position={[mousePos.x / 100, -mousePos.y / 100, 10]} intensity={2} color="#00E5FF" />
-          <NeuralReactor isHovered={isHovered} />
+          <ambientLight intensity={0.4} />
+          <pointLight position={[mousePos.x / 100, -mousePos.y / 100, 10]} intensity={1.5} color="#00E5FF" />
+          <FusionReactor isHovered={isHovered} />
           <ContactShadows position={[0, -10, 0]} opacity={0.4} scale={40} blur={2} far={20} color="#00E5FF" />
         </Canvas>
       </div>
@@ -175,9 +176,7 @@ export default function App() {
             <NavLink href="#projects">Builds</NavLink>
             <NavLink href="#contact">Connect</NavLink>
           </div>
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-gray-300 p-2 focus:outline-none">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}/></svg>
-          </button>
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-gray-300 p-2"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}/></svg></button>
         </nav>
 
         {/* HERO */}
@@ -187,11 +186,11 @@ export default function App() {
           onMouseLeave={() => setIsHovered(false)}
         >
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }} className="flex flex-col items-start max-w-4xl z-40">
-            <div className="mb-8 px-4 py-1.5 border border-[#00E5FF]/20 bg-[#00E5FF]/5 text-[#00E5FF] text-[10px] font-black tracking-[0.5em] uppercase">Architecture & Logic</div>
+            <div className="mb-8 px-4 py-1.5 border border-[#00E5FF]/20 bg-[#00E5FF]/5 text-[#00E5FF] text-[10px] font-black tracking-[0.5em] uppercase">Architecture & Systems</div>
             <h1 className="text-6xl sm:text-8xl md:text-[9rem] font-black text-white mb-6 tracking-tighter leading-[0.9]">Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Ayar.</span></h1>
             <p className="text-lg md:text-2xl text-gray-400 mt-6 mb-12 font-light max-w-2xl border-l border-white/10 pl-8 leading-relaxed">Designing high-performance full-stack architectures and resilient digital systems.</p>
-            <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto pointer-events-auto">
-              <a href="#projects" className="bg-white text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-[#00E5FF] hover:text-white transition-all duration-500">Execute Builds</a>
+            <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto">
+              <a href="#projects" className="bg-white text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-[#00E5FF] hover:text-white transition-all duration-500 shadow-xl">Execute Builds</a>
               <a href="/resume.pdf" target="_blank" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all duration-500">Resume ↓</a>
             </div>
           </motion.div>
@@ -199,22 +198,23 @@ export default function App() {
 
         {/* ABOUT & JOURNEY (RESTORED SPLIT LAYOUT) */}
         <section id="about" className="max-w-7xl mx-auto px-6 py-40 w-full relative">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-5">
-              <h2 className="text-5xl md:text-6xl font-black text-white mb-10 tracking-tighter">The <span className="text-[#00E5FF]">Mindset.</span></h2>
+              <h2 className="text-5xl md:text-6xl font-black text-white mb-10 tracking-tighter">About <span className="text-[#00E5FF]">Me.</span></h2>
               <p className="text-gray-400 mb-8 text-xl font-light leading-relaxed">Born and raised in Zambia, now operating in Ottawa. My approach to engineering is purely objective: Build, Optimize, and Master.</p>
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#0A0A12]/40 border border-white/5 p-8 rounded-2xl text-center"><h3 className="text-4xl font-black text-white">3+</h3><p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2 font-black">Years</p></div>
-                <div className="bg-[#0A0A12]/40 border border-white/5 p-8 rounded-2xl text-center"><h3 className="text-4xl font-black text-white">10+</h3><p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2 font-black">Builds</p></div>
+                <div className="bg-[#0A0A12]/60 border border-white/5 p-8 rounded-2xl text-center"><h3 className="text-4xl font-black text-white">3+</h3><p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2 font-black">Years</p></div>
+                <div className="bg-[#0A0A12]/60 border border-white/5 p-8 rounded-2xl text-center"><h3 className="text-4xl font-black text-white">10+</h3><p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2 font-black">Builds</p></div>
               </div>
             </motion.div>
-            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-7 space-y-10 border-l-2 border-[#00E5FF]/20 ml-4 relative">
-              {[ {i:"🎓", y:"2024 - Present", t:"Algonquin College", p:"Computer Programming & Analysis. Enterprise focus.", c:"#00E5FF"},
+            
+            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-7 space-y-12 border-l-2 border-[#00E5FF]/20 ml-4 relative">
+              {[ {i:"🎓", y:"2024 - Present", t:"Algonquin College", p:"Advanced Diploma in Computer Programming. Systems focus.", c:"#00E5FF"},
                  {i:"💻", y:"2021 - 2023", t:"Fraser International College", p:"Computer Science Pathway. Algorithmic foundations.", c:"#A855F7"}
               ].map((step, idx) => (
                 <div key={idx} className="relative pl-12 group">
-                  <div className={`absolute -left-[21px] top-2 w-10 h-10 rounded-full bg-[#020204] border-2 flex items-center justify-center transition-all duration-500 shadow-[0_0_15px_rgba(0,229,255,0.2)]`} style={{ borderColor: step.c }}>{step.i}</div>
-                  <div className="bg-[#0A0A12]/40 backdrop-blur-xl border border-white/5 p-10 rounded-3xl transition-all hover:border-white/20">
+                  <div className={`absolute -left-[18px] top-2 w-8 h-8 rounded-full bg-[#030305] border flex items-center justify-center transition-all duration-500 shadow-[0_0_15px_rgba(0,229,255,0.2)]`} style={{ borderColor: step.c }}>{step.i}</div>
+                  <div className="bg-[#0A0A12]/40 backdrop-blur-xl border border-white/5 p-10 rounded-3xl transition-all hover:border-white/20 shadow-2xl">
                     <span className="text-[10px] font-black uppercase tracking-[0.4em]" style={{ color: step.c }}>{step.y}</span>
                     <h3 className="text-2xl font-bold text-white mt-4 tracking-tight">{step.t}</h3>
                     <p className="text-gray-400 text-base mt-4 font-light leading-relaxed">{step.p}</p>
@@ -237,7 +237,7 @@ export default function App() {
                    { t: "Cloud & DevOps", i: "☁️", s: [{n: "Git / GitHub", v: "95%"}, {n: "AWS", v: "80%"}, {n: "Docker", v: "75%"}] }
                 ].map((card, idx) => (
                     <div key={idx} className="bg-[#0A0A12]/40 border border-white/5 p-10 rounded-3xl hover:border-[#00E5FF]/40 transition-all shadow-2xl group flex flex-col">
-                        <h3 className="text-xl font-black text-white mb-8 tracking-tighter uppercase flex items-center gap-4">
+                        <h3 className="text-xl font-bold text-white mb-8 tracking-tighter uppercase flex items-center gap-4">
                             <span className="text-2xl">{card.i}</span> {card.t}
                         </h3>
                         <div className="space-y-6 mt-auto">
@@ -255,7 +255,7 @@ export default function App() {
             </div>
         </section>
 
-        {/* PROJECTS (RESTORED 6 PROJECTS + REACTIVITY) */}
+        {/* PROJECTS (RESTORED 6 PROJECTS + HOVER) */}
         <section id="projects" className="max-w-7xl mx-auto px-6 py-40">
             <h2 className="text-7xl font-black text-white mb-20 tracking-tighter text-right">System <span className="text-[#FF8C00]">Builds.</span></h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 [perspective:2000px]">
@@ -279,28 +279,11 @@ export default function App() {
             </div>
         </section>
 
-        {/* OFFLINE PROTOCOL */}
-        <section className="max-w-7xl mx-auto px-6 py-40 flex flex-col items-center w-full">
-            <h2 className="text-5xl font-black text-white mb-16 tracking-tighter text-center">Offline <span className="text-[#FF8C00]">Protocol.</span></h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
-              {[ {i:"🏋️‍♂️",t:"Discipline",d:"6-day compound split focusing on heavy progression."},
-                 {i:"🎮",t:"Logic",d:"Competitive strategy and precision PC optimization."},
-                 {i:"🌍",t:"Equilibrium",d:"Hiking and exploration to maintain technical focus."}
-              ].map((h,x)=>(
-                <div key={x} className="bg-[#0A0A12]/40 backdrop-blur-xl border border-white/5 p-12 rounded-[2.5rem] text-center hover:border-white/20 transition-all shadow-2xl group">
-                  <div className="text-7xl mb-8 grayscale opacity-20 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110">{h.i}</div>
-                  <h3 className="text-xl font-black text-white mb-4 uppercase tracking-[0.3em]">{h.t}</h3>
-                  <p className="text-gray-500 font-light leading-relaxed text-lg">{h.d}</p>
-                </div>
-              ))}
-            </div>
-        </section>
-
         {/* TERMINAL FOOTER */}
         <footer id="contact" className="w-full py-60 flex items-center justify-center relative z-30">
           <div className="max-w-5xl mx-auto px-6 flex flex-col items-center w-full">
             <div className="bg-[#010102]/80 backdrop-blur-3xl border border-white/10 p-16 md:p-24 rounded-[4rem] shadow-[0_0_100px_rgba(0,0,0,1)] text-center relative overflow-hidden group w-full">
-              <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00] shadow-[0_0_20px_#00E5FF]" />
+              <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" />
               <h2 className="text-6xl md:text-8xl font-black text-white mb-10 tracking-tighter leading-tight">Terminal <br/><span className="text-[#00E5FF]">Ready.</span></h2>
               <div className="flex items-center justify-center gap-4 mb-20 bg-white/5 w-max mx-auto px-12 py-5 rounded-full border border-white/10">
                 <span className="relative flex h-4 w-4"><span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative h-4 w-4 rounded-full bg-green-500 shadow-[0_0_15px_#4ade80]"></span></span>
