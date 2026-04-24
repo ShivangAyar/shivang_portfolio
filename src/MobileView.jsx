@@ -4,7 +4,7 @@ import { Text, ContactShadows, PerspectiveCamera, Environment } from '@react-thr
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- THE HACKER LOADING SCREEN (Slower Protocol) ---
+// --- SLOWED HACKER LOADING SCREEN ---
 const LoadingScreen = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState("Initializing...");
@@ -14,16 +14,21 @@ const LoadingScreen = ({ onComplete }) => {
       setProgress(prev => {
         if (prev >= 100) {
           clearInterval(timer);
-          setTimeout(onComplete, 1200);
+          setTimeout(onComplete, 1200); // Hold at 100% for a second
           return 100;
         }
-        const next = prev + Math.floor(Math.random() * 2) + 1; 
+        
+        // Randomly increment progress
+        const next = prev + Math.floor(Math.random() * 2) + 1;
+        
+        // Sequence triggers
         if (next >= 89) setStatus("89% ALLOWING ACCESS...");
         else if (next >= 54) setStatus("54% VERIFIED USER");
         else if (next >= 33) setStatus("33% SCANNING IF YOU ARE HUMAN...");
+        
         return next > 100 ? 100 : next;
       });
-    }, 180);
+    }, 150); // Slower interval
     return () => clearInterval(timer);
   }, [onComplete]);
 
@@ -46,14 +51,12 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- THE DESKTOP CUBE LOGIC (Extracted from your App.jsx) ---
+// --- MECHANICAL SNAP CORE (Mobile Version) ---
 function MechanicalCore({ isActive }) {
   const meshRef = useRef();
   const groupRef = useRef();
   const gridSize = 4;
   const count = gridSize ** 3;
-  const { viewport } = useThree();
-  const isMobile = viewport.width < 6;
 
   const cubeData = useMemo(() => {
     const temp = [];
@@ -68,8 +71,8 @@ function MechanicalCore({ isActive }) {
           ).multiplyScalar(1.05);
 
           const randomPos = new THREE.Vector3(
-            (Math.random() - 0.5) * (isMobile ? 15 : 35),
-            (Math.random() - 0.5) * (isMobile ? 15 : 35),
+            (Math.random() - 0.5) * 15,
+            (Math.random() - 0.5) * 15,
             (Math.random() - 0.5) * 20
           );
           
@@ -79,7 +82,7 @@ function MechanicalCore({ isActive }) {
       }
     }
     return temp;
-  }, [isMobile]);
+  }, []);
 
   const dummy = new THREE.Object3D();
   const currentPositions = useMemo(() => cubeData.map(d => d.randomPos.clone()), [cubeData]);
@@ -107,7 +110,6 @@ function MechanicalCore({ isActive }) {
       dummy.position.copy(currentPositions[i]);
       if (!isActive) {
         dummy.position.y += Math.sin(t + i) * 0.005;
-        dummy.position.x += Math.cos(t * 0.5 + i) * 0.005;
       }
       dummy.quaternion.copy(currentRotations[i]);
       dummy.updateMatrix();
@@ -132,9 +134,6 @@ function MechanicalCore({ isActive }) {
 
 function FloatingHUDText({ text, isActive, offset, phase }) {
   const ref = useRef();
-  const { viewport } = useThree();
-  const isMobile = viewport.width < 6;
-
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
     if (ref.current) {
@@ -142,7 +141,9 @@ function FloatingHUDText({ text, isActive, offset, phase }) {
       const driftY = Math.cos(t * 0.3 + phase) * (isActive ? 1.5 : 8);
       const targetX = isActive ? offset[0] + driftX : driftX * 2;
       const targetY = isActive ? offset[1] + driftY : driftY * 2;
-      ref.current.position.lerp(new THREE.Vector3(targetX, targetY, isActive ? 0 : -10), 0.03);
+      const targetZ = isActive ? offset[2] : -10;
+
+      ref.current.position.lerp(new THREE.Vector3(targetX, targetY, targetZ), 0.03);
       ref.current.lookAt(state.camera.position);
     }
   });
@@ -150,7 +151,7 @@ function FloatingHUDText({ text, isActive, offset, phase }) {
   return (
     <Text
       ref={ref}
-      fontSize={isMobile ? 0.4 : 0.6}
+      fontSize={0.4}
       font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf"
       color="#00E5FF"
       emissive="#00E5FF"
@@ -163,25 +164,23 @@ function FloatingHUDText({ text, isActive, offset, phase }) {
   );
 }
 
-// --- SEQUENTIAL REACTIVE SKILL BARS ---
+// --- SEQUENTIAL SKILL BARS ---
 const CompCard = ({ title, icon, skills }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { amount: 0.3, once: true });
+  const isInView = useInView(ref, { amount: 0.4, once: true });
   return (
-    <div ref={ref} className="bg-[#050507]/60 p-8 rounded-[2.5rem] border border-white/5 shadow-2xl flex flex-col h-[420px]">
-      <div className="flex justify-between items-center mb-10 text-white"><h3 className="text-xl font-black uppercase tracking-widest">{title}</h3><span className="text-3xl">{icon}</span></div>
-      <div className="space-y-10 mt-auto">
-        {skills.map((s, i) => (
-          <div key={i}>
-            <div className="flex justify-between text-[11px] font-bold text-gray-500 uppercase mb-3 transition-colors duration-700" style={{ color: isInView ? 'white' : '' }}><span>{s.n}</span><span style={{ color: isInView ? '#00E5FF' : '' }}>{s.v}</span></div>
-            <div className="flex gap-2 h-[5px] overflow-hidden bg-white/2 rounded-full">
-              {[...Array(12)].map((_, idx) => (
-                <motion.div key={idx} initial={{ backgroundColor: "#14141B" }} animate={isInView ? { backgroundColor: idx * (100 / 12) < parseInt(s.v) ? "#00E5FF" : "#14141B" } : {}} transition={{ delay: i * 0.1 + idx * 0.04 }} className="flex-1 rounded-sm" style={{ backgroundImage: isInView && idx * (100 / 12) < parseInt(s.v) ? 'linear-gradient(to right, #00E5FF, #FF8C00)' : 'none' }} />
-              ))}
-            </div>
+    <div ref={ref} className="bg-[#0A0A12]/40 border border-white/5 p-8 rounded-3xl shadow-2xl flex flex-col h-[400px]">
+      <h3 className="text-xl font-bold text-white mb-8 tracking-tighter uppercase flex items-center gap-4"><span className="text-2xl">{icon}</span> {title}</h3>
+      <div className="space-y-10 mt-auto">{skills.map((skill, i) => (
+        <div key={i}>
+          <div className="flex justify-between text-[11px] font-bold text-gray-500 uppercase mb-3 transition-colors duration-700" style={{ color: isInView ? 'white' : '' }}><span>{skill.n}</span><span style={{ color: isInView ? '#00E5FF' : '' }}>{skill.v}</span></div>
+          <div className="flex gap-2 h-[5px] overflow-hidden bg-white/2 rounded-full">
+            {[...Array(12)].map((_, idx) => (
+              <motion.div key={idx} initial={{ backgroundColor: "#14141B" }} animate={isInView ? { backgroundColor: idx * (100 / 12) < parseInt(skill.v) ? "#00E5FF" : "#14141B" } : {}} transition={{ delay: i * 0.1 + idx * 0.04 }} className="flex-1 rounded-sm" style={{ backgroundImage: isInView && idx * (100 / 12) < parseInt(skill.v) ? 'linear-gradient(to right, #00E5FF, #FF8C00)' : 'none' }} />
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      ))}</div>
     </div>
   );
 };
@@ -197,40 +196,57 @@ export default function MobileView() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const activeState = scrollY < 150;
+  const cubeActive = scrollY < 150;
 
   return (
-    <div className="min-h-screen bg-[#010102] text-gray-200 overflow-x-hidden touch-pan-y selection:bg-[#00E5FF]">
+    <div className="bg-[#010102] text-gray-200 antialiased selection:bg-[#00E5FF] selection:text-black font-sans scroll-smooth relative min-h-screen overflow-x-hidden">
       <AnimatePresence>{isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}</AnimatePresence>
-      <div className="fixed inset-0 z-[-1] pointer-events-none">
+      
+      {/* 3D SCENE */}
+      <div className="fixed inset-0 z-0 pointer-events-auto">
         <Canvas dpr={[1, 2]}>
-          <PerspectiveCamera makeDefault position={[0, 0, 35]} fov={75} />
+          <PerspectiveCamera makeDefault position={[0, 0, 22]} fov={55} />
           <ambientLight intensity={0.5} />
           <Environment preset="night" />
-          <MechanicalCore isActive={activeState} />
-          <ContactShadows position={[0, -12, 0]} opacity={0.4} scale={50} blur={3} color="#00E5FF" />
+          <MechanicalCore isActive={cubeActive} />
+          <ContactShadows position={[0, -10, 0]} opacity={0.4} scale={40} blur={2} far={20} color="#00E5FF" />
         </Canvas>
       </div>
-      
-      <div className="relative z-10 w-full flex flex-col px-6">
-        <nav className="fixed top-0 left-0 w-full z-[100] bg-[#010102]/70 backdrop-blur-3xl border-b border-white/5 h-20 flex items-center justify-between px-6">
-          <div className="text-xl font-black text-white cursor-pointer" onClick={() => window.scrollTo(0,0)}>SHIVANG<span className="text-[#00E5FF]">.</span></div>
-          <button onClick={() => setIsMenuOpen(true)} className="text-[#00E5FF] p-2 focus:outline-none"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+
+      <div className="relative z-30 w-full flex flex-col">
+        {/* NAVBAR */}
+        <nav className="fixed top-0 w-full z-50 bg-[#010102]/60 backdrop-blur-xl border-b border-white/5 h-20 flex items-center justify-between px-6">
+          <div className="text-xl font-black text-white">SHIVANG<span className="text-[#00E5FF]">.</span></div>
+          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-gray-300 p-2"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}/></svg></button>
         </nav>
 
-        <AnimatePresence>{isMenuOpen && (<motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "tween", duration: 0.4 }} className="fixed inset-0 z-[200] bg-[#010102] flex flex-col items-center justify-center gap-12 pointer-events-auto"><button onClick={() => setIsMenuOpen(false)} className="absolute top-8 right-8 text-[#00E5FF]"><svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg></button>{["Journey", "Stacks", "Builds", "Offline", "Connect"].map(t => <a key={t} href={`#${t.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="text-3xl font-black tracking-widest uppercase hover:text-[#00E5FF] transition-colors">{t}</a>)}</motion.div>)}</AnimatePresence>
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="fixed inset-0 z-40 bg-[#010102] flex flex-col items-center justify-center gap-10">
+              <a href="#about" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black uppercase">Journey</a>
+              <a href="#skills" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black uppercase">Stacks</a>
+              <a href="#projects" onClick={() => setIsMenuOpen(false)} className="text-4xl font-black uppercase">Builds</a>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <section className="min-h-screen flex items-center pt-20">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={!isLoading ? { opacity: 1, y: 0 } : {}} transition={{ duration: 1 }}>
-            <h1 className="text-6xl font-black text-white mb-6 leading-none tracking-tighter uppercase leading-[0.85]">Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#FF8C00]">Ayar.</span></h1>
-            <p className="text-lg text-gray-400 mb-12 border-l-2 border-[#FF8C00] pl-6 leading-relaxed font-light">Designing high-performance full-stack architectures and resilient digital systems.</p>
-            <div className="flex flex-col gap-6"><a href="#builds" className="bg-white text-black px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest shadow-2xl">Execute Builds</a><a href="/resume.pdf" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest">Resume ↓</a></div>
+        {/* HERO */}
+        <section className="px-6 min-h-screen flex items-center pt-20">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={!isLoading ? { opacity: 1, y: 0 } : {}} transition={{ duration: 1 }} className="flex flex-col items-start z-40">
+            <div className="mb-6 px-4 py-1.5 border border-[#00E5FF]/20 bg-[#00E5FF]/5 text-[#00E5FF] text-[10px] font-black tracking-[0.5em] uppercase">Architecture & Logic</div>
+            <h1 className="text-6xl font-black text-white mb-6 tracking-tighter leading-[0.9]">Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#FF8C00]">Ayar.</span></h1>
+            <p className="text-lg text-gray-400 mt-6 mb-12 font-light border-l border-white/10 pl-6 leading-relaxed">Designing high-performance full-stack architectures and resilient digital systems.</p>
+            <div className="flex flex-col gap-6 w-full">
+              <a href="#projects" className="bg-white text-black px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest shadow-2xl">Execute Builds</a>
+              <a href="/resume.pdf" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest">Resume ↓</a>
+            </div>
           </motion.div>
         </section>
 
-        <section id="journey" className="py-32 space-y-12 border-l-2 border-[#00E5FF]/20 ml-2">
-          {[{y:"2024 - PRES", t:"Algonquin College", d:"Advanced Diploma in Computer Programming. Focused on Enterprise Microservices."},
-            {y:"2021 - 2023", t:"FIC | BC", d:"Computer Science Pathway. Foundational deep-dive into Big O efficiency and OOP logic."}].map((item, idx) => (
+        {/* JOURNEY */}
+        <section id="about" className="px-6 py-32 space-y-12 border-l-2 border-[#00E5FF]/20 ml-2">
+          {[ {y:"2024 - PRES", t:"Algonquin College", d:"Advanced Diploma in Computer Programming. Focused on Enterprise Microservices."},
+             {y:"2021 - 2023", t:"FIC | BC", d:"Computer Science Pathway. Foundational deep-dive into Big O efficiency and OOP logic."}].map((item, idx) => (
             <div key={idx} className="relative pl-10">
               <div className={`absolute -left-[11px] top-2 w-5 h-5 rounded-full shadow-[0_0_15px_#00E5FF] ${idx === 0 ? 'bg-[#00E5FF]' : 'bg-purple-500'}`} />
               <div className="bg-[#050507]/40 p-8 rounded-[3rem] border border-white/5 shadow-2xl"><span className="text-[10px] font-black text-gray-500 tracking-[0.3em]">{item.y}</span><h3 className="text-2xl font-black text-white mt-4 tracking-tight leading-tight">{item.t}</h3><p className="text-gray-400 text-lg mt-4 font-light leading-relaxed">{item.d}</p></div>
@@ -238,21 +254,34 @@ export default function MobileView() {
           ))}
         </section>
 
-        <section id="stacks" className="py-20 space-y-8"><h2 className="text-6xl font-black text-white mb-16 tracking-tighter uppercase text-center">Technical Arsenal.</h2>
-          <CompCard title="Languages" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"}]} />
-          <CompCard title="Frontend" icon="🖥️" skills={[{n:"React",v:"90%"},{n:"HTML/CSS",v:"95%"},{n:"Tailwind",v:"85%"}]} />
+        {/* SKILLS */}
+        <section id="skills" className="px-6 py-20 space-y-8">
+          <h2 className="text-6xl font-black text-white mb-16 tracking-tighter uppercase text-center">Core Stacks.</h2>
+          <CompCard title="Programming" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"}]} />
+          <CompCard title="Frontend" icon="🖥️" skills={[{n:"React",v:"90%"},{n:"HTML",v:"95%"},{n:"Tailwind",v:"85%"}]} />
           <CompCard title="Backend" icon="⚙️" skills={[{n:"Node",v:"85%"},{n:"REST",v:"90%"},{n:"WS",v:"75%"}]} />
         </section>
 
-        <section id="builds" className="py-40 space-y-10">
+        {/* BUILDS */}
+        <section id="projects" className="px-6 py-40 space-y-10">
           <h2 className="text-6xl font-black text-white mb-16 tracking-tighter uppercase text-right">System Builds.</h2>
-          {[ {title: "Microservices", d: "Scalable ecosystem using Node.js and Docker. Integrated Stripe API."},
+          {[ {title: "Microservices", d: "Scalable ecosystem using Node.js and Docker. Integrated Stripe API and JWT auth."},
              {title: "Watchlist App", d: "Engineered a full-stack media tracking application using the MERN stack."}
           ].map((p, i) => (
-          <div key={i} className="bg-[#050507]/40 p-10 rounded-[3rem] border border-white/5 shadow-2xl relative overflow-hidden"><div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#00E5FF]/20 m-6" /><h3 className="text-3xl font-black text-white mb-6 uppercase leading-tight tracking-tighter">{p.title}</h3><p className="text-gray-400 text-lg mb-8 leading-relaxed font-light">{p.d}</p></div>
-        ))}</section>
+            <div key={i} className="bg-[#050507]/40 p-10 rounded-[3rem] border border-white/5 shadow-2xl relative overflow-hidden"><div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#00E5FF]/20 m-6" /><h3 className="text-3xl font-black text-white mb-6 uppercase leading-tight tracking-tighter">{p.title}</h3><p className="text-gray-400 text-lg mb-8 leading-relaxed font-light">{p.d}</p></div>
+          ))}
+        </section>
 
-        <footer id="connect" className="py-40 flex items-center justify-center">
+        {/* OFFLINE */}
+        <section className="px-6 py-32 space-y-8 text-center">
+          <h2 className="text-5xl font-black text-white mb-16 tracking-tighter uppercase italic">Offline Protocol.</h2>
+          {[ {i:"🏋️‍♂️",t:"Iron",d:"6-day compound split focus."}, {i:"🎮",t:"Logic",d:"Hardware tuning & shooters."}, {i:"🌍",t:"Nature",d:"Hiking to reset the digital buffer."}].map((h,x)=>(
+            <motion.div key={x} initial={{scale:0.9, opacity: 0}} whileInView={{scale:1, opacity: 1}} transition={{duration: 0.6}} viewport={{once: true}} className="bg-[#050507]/40 p-12 rounded-[3.5rem] border border-white/5 shadow-2xl"><div className="text-7xl mb-10">{h.i}</div><h3 className="text-2xl font-black text-white uppercase tracking-widest">{h.t}</h3><p className="text-gray-500 text-lg mt-6 font-light leading-relaxed">{h.d}</p></motion.div>
+          ))}
+        </section>
+
+        {/* FOOTER */}
+        <footer id="connect" className="px-6 py-40 flex items-center justify-center">
           <div className="w-full bg-[#020203] border-2 border-[#00E5FF]/40 p-12 rounded-[5rem] shadow-2xl text-center relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-[#00E5FF] to-[#FF8C00]" />
             <h2 className="text-6xl font-black text-white mb-10 tracking-tighter uppercase leading-none text-center">Terminal Ready.</h2>
