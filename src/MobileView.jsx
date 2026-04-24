@@ -18,14 +18,12 @@ const LoadingScreen = ({ onComplete }) => {
           return 100;
         }
         const next = prev + Math.floor(Math.random() * 2) + 1; 
-        
         if (next >= 89) setStatus("89% ALLOWING ACCESS...");
         else if (next >= 54) setStatus("54% VERIFIED USER");
         else if (next >= 33) setStatus("33% SCANNING IF YOU ARE HUMAN...");
-        
         return next > 100 ? 100 : next;
       });
-    }, 150); 
+    }, 180); 
     return () => clearInterval(timer);
   }, [onComplete]);
 
@@ -44,15 +42,12 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (Scroll-Sync Dispersal) ---
-function MechanicalCore({ scrollY }) {
+// --- MECHANICAL SNAP CORE (With Fixed Obsidian-Teal Colors) ---
+function MechanicalCore({ isActive }) {
   const meshRef = useRef();
   const groupRef = useRef();
   const gridSize = 4;
   const count = gridSize ** 3;
-  
-  // Logic: Intact at top (<150px), Disperse as user scrolls
-  const isActive = scrollY < 150;
 
   const cubeData = useMemo(() => {
     const temp = [];
@@ -77,7 +72,8 @@ function MechanicalCore({ scrollY }) {
   const words = useMemo(() => [
     { text: "SHIVANG", phase: 0, offset: [0, 4, 0] },
     { text: "ARCHITECTURE", phase: 2, offset: [4, 1, 1] },
-    { text: "SYSTEMS", phase: 4, offset: [-4, -2, 1] }
+    { text: "MERN STACK", phase: 3.5, offset: [-4, -2, 1] },
+    { text: "SYSTEMS", phase: 5, offset: [0, -4, 0] }
   ], []);
 
   useFrame((state, delta) => {
@@ -88,6 +84,7 @@ function MechanicalCore({ scrollY }) {
       const tR = isActive ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
       cP[i].lerp(tP, 0.08); cR[i].slerp(tR, 0.08);
       dummy.position.copy(cP[i]); dummy.quaternion.copy(cR[i]);
+      dummy.scale.setScalar(isActive ? 1 : 0.6);
       dummy.updateMatrix(); meshRef.current.setMatrixAt(i, dummy.matrix);
     });
     meshRef.current.instanceMatrix.needsUpdate = true;
@@ -97,7 +94,14 @@ function MechanicalCore({ scrollY }) {
     <group ref={groupRef}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
-        <meshStandardMaterial color={isActive ? "#002222" : "#020202"} roughness={0.1} metalness={0.9} />
+        {/* FIXED: Using Vibrant #00E5FF Teal with High Metalness */}
+        <meshStandardMaterial 
+          color="#00E5FF" 
+          metalness={1} 
+          roughness={0.05} 
+          emissive={isActive ? "#00E5FF" : "#000"} 
+          emissiveIntensity={isActive ? 0.5 : 0.1} 
+        />
       </instancedMesh>
       {isActive && <pointLight intensity={20} color="#FF8C00" distance={10} />}
       {words.map((w, i) => <FloatingHUDText key={i} text={w.text} isActive={isActive} offset={w.offset} phase={w.phase} />)}
@@ -119,16 +123,16 @@ function FloatingHUDText({ text, isActive, offset, phase }) {
   return <Text ref={ref} fontSize={0.4} color="#00E5FF" emissive="#00E5FF" emissiveIntensity={isActive ? 4 : 0.2} transparent opacity={isActive ? 0.9 : 0.15}>{text}</Text>;
 }
 
-// --- SEQUENTIAL SCROLL-REACTIVE SKILL BARS ---
+// --- SEQUENTIAL SCROLL-REACTIVE SKILLS ---
 const CompCard = ({ title, icon, skills }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { amount: 0.3, once: false });
   return (
-    <div ref={ref} className="bg-[#0A0A12]/60 border border-white/5 p-8 rounded-3xl shadow-2xl flex flex-col h-[400px]">
+    <div ref={ref} className="bg-[#050507]/40 border border-white/5 p-8 rounded-3xl shadow-2xl flex flex-col h-[400px]">
       <h3 className="text-xl font-bold text-white mb-8 tracking-tighter uppercase flex items-center gap-4"><span className="text-2xl">{icon}</span> {title}</h3>
       <div className="space-y-10 mt-auto">{skills.map((skill, i) => (
         <div key={i}>
-          <div className="flex justify-between text-[11px] font-bold text-gray-400 uppercase mb-3 transition-colors" style={{ color: isInView ? 'white' : '' }}><span>{skill.n}</span><span style={{ color: isInView ? '#00E5FF' : '' }}>{skill.v}</span></div>
+          <div className="flex justify-between text-[11px] font-bold text-gray-500 uppercase mb-3 transition-colors" style={{ color: isInView ? 'white' : '' }}><span>{skill.n}</span><span style={{ color: isInView ? '#00E5FF' : '' }}>{skill.v}</span></div>
           <div className="flex gap-2 h-[5px] overflow-hidden bg-white/2 rounded-full">
             {[...Array(12)].map((_, idx) => (
               <motion.div key={idx} initial={{ backgroundColor: "#14141B" }} animate={isInView ? { backgroundColor: idx * (100/12) < parseInt(skill.v) ? "#00E5FF" : "#14141B" } : { backgroundColor: "#14141B" }} transition={{ delay: isInView ? (i * 0.1 + idx * 0.04) : 0 }} className="flex-1 rounded-sm" style={{ backgroundImage: isInView && idx * (100/12) < parseInt(skill.v) ? 'linear-gradient(to right, #00E5FF, #FF8C00)' : 'none' }} />
@@ -157,46 +161,36 @@ export default function MobileView() {
     <div className="min-h-screen bg-[#010102] text-gray-200 overflow-x-hidden selection:bg-[#00E5FF]">
       <AnimatePresence>{isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}</AnimatePresence>
       
-      {/* 3D BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        <Canvas dpr={[1, 2]}><PerspectiveCamera makeDefault position={[0, 0, 22]} fov={55} /><ambientLight intensity={0.5} /><MechanicalCore scrollY={scrollY} /><ContactShadows position={[0, -10, 0]} opacity={0.4} scale={40} blur={2} color="#00E5FF" /></Canvas>
+        <Canvas dpr={[1, 2]}><PerspectiveCamera makeDefault position={[0, 0, 22]} fov={55} /><ambientLight intensity={0.5} /><MechanicalCore isActive={scrollY < 150} /><ContactShadows position={[0, -10, 0]} opacity={0.4} scale={40} blur={2} color="#00E5FF" /></Canvas>
       </div>
 
       <div className="relative z-30 w-full flex flex-col">
-        {/* NAVBAR */}
-        <nav className="fixed top-0 w-full z-50 bg-[#010102]/60 backdrop-blur-xl border-b border-white/5 h-20 flex items-center justify-between px-6">
+        <nav className="fixed top-0 w-full z-[100] bg-[#010102]/60 backdrop-blur-xl border-b border-white/5 h-20 flex items-center justify-between px-6">
           <div className="text-xl font-black text-white cursor-pointer" onClick={() => window.scrollTo(0,0)}>SHIVANG<span className="text-[#00E5FF]">.</span></div>
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-gray-300 p-2 z-[60]"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}/></svg></button>
+          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-gray-300 p-2 z-[110]"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}/></svg></button>
         </nav>
 
-        {/* ISOLATED MOBILE MENU */}
         <AnimatePresence>
           {isMenuOpen && (
-            <motion.div initial={{ opacity: 0, x: '100%' }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: '100%' }} className="fixed inset-0 z-[55] bg-[#010102] flex flex-col items-center justify-center gap-10">
+            <motion.div initial={{ opacity: 0, x: '100%' }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: '100%' }} className="fixed inset-0 z-[105] bg-[#010102] flex flex-col items-center justify-center gap-10">
               {['About', 'Skills', 'Builds', 'Connect'].map(t => <a key={t} href={`#${t.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="text-4xl font-black uppercase tracking-widest">{t}</a>)}
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* HERO */}
         <section className="px-6 min-h-screen flex items-center pt-20"><motion.div initial={{ opacity: 0, y: 20 }} animate={!isLoading ? { opacity: 1, y: 0 } : {}} className="flex flex-col items-start z-40">
           <div className="mb-6 px-4 py-1.5 border border-[#00E5FF]/20 bg-[#00E5FF]/5 text-[#00E5FF] text-[10px] font-black uppercase tracking-widest">Architecture & Logic</div>
           <h1 className="text-6xl font-black text-white mb-6 leading-none tracking-tighter uppercase">Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#FF8C00]">Ayar.</span></h1>
           <p className="text-lg text-gray-400 mb-12 border-l-2 border-[#FF8C00] pl-6 leading-relaxed font-light text-left">Designing high-performance architectures and digital systems.</p>
-          <div className="flex flex-col gap-6 w-full"><a href="#builds" className="bg-white text-black px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest">Execute Builds</a><a href="/resume.pdf" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest">Resume ↓</a></div>
+          <div className="flex flex-col gap-6 w-full"><a href="#builds" className="bg-white text-black px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest shadow-2xl">Execute Builds</a><a href="/resume.pdf" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest">Resume ↓</a></div>
         </motion.div></section>
 
-        {/* ABOUT ME & JOURNEY (VERTICAL SEQUENCE) */}
         <section id="about" className="px-6 py-32 flex flex-col gap-10"><div className="w-full text-left">
           <h2 className="text-5xl font-black text-white mb-8 tracking-tighter uppercase">About <span className="text-[#00E5FF]">Me.</span></h2>
           <p className="text-gray-400 text-lg font-light leading-relaxed">Born and raised in Zambia, now operating in Ottawa. My approach to engineering is purely objective: Build, Optimize, and Master.</p>
-          <div className="grid grid-cols-2 gap-4 mt-10">
-            <div className="bg-[#050507]/60 border border-white/5 p-8 rounded-2xl text-center"><h3 className="text-3xl font-black text-white">3+</h3><p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2 font-black">Years</p></div>
-            <div className="bg-[#050507]/60 border border-white/5 p-8 rounded-2xl text-center"><h3 className="text-3xl font-black text-white">10+</h3><p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2 font-black">Builds</p></div>
-          </div>
         </div></section>
 
-        {/* TIMELINE (CALENDAR) */}
         <section className="px-6 py-10 space-y-12 border-l-2 border-[#00E5FF]/20 ml-2">
           {[{y:"2024 - PRES", t:"Algonquin College", d:"Advanced Diploma in Computer Programming. Enterprise focus."},
             {y:"2021 - 2023", t:"Fraser International College", d:"Computer Science Pathway. Specialized expertise in algorithm design."}].map((item, idx) => (
@@ -206,7 +200,6 @@ export default function MobileView() {
           ))}
         </section>
 
-        {/* TECHNICAL ARSENAL (REACTIVE SKILLS) */}
         <section id="skills" className="px-6 py-32 space-y-8">
           <h2 className="text-6xl font-black text-white mb-16 tracking-tighter uppercase text-center">Core Stacks.</h2>
           <CompCard title="Programming" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"}]} />
@@ -214,14 +207,9 @@ export default function MobileView() {
           <CompCard title="Backend" icon="⚙️" skills={[{n:"Node",v:"85%"},{n:"REST",v:"90%"},{n:"WS",v:"75%"}]} />
         </section>
 
-        {/* FOOTER */}
         <footer id="connect" className="px-6 py-40 flex items-center justify-center text-center"><div className="w-full bg-[#020203] border-2 border-[#00E5FF]/40 p-12 rounded-[5rem] shadow-2xl relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-[#00E5FF] to-[#FF8C00]" />
           <h2 className="text-5xl font-black text-white mb-10 tracking-tighter uppercase leading-none">Terminal <br/><span className="text-[#00E5FF]">Ready.</span></h2>
-          <div className="flex flex-col gap-6 mt-10">
-            <a href="https://github.com/ayarshivang27" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase shadow-2xl">GitHub</a>
-            <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase shadow-2xl">Email</a>
-          </div>
           <p className="mt-40 text-[10px] font-black tracking-[1.5em] text-gray-800 uppercase leading-relaxed text-center">© 2026 SHIVANG AYAR.<br/>ARCHITECTED WITH INTENT.</p>
         </div></footer>
       </div>
