@@ -1,31 +1,37 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Text, ContactShadows, PerspectiveCamera, Environment } from '@react-three/drei';
-import { motion, AnimatePresence, useInView } from 'framer-motion';
+import { Float, Text, ContactShadows, Edges, PerspectiveCamera, Environment } from '@react-three/drei';
+import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- THE CHROME REACTOR CORE ---
-function MechanicalCore({ isHovered, scrollY, isMobile }) {
+// --- THE MECHANICAL SNAP CORE ---
+function MechanicalCore({ isActive }) {
   const meshRef = useRef();
   const groupRef = useRef();
-  const gridSize = 4;
-  const count = 64;
+  const gridSize = 4; // 4x4x4 = 64 cubes
+  const count = gridSize ** 3;
+  const { viewport } = useThree();
+  const isMobile = viewport.width < 6;
 
-  // Logic: Laptop = Hover. Mobile = Scroll-based at top.
-  const isAssembled = isMobile ? (scrollY < 120) : (isHovered && scrollY < 200);
-
+  // Pre-calculate positions
   const cubeData = useMemo(() => {
     const temp = [];
     let i = 0;
     for (let x = 0; x < gridSize; x++) {
       for (let y = 0; y < gridSize; y++) {
         for (let z = 0; z < gridSize; z++) {
-          const targetPos = new THREE.Vector3(x - 1.5, y - 1.5, z - 1.5).multiplyScalar(1.05);
+          const targetPos = new THREE.Vector3(
+            x - (gridSize - 1) / 2,
+            y - (gridSize - 1) / 2,
+            z - (gridSize - 1) / 2
+          ).multiplyScalar(1.05);
+
           const randomPos = new THREE.Vector3(
-            (Math.random() - 0.5) * (isMobile ? 35 : 60),
-            (Math.random() - 0.5) * (isMobile ? 35 : 60),
-            (Math.random() - 0.5) * 25
+            (Math.random() - 0.5) * (isMobile ? 15 : 35),
+            (Math.random() - 0.5) * (isMobile ? 15 : 35),
+            (Math.random() - 0.5) * 20
           );
+          
           const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
           temp.push({ targetPos, randomPos, randomRot, index: i++ });
         }
@@ -38,21 +44,33 @@ function MechanicalCore({ isHovered, scrollY, isMobile }) {
   const currentPositions = useMemo(() => cubeData.map(d => d.randomPos.clone()), [cubeData]);
   const currentRotations = useMemo(() => cubeData.map(d => new THREE.Quaternion().setFromEuler(d.randomRot)), [cubeData]);
 
+  // Words Data with unique phases for natural floating
+  const words = useMemo(() => [
+    { text: "SHIVANG", phase: Math.random() * 10, offset: [0, 4, 0] },
+    { text: "ARCHITECTURE", phase: Math.random() * 10, offset: [5, 2, 2] },
+    { text: "MERN STACK", phase: Math.random() * 10, offset: [-5, -2, 2] },
+    { text: "FULL-STACK", phase: Math.random() * 10, offset: [2, -4, -2] },
+    { text: "SYSTEMS", phase: Math.random() * 10, offset: [-3, 3, -4] }
+  ], []);
+
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
-    groupRef.current.rotation.y += delta * (isAssembled ? 0.3 : 0.04);
+    groupRef.current.rotation.y += delta * (isActive ? 0.25 : 0.05);
     
     cubeData.forEach((data, i) => {
-      const targetP = isAssembled ? data.targetPos : data.randomPos;
-      const targetR = isAssembled ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
-      
-      currentPositions[i].lerp(targetP, isAssembled ? 0.12 : 0.015);
-      currentRotations[i].slerp(targetR, isAssembled ? 0.12 : 0.015);
-      
+      const targetP = isActive ? data.targetPos : data.randomPos;
+      const targetR = isActive ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
+
+      currentPositions[i].lerp(targetP, isActive ? 0.08 : 0.015);
+      currentRotations[i].slerp(targetR, isActive ? 0.08 : 0.01);
+
       dummy.position.copy(currentPositions[i]);
-      if (!isAssembled) dummy.position.y += Math.sin(t + i) * 0.01;
+      // Natural idle drift
+      if (!isActive) {
+        dummy.position.y += Math.sin(t + i) * 0.005;
+        dummy.position.x += Math.cos(t * 0.5 + i) * 0.005;
+      }
       dummy.quaternion.copy(currentRotations[i]);
-      dummy.scale.setScalar(isAssembled ? 1 : 0.6);
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
     });
@@ -60,268 +78,273 @@ function MechanicalCore({ isHovered, scrollY, isMobile }) {
   });
 
   return (
-    <group ref={groupRef} position={[isMobile ? 0 : 4.5, 0, 0]}>
+    <group ref={groupRef} position={[isMobile ? 0 : 2.5, 0, 0]}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
-        <boxGeometry args={[0.95, 0.95, 0.95]} />
-        <meshStandardMaterial 
-          color="#00E5FF" 
-          metalness={1} 
-          roughness={0} 
-          emissive={isAssembled ? "#00E5FF" : "#003333"} 
-          emissiveIntensity={isAssembled ? 1.5 : 0.2} 
-        />
+        <boxGeometry args={[0.9, 0.9, 0.9]} />
+        <meshStandardMaterial color={isActive ? "#002222" : "#020202"} roughness={0.1} metalness={0.9} />
       </instancedMesh>
-      {isAssembled && <pointLight intensity={30} color="#FF8C00" distance={15} />}
-      
-      {["SHIVANG", "ARCHITECTURE", "LOGIC", "SYSTEMS"].map((txt, i) => (
-        <HUDText key={txt} text={txt} offset={[[0, 5, 0], [8, 0, 0], [-8, -2, 0], [0, -5, 0]][i]} isAssembled={isAssembled} p={i * 0.5} />
+
+      {isActive && <pointLight intensity={20} color="#FF8C00" distance={10} />}
+
+      {words.map((w, i) => (
+        <FloatingHUDText key={i} text={w.text} isActive={isActive} offset={w.offset} phase={w.phase} />
       ))}
     </group>
   );
 }
 
-function HUDText({ text, offset, isAssembled, p }) {
+function FloatingHUDText({ text, isActive, offset, phase }) {
   const ref = useRef();
+  const { viewport } = useThree();
+  const isMobile = viewport.width < 6;
+
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
     if (ref.current) {
-        const dX = Math.sin(t * 0.2 + p) * (isAssembled ? 0.5 : 25);
-        const dY = Math.cos(t * 0.2 + p) * (isAssembled ? 0.5 : 20);
-        ref.current.position.lerp(new THREE.Vector3(offset[0] + dX, offset[1] + dY, isAssembled ? 0 : -15), 0.03);
-        ref.current.lookAt(state.camera.position);
+      // Natural Float Logic (Perlin-like Sine drift)
+      const driftX = Math.sin(t * 0.4 + phase) * (isActive ? 1.5 : 8);
+      const driftY = Math.cos(t * 0.3 + phase) * (isActive ? 1.5 : 8);
+      const driftZ = Math.sin(t * 0.2 + phase) * (isActive ? 1 : 5);
+
+      const targetX = isActive ? offset[0] + driftX : driftX * 2;
+      const targetY = isActive ? offset[1] + driftY : driftY * 2;
+      const targetZ = isActive ? offset[2] + driftZ : driftZ;
+
+      ref.current.position.lerp(new THREE.Vector3(targetX, targetY, targetZ), 0.03);
+      ref.current.lookAt(state.camera.position);
     }
   });
-  return <Text ref={ref} fontSize={0.7} font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf" color="#00E5FF" emissive="#00E5FF" emissiveIntensity={isAssembled ? 5 : 0.1} transparent opacity={isAssembled ? 1 : 0.15} />;
-}
-
-// --- DUAL-MODE REACTIVE SLIDER CARD ---
-const CompetencyCard = ({ title, icon, skills, isMobile }) => {
-  const ref = useRef(null);
-  const isInView = useInView(ref, { once: false, amount: 0.4 });
-  const [isHovered, setIsHovered] = useState(false);
-  const active = isMobile ? isInView : isHovered;
 
   return (
-    <div 
+    <Text
       ref={ref}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="bg-[#0A0A12]/40 backdrop-blur-xl p-10 rounded-[2.5rem] border border-white/5 hover:border-[#00E5FF]/40 transition-all duration-700 shadow-2xl group flex flex-col h-[420px] relative"
+      fontSize={isMobile ? 0.4 : 0.6}
+      font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf"
+      color="#00E5FF"
+      emissive="#00E5FF"
+      emissiveIntensity={isActive ? 4 : 0.2}
+      transparent
+      opacity={isActive ? 0.9 : 0.25}
     >
-      <div className="flex justify-between items-center mb-10">
-        <h3 className="text-xl font-black text-white tracking-[0.3em] uppercase">{title}</h3>
-        <span className="text-3xl filter-none">{icon}</span>
-      </div>
-      <div className="space-y-10 mt-auto">
-        {skills.map((s, i) => (
-          <div key={i}>
-            <div className="flex justify-between text-[11px] font-bold text-gray-500 uppercase mb-3 tracking-widest transition-colors duration-500" style={{ color: active ? 'white' : '' }}>
-              <span>{s.n}</span><span style={{ color: active ? '#00E5FF' : '' }}>{s.v}</span>
-            </div>
-            <div className="flex gap-2 h-[5px] overflow-hidden bg-white/2 rounded-full">
-              {[...Array(12)].map((_, idx) => (
-                <motion.div
-                  key={idx}
-                  initial={{ backgroundColor: "#14141B" }}
-                  animate={active ? { backgroundColor: idx * (100/12) < parseInt(s.v) ? "#00E5FF" : "#14141B" } : { backgroundColor: "#14141B" }}
-                  transition={{ delay: active ? (idx * 0.04 + i * 0.1) : 0, duration: 0.2 }}
-                  className="flex-1 rounded-sm"
-                  style={{ 
-                    backgroundImage: active && idx * (100/12) < parseInt(s.v) ? 'linear-gradient(to right, #00E5FF, #FF8C00)' : 'none', 
-                    boxShadow: active && idx * (100/12) < parseInt(s.v) ? '0 0 10px rgba(0,229,255,0.4)' : 'none' 
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+      {text}
+    </Text>
   );
-};
+}
+
+// --- APP SECTIONS DATA ---
+const projects = [
+  { title: "E-Commerce Microservices", desc: "Scaleable backend utilizing Docker, Stripe API, and JWT auth.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
+  { title: "Movie Watchlist App", desc: "Full-stack media tracker via RESTful APIs and NoSQL architecture.", tags: ["MongoDB", "Express", "Node"], color: "#FF8C00" },
+  { title: "Real-Time Collab Workspace", desc: "Live-syncing environment using WebSockets for real-time editing.", tags: ["Socket.io", "Next.js", "Redis"], color: "#A855F7" },
+  { title: "Voice AI Chatbot", desc: "Emotion-aware chatbot integrating OpenAI and Voice APIs.", tags: ["React", "OpenAI", "WebRTC"], color: "#00E5FF" },
+  { title: "DevOps CI/CD Dashboard", desc: "Command center for GitHub Actions and AWS deployment metrics.", tags: ["AWS", "Python", "GitHub"], color: "#FF8C00" },
+  { title: "AI SaaS Image Generator", desc: "SaaS wrapping OpenAI featuring user credits and async generation.", tags: ["Tailwind", "React", "DALL-E"], color: "#FF8C00" }
+];
+
+const NavLink = ({ href, children }) => (
+  <a href={href} className="group relative py-2 text-[10px] font-black tracking-[0.3em] text-gray-500 uppercase transition-colors hover:text-white">
+    {children}
+    <span className="absolute bottom-0 left-0 h-[1.5px] w-full origin-left scale-x-0 bg-gradient-to-r from-[#00E5FF] to-[#FF8C00] transition-transform duration-500 group-hover:scale-x-100 shadow-[0_0_10px_#00E5FF]" />
+  </a>
+);
 
 export default function App() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [isHovered, setIsHovered] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const [activeTab, setActiveTab] = useState("Journey");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const checkRes = () => setIsMobile(window.innerWidth < 1024);
-    const handleScroll = () => setScrollY(window.scrollY);
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
     const handleMouseMove = (e) => setMousePos({ x: e.clientX, y: e.clientY });
-    checkRes();
-    window.addEventListener('resize', checkRes);
-    window.addEventListener('scroll', handleScroll);
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
     window.addEventListener('mousemove', handleMouseMove);
     return () => {
-      window.removeEventListener('resize', checkRes);
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
       window.removeEventListener('mousemove', handleMouseMove);
     };
   }, []);
 
+  // For Mobile: Active if hero is visible. For Desktop: Active on Hover.
+  const activeState = isMobile ? true : isHovered;
+
   return (
-    <div className="bg-[#010102] text-gray-200 antialiased font-sans scroll-smooth relative min-h-screen overflow-x-hidden">
+    <div className="bg-[#010102] text-gray-200 antialiased selection:bg-[#00E5FF] selection:text-black font-sans scroll-smooth relative min-h-screen overflow-x-hidden">
       
       {/* 2D LIGHT TRACKER */}
       {!isMobile && (
-        <div className="pointer-events-none fixed inset-0 z-0" style={{ background: `radial-gradient(950px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.05), transparent 85%)` }} />
+        <div className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-300"
+          style={{ background: `radial-gradient(800px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.04), transparent 85%)` }} />
       )}
 
-      {/* 3D SCENE BACKGROUND */}
-      <div className="fixed inset-0 z-[-1] pointer-events-none" style={{ touchAction: 'none' }}>
+      {/* 3D SCENE */}
+      <div className="fixed inset-0 z-0 pointer-events-auto">
         <Canvas dpr={[1, 2]}>
-          <PerspectiveCamera makeDefault position={[0, 0, isMobile ? 30 : 22]} fov={isMobile ? 75 : 45} />
+          <PerspectiveCamera makeDefault position={[0, 0, isMobile ? 22 : 16]} fov={isMobile ? 55 : 40} />
+          <color attach="background" args={['#010102']} />
           <ambientLight intensity={0.5} />
+          <pointLight position={[10, 10, 10]} intensity={1.5} color="#00E5FF" />
           <Environment preset="night" />
-          <MechanicalCore isHovered={isHovered} scrollY={scrollY} isMobile={isMobile} />
-          <ContactShadows position={[0, -12, 0]} opacity={0.4} scale={50} blur={3} far={20} color="#00E5FF" />
+          <MechanicalCore isActive={activeState} />
+          <ContactShadows position={[0, -10, 0]} opacity={0.4} scale={40} blur={2} far={20} color="#00E5FF" />
         </Canvas>
       </div>
 
-      <div className="relative z-10 w-full flex flex-col px-6 md:px-16">
-        
+      <div className="relative z-30 w-full flex flex-col">
         {/* NAVBAR */}
-        <nav className="fixed top-0 left-0 w-full z-[100] bg-[#010102]/70 backdrop-blur-3xl border-b border-white/5 h-20 md:h-24 flex items-center justify-between px-10 md:px-24">
-          <div className="text-xl md:text-2xl font-black text-white cursor-pointer" onClick={() => window.scrollTo(0,0)}>SHIVANG<span className="text-[#00E5FF]">.</span></div>
-          <div className="hidden md:flex gap-12 relative">
-            {["Journey", "Stacks", "Builds", "Offline", "Connect"].map(t => (
-              <a key={t} href={`#${t.toLowerCase()}`} onClick={() => setActiveTab(t)} className="relative py-2 text-[10px] font-black tracking-[0.3em] uppercase text-gray-500 hover:text-white transition-colors">
-                {t}
-                {activeTab === t && <motion.div layoutId="nav-slider" className="absolute bottom-0 left-0 h-[2px] w-full bg-gradient-to-r from-[#00E5FF] to-[#FF8C00] shadow-[0_0_15px_#00E5FF]" />}
-              </a>
-            ))}
+        <nav className="fixed top-0 w-full z-50 bg-[#010102]/60 backdrop-blur-xl border-b border-white/5 h-20 md:h-24 flex items-center justify-between px-10">
+          <div className="text-xl md:text-2xl font-black tracking-tighter text-white cursor-pointer" onClick={() => window.scrollTo(0,0)}>
+            SHIVANG<span className="text-[#00E5FF]">.</span>
           </div>
-          <button onClick={() => setIsMenuOpen(true)} className="md:hidden text-[#00E5FF] p-2 focus:outline-none"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+          <div className="hidden md:flex gap-10">
+            <NavLink href="#about">Journey</NavLink>
+            <NavLink href="#skills">Competencies</NavLink>
+            <NavLink href="#projects">Builds</NavLink>
+            <NavLink href="#contact">Connect</NavLink>
+          </div>
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-gray-300 p-2"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}/></svg></button>
         </nav>
 
-        {/* MOBILE MENU */}
-        <AnimatePresence>
-          {isMenuOpen && (
-            <motion.div initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }} transition={{ type: "tween", duration: 0.4 }} className="fixed inset-0 z-[200] bg-[#010102] flex flex-col items-center justify-center gap-12">
-              <button onClick={() => setIsMenuOpen(false)} className="absolute top-8 right-8 text-[#00E5FF]"><svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"/></svg></button>
-              {["Journey", "Stacks", "Builds", "Offline", "Connect"].map(t => <a key={t} href={`#${t.toLowerCase()}`} onClick={() => setIsMenuOpen(false)} className="text-3xl font-black tracking-widest uppercase transition-colors hover:text-[#00E5FF]">{t}</a>)}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         {/* HERO */}
-        <section className="max-w-7xl mx-auto px-6 min-h-screen flex items-center relative w-full pt-20" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }} className="flex flex-col items-start max-w-4xl">
-            <h1 className="text-6xl sm:text-8xl md:text-[9.5rem] font-black text-white mb-4 tracking-tighter leading-[0.85]">Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Ayar.</span></h1>
-            <p className="text-lg md:text-2xl text-gray-400 mt-6 mb-12 font-light max-w-2xl border-l-2 border-[#FF8C00] pl-8 leading-relaxed">Designing high-performance full-stack architectures and resilient digital systems.</p>
-            <div className="flex gap-6 pointer-events-auto">
-              <a href="#builds" className="bg-white text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-[#00E5FF] hover:text-white transition-all shadow-[0_0_40px_rgba(0,229,255,0.15)]">Execute Builds</a>
-              <a href="/resume.pdf" target="_blank" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.3em] uppercase hover:bg-white hover:text-black transition-all">Resume ↓</a>
+        <section 
+          className="max-w-7xl mx-auto px-6 min-h-screen flex items-center relative w-full pt-20"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1 }} className="flex flex-col items-start max-w-4xl z-40">
+            <div className="mb-8 px-4 py-1.5 border border-[#00E5FF]/20 bg-[#00E5FF]/5 text-[#00E5FF] text-[10px] font-black tracking-[0.5em] uppercase">Architecture & Logic</div>
+            <h1 className="text-6xl sm:text-8xl md:text-[9rem] font-black text-white mb-6 tracking-tighter leading-[0.9]">Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Ayar.</span></h1>
+            <p className="text-lg md:text-2xl text-gray-400 mt-6 mb-12 font-light max-w-2xl border-l border-white/10 pl-8 leading-relaxed">Designing high-performance full-stack architectures and resilient digital systems.</p>
+            <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto">
+              <a href="#projects" className="bg-white text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-[#00E5FF] hover:text-white transition-all duration-500">Execute Builds</a>
+              <a href="/resume.pdf" target="_blank" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all duration-500">Resume ↓</a>
             </div>
           </motion.div>
         </section>
 
-        {/* JOURNEY - VERTICAL SPINE */}
-        <section id="journey" className="max-w-7xl mx-auto px-6 py-40 w-full relative">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
-            <div className="lg:col-span-5 lg:sticky lg:top-40">
-              <h2 className="text-6xl font-black text-white mb-10 tracking-tighter uppercase leading-none">The <br/><span className="text-[#00E5FF]">Timeline.</span></h2>
-              <p className="text-gray-400 text-xl font-light leading-relaxed">Mastering software architecture through engineering precision.</p>
-            </div>
-            <div className="lg:col-span-7 space-y-12 border-l-2 border-[#00E5FF]/20 ml-4 relative">
-              {[
-                {y:"2024 - PRESENT", t:"Algonquin College | Ottawa", d:"Advanced Diploma in Computer Programming. Focused on Enterprise Microservices, Java OOP architectures, and high-scale cloud-native logic."},
-                {y:"2021 - 2023", t:"Fraser International College | BC", d:"Computer Science Pathway. Foundational deep-dive into Big O efficiency, data structure optimization, and OOP principles."}
-              ].map((item, idx) => (
+        {/* ABOUT & JOURNEY */}
+        <section id="about" className="max-w-7xl mx-auto px-6 py-40 w-full relative">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-5">
+              <h2 className="text-5xl md:text-6xl font-black text-white mb-10 tracking-tighter">About <span className="text-[#00E5FF]">Me.</span></h2>
+              <p className="text-gray-400 mb-8 text-xl font-light leading-relaxed">Born and raised in Zambia, now operating in Ottawa. My approach to engineering is purely objective: Build, Optimize, and Master.</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-[#0A0A12]/60 border border-white/5 p-8 rounded-2xl text-center"><h3 className="text-4xl font-black text-white">3+</h3><p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2 font-black">Years</p></div>
+                <div className="bg-[#0A0A12]/60 border border-white/5 p-8 rounded-2xl text-center"><h3 className="text-4xl font-black text-white">10+</h3><p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2 font-black">Builds</p></div>
+              </div>
+            </motion.div>
+            
+            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-7 space-y-12 border-l-2 border-[#00E5FF]/20 ml-4 relative">
+              {[ {i:"🎓", y:"2024 - Present", t:"Algonquin College", p:"Advanced Diploma in Computer Programming. Enterprise focus.", c:"#00E5FF"},
+                 {i:"💻", y:"2021 - 2023", t:"Fraser International College", p:"Computer Science Pathway. specialized expertise in algorithm design.", c:"#A855F7"}
+              ].map((step, idx) => (
                 <div key={idx} className="relative pl-12 group">
-                  <div className={`absolute -left-[11px] top-2 w-5 h-5 rounded-full shadow-[0_0_15px_#00E5FF] ${idx === 0 ? 'bg-[#00E5FF]' : 'bg-purple-500'}`} />
-                  <div className="bg-[#0A0A12]/60 p-10 rounded-[3rem] border border-white/5 transition-all hover:border-[#00E5FF]/30 shadow-2xl">
-                    <span className="text-[10px] font-black tracking-[0.4em] text-gray-500">{item.y}</span>
-                    <h3 className="text-3xl font-black text-white mt-4">{item.t}</h3>
-                    <p className="text-gray-400 text-lg mt-6 font-light leading-relaxed">{item.d}</p>
+                  <div className={`absolute -left-[18px] top-2 w-8 h-8 rounded-full bg-[#030305] border flex items-center justify-center transition-all duration-500 shadow-[0_0_15px_rgba(0,229,255,0.2)]`} style={{ borderColor: step.c }}>{step.i}</div>
+                  <div className="bg-[#0A0A12]/40 backdrop-blur-xl border border-white/5 p-10 rounded-3xl transition-all hover:border-white/20 shadow-2xl">
+                    <span className="text-[10px] font-black uppercase tracking-[0.4em]" style={{ color: step.c }}>{step.y}</span>
+                    <h3 className="text-2xl font-bold text-white mt-4 tracking-tight">{step.t}</h3>
+                    <p className="text-gray-400 text-base mt-4 font-light leading-relaxed">{step.p}</p>
                   </div>
                 </div>
               ))}
+            </motion.div>
+          </div>
+        </section>
+
+        {/* COMPETENCIES */}
+        <section id="skills" className="max-w-7xl mx-auto px-6 py-20 w-full">
+            <h2 className="text-6xl md:text-7xl font-black text-white mb-16 tracking-tighter">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[ { t: "Programming", i: "💻", s: [{n: "Java", v: "90%"}, {n: "Python", v: "85%"}, {n: "JavaScript", v: "85%"}] },
+                   { t: "Frontend Dev", i: "🖥️", s: [{n: "React.js", v: "90%"}, {n: "HTML5/CSS3", v: "95%"}, {n: "Tailwind", v: "85%"}] },
+                   { t: "Backend & APIs", i: "⚙️", s: [{n: "Node.js", v: "85%"}, {n: "Express.js", v: "85%"}, {n: "REST APIs", v: "90%"}] },
+                   { t: "Databases", i: "🗄️", s: [{n: "MongoDB", v: "85%"}, {n: "MySQL", v: "90%"}, {n: "PostgreSQL", v: "75%"}] },
+                   { t: "Data Arch", i: "📊", s: [{n: "Power BI", v: "90%"}, {n: "DAX", v: "85%"}, {n: "Star Schema", v: "85%"}] },
+                   { t: "Cloud & DevOps", i: "☁️", s: [{n: "Git / GitHub", v: "95%"}, {n: "AWS", v: "80%"}, {n: "Docker", v: "75%"}] }
+                ].map((card, idx) => (
+                    <div key={idx} className="bg-[#0A0A12]/40 border border-white/5 p-10 rounded-3xl hover:border-[#00E5FF]/40 transition-all shadow-2xl group flex flex-col">
+                        <h3 className="text-xl font-bold text-white mb-8 tracking-tighter uppercase flex items-center gap-4">
+                            <span className="text-2xl">{card.i}</span> {card.t}
+                        </h3>
+                        <div className="space-y-6 mt-auto">
+                            {card.s.map((skill, i) => (
+                                <div key={i}>
+                                    <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase mb-2"><span>{skill.n}</span><span className="text-white">{skill.v}</span></div>
+                                    <div className="w-full bg-white/5 rounded-full h-[2px] overflow-hidden">
+                                        <div className="h-full bg-gradient-to-r from-[#00E5FF] to-[#FF8C00] transition-all duration-1000 w-0 group-hover:w-full shadow-[0_0_10px_rgba(0,229,255,0.8)]" style={{ maxWidth: skill.v }}></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))}
             </div>
-          </div>
         </section>
 
-        {/* STACKS - SEQUENTIAL REACTIVE BARS */}
-        <section id="stacks" className="max-w-7xl mx-auto px-6 py-20 w-full">
-          <h2 className="text-6xl md:text-8xl font-black text-white mb-24 tracking-tighter text-center uppercase">Technical <span className="text-[#00E5FF]">Arsenal.</span></h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            <CompetencyCard title="Languages" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JavaScript",v:"85%"},{n:"C#",v:"70%"}]} isMobile={isMobile} />
-            <CompetencyCard title="Frontend" icon="🖥️" skills={[{n:"React.js",v:"90%"},{n:"HTML5/CSS3",v:"95%"},{n:"Tailwind",v:"85%"},{n:"Next.js",v:"80%"}]} isMobile={isMobile} />
-            <CompetencyCard title="Backend" icon="⚙️" skills={[{n:"Node.js",v:"85%"},{n:"Express.js",v:"85%"},{n:"REST APIs",v:"90%"},{n:"WebSockets",v:"75%"}]} isMobile={isMobile} />
-            <CompetencyCard title="Databases" icon="🗄️" skills={[{n:"MongoDB",v:"85%"},{n:"MySQL",v:"90%"},{n:"PostgreSQL",v:"75%"},{n:"NoSQL",v:"85%"}]} isMobile={isMobile} />
-            <CompetencyCard title="Analytics" icon="📊" skills={[{n:"Power BI",v:"90%"},{n:"DAX",v:"85%"},{n:"Star Schema",v:"85%"},{n:"ETL",v:"80%"}]} isMobile={isMobile} />
-            <CompetencyCard title="DevOps" icon="☁️" skills={[{n:"GitHub",v:"95%"},{n:"AWS",v:"80%"},{n:"Docker",v:"75%"},{n:"CI/CD",v:"85%"}]} isMobile={isMobile} />
-          </div>
-        </section>
-
-        {/* BUILDS */}
-        <section id="builds" className="max-w-7xl mx-auto px-6 py-40">
-          <h2 className="text-7xl font-black text-white mb-20 tracking-tighter text-right uppercase">System <span className="text-[#FF8C00]">Builds.</span></h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {[
-              { title: "E-Commerce Services", d: "Scalable microservices using Node.js/Docker. Integrated Stripe API and JWT auth for security.", t: ["Node.js", "Docker", "Stripe"] },
-              { title: "Movie Watchlist App", d: "Full-stack tracking using MERN. Designed RESTful API and utilized MongoDB NoSQL architecture.", t: ["MongoDB", "Express", "Node"] },
-              { title: "Real-Time Collaboration", d: "Synchronized workspace using Socket.io and Next.js with high-performance Redis caching.", t: ["Socket.io", "Next.js", "Redis"] },
-              { title: "Voice AI Chatbot", d: "AI chatbot with emotion recognition. Leveraged OpenAI GPT models and low-latency WebRTC.", t: ["React", "OpenAI", "WebRTC"] },
-              { title: "DevOps Metrics Hub", d: "Monitoring platform for GitHub Actions and AWS infrastructure using Python ETL pipelines.", t: ["AWS", "Python", "GitHub"] },
-              { title: "AI SaaS Generator", d: "Launched SaaS platform for AI image generation featuring a credit-based user system.", t: ["Tailwind", "React", "DALL-E"] }
-            ].map((p, i) => (
-              <motion.div key={i} whileHover={!isMobile ? { y: -15 } : {}} className="bg-[#050507]/60 backdrop-blur-xl p-12 rounded-[3.5rem] border border-white/5 relative overflow-hidden h-[540px] flex flex-col group cursor-pointer shadow-2xl">
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#00E5FF]/20 m-8 group-hover:border-[#00E5FF] transition-all" />
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#FF8C00]/20 m-8 group-hover:border-[#FF8C00] transition-all" />
-                <h3 className="text-3xl font-black text-white mb-10 tracking-tight leading-tight uppercase">{p.title}</h3>
-                <p className="text-gray-400 text-lg font-light leading-relaxed mb-auto">{p.d}</p>
-                <div className="flex flex-wrap gap-2 mt-10">{p.t.map(tag => <span key={tag} className="text-[9px] font-black border border-white/10 px-4 py-1.5 rounded-full uppercase text-gray-500 group-hover:text-white transition-all">{tag}</span>)}</div>
-              </motion.div>
-            ))}
-          </div>
+        {/* PROJECTS */}
+        <section id="projects" className="max-w-7xl mx-auto px-6 py-40">
+            <h2 className="text-7xl font-black text-white mb-20 tracking-tighter text-right">System <span className="text-[#FF8C00]">Builds.</span></h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 [perspective:2000px]">
+                {projects.map((p, i) => (
+                    <motion.div 
+                        key={i} 
+                        className="bg-[#0A0A12]/40 backdrop-blur-xl p-12 rounded-[2.5rem] border border-white/5 transition-all shadow-2xl relative overflow-hidden h-[450px] flex flex-col group cursor-pointer"
+                        whileHover={{ y: -15, rotateX: -7, rotateY: 7, borderColor: `${p.color}30`, boxShadow: `0 30px 60px ${p.color}15` }}
+                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                        <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-5 group-hover:opacity-20 transition-all duration-700" style={{ background: p.color }}></div>
+                        <h3 className="text-3xl font-bold text-white mb-6 leading-tight tracking-tighter">{p.title}</h3>
+                        <p className="text-gray-400 text-lg font-light leading-relaxed mb-auto">{p.desc}</p>
+                        <div className="flex flex-wrap gap-2 mt-8">
+                            {p.tags.map((tag, tIdx) => (
+                                <span key={tIdx} className="text-[9px] font-black border border-white/10 px-4 py-1.5 rounded-full uppercase text-gray-500 group-hover:text-white transition-colors">{tag}</span>
+                            ))}
+                        </div>
+                    </motion.div>
+                ))}
+            </div>
         </section>
 
         {/* OFFLINE PROTOCOL */}
-        <section id="offline" className="max-w-7xl mx-auto px-10 py-40 w-full text-center">
-            <h2 className="text-6xl font-black text-white mb-20 tracking-tighter uppercase italic">Offline <span className="text-[#FF8C00]">Protocol.</span></h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-              {[ {i:"🏋️‍♂️",t:"Discipline",d:"6-day compound split focus, applying progressive overload to mastery."},
-                 {i:"🎮",t:"Logic",d:"Hardware tuning and competitive shooters for peak performance optimization."},
-                 {i:"🌍",t:"Equilibrium",d:"Hiking and exploration of terrain to reset the digital buffer."}
+        <section className="max-w-7xl mx-auto px-6 py-40 flex flex-col items-center w-full">
+            <h2 className="text-5xl font-black text-white mb-16 tracking-tighter text-center">Offline <span className="text-[#FF8C00]">Protocol.</span></h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full pointer-events-auto">
+              {[ {i:"🏋️‍♂️",t:"Discipline",d:"6-day compound split focusing on progressive overload."},
+                 {i:"🎮",t:"Logic",d:"Competitive strategy and hardware optimization."},
+                 {i:"🌍",t:"Equilibrium",d:"Hiking and trail exploration to maintain technical focus."}
               ].map((h,x)=>(
-                <motion.div key={x} initial={{scale:0.95, opacity: 0}} whileInView={{scale:1, opacity: 1}} transition={{duration: 0.5}} className="bg-white/5 p-12 rounded-[3.5rem] border border-white/5 hover:border-[#FF8C00]/40 transition-all duration-500 group shadow-2xl">
-                  <div className="text-7xl mb-10 filter-none opacity-100 group-hover:scale-110 transition-transform duration-500">{h.i}</div>
-                  <h3 className="text-2xl font-black text-white uppercase tracking-widest">{h.t}</h3>
-                  <p className="text-gray-500 text-lg mt-6 font-light leading-relaxed">{h.d}</p>
-                </motion.div>
+                <div key={x} className="bg-[#0A0A12]/40 border border-white/5 p-12 rounded-[2.5rem] text-center hover:border-white/20 transition-all shadow-2xl group">
+                  <div className="text-7xl mb-8 grayscale opacity-20 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-105">{h.i}</div>
+                  <h3 className="text-xl font-black text-white mb-4 uppercase tracking-[0.3em]">{h.t}</h3>
+                  <p className="text-gray-500 font-light leading-relaxed text-lg">{h.d}</p>
+                </div>
               ))}
             </div>
         </section>
 
         {/* TERMINAL FOOTER */}
-        <footer id="connect" className="w-full py-60 flex items-center justify-center">
-          <div className="max-w-6xl w-full bg-[#020203] border-2 border-[#00E5FF]/40 p-16 md:p-24 rounded-[5rem] shadow-[0_0_120px_rgba(0,229,255,0.15)] text-center relative overflow-hidden group">
-            <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" />
-            <h2 className="text-6xl md:text-9xl font-black text-white mb-10 tracking-tighter leading-tight uppercase">Terminal <br/><span className="text-[#00E5FF]">Ready.</span></h2>
-            <div className="flex items-center justify-center gap-4 mb-20 bg-white/5 w-max mx-auto px-10 py-4 rounded-full border border-white/10">
-              <span className="relative flex h-3 w-3"><span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75" /><span className="relative h-3 w-3 rounded-full bg-green-500" /></span>
-              <span className="text-[10px] font-black tracking-[0.5em] uppercase text-green-400">Secure Protocol Active</span>
+        <footer id="contact" className="w-full py-60 flex items-center justify-center relative z-30">
+          <div className="max-w-5xl mx-auto px-6 flex flex-col items-center w-full">
+            <div className="bg-[#010102]/80 backdrop-blur-3xl border border-white/10 p-16 md:p-24 rounded-[4rem] shadow-[0_0_100px_rgba(0,0,0,1)] text-center relative overflow-hidden group w-full">
+              <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00] shadow-[0_0_20px_#00E5FF]" />
+              <h2 className="text-6xl md:text-8xl font-black text-white mb-10 tracking-tighter leading-tight">Terminal <br/><span className="text-[#00E5FF]">Ready.</span></h2>
+              <div className="flex items-center justify-center gap-4 mb-20 bg-white/5 w-max mx-auto px-12 py-5 rounded-full border border-white/10">
+                <span className="relative flex h-4 w-4"><span className="animate-ping absolute h-full w-full rounded-full bg-green-400 opacity-75"></span><span className="relative h-4 w-4 rounded-full bg-green-500 shadow-[0_0_15px_#4ade80]"></span></span>
+                <span className="text-[10px] font-black tracking-[0.5em] uppercase text-green-400">Secure Protocol Active</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <a href="https://github.com" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all duration-500">GitHub</a>
+                <a href="https://linkedin.com" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all duration-500">LinkedIn</a>
+                <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#FF8C00] hover:text-black transition-all duration-500">Email</a>
+              </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 relative z-50">
-              <a href="https://github.com/ayarshivang27" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-white hover:text-black transition-all">GitHub</a>
-              <a href="https://linkedin.com/in/shivangayar/" target="_blank" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#00E5FF] hover:text-black transition-all">LinkedIn</a>
-              <a href="mailto:ayarshivang27@gmail.com" className="bg-white/5 border border-white/10 px-10 py-6 rounded-3xl text-white font-black tracking-widest uppercase hover:bg-[#FF8C00] hover:text-black transition-all">Email</a>
-            </div>
-            <p className="mt-40 text-[10px] font-black tracking-[1.5em] text-gray-800 uppercase">© 2026 SHIVANG AYAR. ARCHITECTED WITH INTENT.</p>
+            <p className="mt-32 text-center text-[11px] font-black tracking-[0.8em] text-gray-700 uppercase">© 2026 SHIVANG AYAR. ARCHITECTED WITH INTENT.</p>
           </div>
         </footer>
 
       </div>
-      <style>{`
-        html, body { touch-action: pan-y; -webkit-overflow-scrolling: touch; background: #010102; width: 100vw; overflow-x: hidden; }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #00E5FF; border-radius: 10px; }
-      `}</style>
     </div>
   );
 }
