@@ -1,9 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Text, Environment, ContactShadows } from '@react-three/drei';
 import { motion } from 'framer-motion';
 import * as THREE from 'three';
 
+// --- REACTIVE CURSOR LIGHT (3D) ---
 function CursorLight() {
   const lightRef = useRef();
   useFrame((state) => {
@@ -14,6 +15,7 @@ function CursorLight() {
   return <pointLight ref={lightRef} intensity={8} color="#00E5FF" distance={15} />;
 }
 
+// --- 3D INTERACTIVE TEXT ---
 function FloatingWord({ children, position, rotation, scale = 1, baseColor = "#1A1A24" }) {
   const textRef = useRef();
   useFrame((state) => {
@@ -33,6 +35,7 @@ function FloatingWord({ children, position, rotation, scale = 1, baseColor = "#1
   );
 }
 
+// --- CENTRAL REACTIVE GEOMETRY ---
 function CentralReactiveShape() {
   const meshRef = useRef();
   useFrame((state, delta) => {
@@ -59,6 +62,16 @@ function CentralReactiveShape() {
 
 export default function App() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  // Track mouse for the HTML DOM Spotlight
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const handleContactSubmit = (e) => {
     e.preventDefault();
@@ -66,16 +79,23 @@ export default function App() {
   };
 
   return (
-    <div className="bg-[#05050A] text-gray-200 antialiased selection:bg-[#FF3366] selection:text-white font-sans scroll-smooth">
+    <div className="bg-[#05050A] text-gray-200 antialiased selection:bg-[#FF3366] selection:text-white font-sans scroll-smooth relative">
       
+      {/* --- LAYER 0: HTML DOM SPOTLIGHT --- */}
+      <div 
+        className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-300"
+        style={{
+          background: `radial-gradient(600px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.06), transparent 80%)`
+        }}
+      />
+
+      {/* --- LAYER 1: HIGHLY REACTIVE 3D BACKGROUND --- */}
       <div className="fixed inset-0 z-0 pointer-events-auto">
         <Canvas camera={{ position: [0, 0, 10], fov: 50 }} shadows>
           <color attach="background" args={['#05050A']} />
           <ambientLight intensity={0.1} />
-          
           <directionalLight position={[10, 10, -5]} intensity={0.5} color="#FF3366" />
           <directionalLight position={[-10, -10, -5]} intensity={0.3} color="#00E5FF" />
-          
           <CursorLight />
           <Environment preset="night" />
           
@@ -91,12 +111,14 @@ export default function App() {
         </Canvas>
       </div>
 
-      <div className="relative z-10 w-full">
+      {/* --- LAYER 2: HTML UI OVERLAY --- */}
+      <div className="relative z-30 w-full">
         
+        {/* Sleek Minimalist Navbar */}
         <nav className="fixed top-0 w-full z-50 bg-[#05050A]/70 backdrop-blur-xl border-b border-white/5">
           <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <div className="flex items-center gap-2 text-xl font-bold tracking-widest text-white">
-              <span className="text-[#FF3366]">SA.</span>
+              <span className="text-[#FF3366]">SHIVANG<span className="text-[#00E5FF]">.</span></span>
             </div>
             <div className="hidden md:flex gap-8 text-xs font-bold tracking-[0.2em] text-gray-500 uppercase">
               <a href="#about" className="hover:text-[#00E5FF] transition-colors">Journey</a>
@@ -107,6 +129,7 @@ export default function App() {
           </div>
         </nav>
 
+        {/* HERO SECTION */}
         <section className="max-w-7xl mx-auto px-6 pt-40 pb-20 min-h-screen flex items-center pointer-events-none">
           <motion.div 
             initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}
@@ -128,6 +151,7 @@ export default function App() {
           </motion.div>
         </section>
 
+        {/* JOURNEY & OFFLINE PROTOCOL */}
         <section id="about" className="max-w-7xl mx-auto px-6 py-32 min-h-screen flex flex-col justify-center pointer-events-none">
           <div className="pointer-events-auto">
             
@@ -158,7 +182,7 @@ export default function App() {
                 </div>
                 
                 <div className="bg-[#0A0A10]/60 border border-white/5 p-8 hover:border-[#00E5FF]/50 transition-all group">
-                  <div className="text-4xl mb-4 grayscale group-hover:grayscale-0 transition-all">🎮</div>
+                  <div className="text-4xl mb-4 grayscale group-hover:grayscale-0 transition-all">💻</div>
                   <h3 className="text-xl font-bold text-white mb-2">Gaming & Coding</h3>
                   <p className="text-sm text-gray-400 leading-relaxed">Immersed in digital worlds and logic. Whether I am exploring immersive gaming mechanics or engineering personal side-projects late into the night.</p>
                 </div>
@@ -174,6 +198,7 @@ export default function App() {
           </div>
         </section>
 
+        {/* KEY ACHIEVEMENTS & CORE COMPETENCIES */}
         <section id="skills" className="max-w-7xl mx-auto px-6 py-32 pointer-events-none">
           <div className="pointer-events-auto">
             
@@ -210,19 +235,85 @@ export default function App() {
             </div>
 
             <h2 className="text-4xl font-black text-white mb-8 tracking-tighter">Core <span className="text-[#00E5FF]">Competencies.</span></h2>
-            <div className="bg-[#0A0A10]/60 p-10 border border-white/5">
-              <div className="flex flex-wrap gap-3">
-                {['Java', 'JavaScript (ES6+)', 'Python', 'React', 'Node.js', 'Express', 'MongoDB', 'MySQL', 'SQL', 'HTML5/CSS3', 'Power BI', 'DAX', 'Git', 'Docker', 'AWS', 'JUnit', 'OOP', 'ETL Processes'].map((skill, i) => (
-                  <span key={i} className="px-5 py-3 bg-[#05050A] border border-white/10 text-gray-300 font-mono text-sm hover:border-[#00E5FF] hover:text-[#00E5FF] transition-colors cursor-default">
-                    {skill}
-                  </span>
-                ))}
+            
+            {/* Animated Skill Bars */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              
+              {/* Frontend & Languages */}
+              <div className="bg-[#0A0A10]/60 p-8 border border-white/5 hover:border-[#00E5FF]/50 transition-all shadow-xl group">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><span className="text-[#00E5FF] text-2xl">&lt;/&gt;</span> Languages & UI</h3>
+                <div className="space-y-5">
+                  <div>
+                    <div className="flex justify-between text-sm font-bold text-gray-300 mb-1"><span>Java / OOP</span><span className="text-[#00E5FF]">90%</span></div>
+                    <div className="w-full bg-[#1A1A24] rounded-full h-1.5"><div className="bg-gradient-to-r from-[#00E5FF] to-[#FF3366] h-1.5 rounded-full w-0 group-hover:w-[90%] transition-all duration-1000 ease-out"></div></div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm font-bold text-gray-300 mb-1"><span>JavaScript (ES6+)</span><span className="text-[#00E5FF]">85%</span></div>
+                    <div className="w-full bg-[#1A1A24] rounded-full h-1.5"><div className="bg-gradient-to-r from-[#00E5FF] to-[#FF3366] h-1.5 rounded-full w-0 group-hover:w-[85%] transition-all duration-1000 delay-100 ease-out"></div></div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm font-bold text-gray-300 mb-1"><span>React.js</span><span className="text-[#00E5FF]">90%</span></div>
+                    <div className="w-full bg-[#1A1A24] rounded-full h-1.5"><div className="bg-gradient-to-r from-[#00E5FF] to-[#FF3366] h-1.5 rounded-full w-0 group-hover:w-[90%] transition-all duration-1000 delay-200 ease-out"></div></div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm font-bold text-gray-300 mb-1"><span>HTML5 / CSS3</span><span className="text-[#00E5FF]">95%</span></div>
+                    <div className="w-full bg-[#1A1A24] rounded-full h-1.5"><div className="bg-gradient-to-r from-[#00E5FF] to-[#FF3366] h-1.5 rounded-full w-0 group-hover:w-[95%] transition-all duration-1000 delay-300 ease-out"></div></div>
+                  </div>
+                </div>
               </div>
+
+              {/* Backend & Architecture */}
+              <div className="bg-[#0A0A10]/60 p-8 border border-white/5 hover:border-[#FF3366]/50 transition-all shadow-xl group">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><span className="text-[#FF3366] text-2xl">⚙️</span> Server & Architecture</h3>
+                <div className="space-y-5">
+                  <div>
+                    <div className="flex justify-between text-sm font-bold text-gray-300 mb-1"><span>Node.js / Express</span><span className="text-[#FF3366]">85%</span></div>
+                    <div className="w-full bg-[#1A1A24] rounded-full h-1.5"><div className="bg-gradient-to-r from-[#FF3366] to-[#00E5FF] h-1.5 rounded-full w-0 group-hover:w-[85%] transition-all duration-1000 ease-out"></div></div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm font-bold text-gray-300 mb-1"><span>MongoDB (NoSQL)</span><span className="text-[#FF3366]">85%</span></div>
+                    <div className="w-full bg-[#1A1A24] rounded-full h-1.5"><div className="bg-gradient-to-r from-[#FF3366] to-[#00E5FF] h-1.5 rounded-full w-0 group-hover:w-[85%] transition-all duration-1000 delay-100 ease-out"></div></div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm font-bold text-gray-300 mb-1"><span>MySQL / SQL</span><span className="text-[#FF3366]">90%</span></div>
+                    <div className="w-full bg-[#1A1A24] rounded-full h-1.5"><div className="bg-gradient-to-r from-[#FF3366] to-[#00E5FF] h-1.5 rounded-full w-0 group-hover:w-[90%] transition-all duration-1000 delay-200 ease-out"></div></div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm font-bold text-gray-300 mb-1"><span>Python</span><span className="text-[#FF3366]">80%</span></div>
+                    <div className="w-full bg-[#1A1A24] rounded-full h-1.5"><div className="bg-gradient-to-r from-[#FF3366] to-[#00E5FF] h-1.5 rounded-full w-0 group-hover:w-[80%] transition-all duration-1000 delay-300 ease-out"></div></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tools & Cloud */}
+              <div className="bg-[#0A0A10]/60 p-8 border border-white/5 hover:border-purple-500/50 transition-all shadow-xl group">
+                <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2"><span className="text-purple-400 text-2xl">☁️</span> Data & Cloud</h3>
+                <div className="space-y-5">
+                  <div>
+                    <div className="flex justify-between text-sm font-bold text-gray-300 mb-1"><span>Power BI / DAX</span><span className="text-purple-400">90%</span></div>
+                    <div className="w-full bg-[#1A1A24] rounded-full h-1.5"><div className="bg-gradient-to-r from-purple-500 to-[#00E5FF] h-1.5 rounded-full w-0 group-hover:w-[90%] transition-all duration-1000 ease-out"></div></div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm font-bold text-gray-300 mb-1"><span>Git / GitHub</span><span className="text-purple-400">95%</span></div>
+                    <div className="w-full bg-[#1A1A24] rounded-full h-1.5"><div className="bg-gradient-to-r from-purple-500 to-[#00E5FF] h-1.5 rounded-full w-0 group-hover:w-[95%] transition-all duration-1000 delay-100 ease-out"></div></div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm font-bold text-gray-300 mb-1"><span>Docker / CI-CD</span><span className="text-purple-400">75%</span></div>
+                    <div className="w-full bg-[#1A1A24] rounded-full h-1.5"><div className="bg-gradient-to-r from-purple-500 to-[#00E5FF] h-1.5 rounded-full w-0 group-hover:w-[75%] transition-all duration-1000 delay-200 ease-out"></div></div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm font-bold text-gray-300 mb-1"><span>AWS / Vercel</span><span className="text-purple-400">80%</span></div>
+                    <div className="w-full bg-[#1A1A24] rounded-full h-1.5"><div className="bg-gradient-to-r from-purple-500 to-[#00E5FF] h-1.5 rounded-full w-0 group-hover:w-[80%] transition-all duration-1000 delay-300 ease-out"></div></div>
+                  </div>
+                </div>
+              </div>
+
             </div>
 
           </div>
         </section>
 
+        {/* PROJECTS SECTION */}
         <section id="projects" className="max-w-7xl mx-auto px-6 py-32 min-h-screen flex flex-col justify-center pointer-events-none">
           <div className="pointer-events-auto">
             <h2 className="text-4xl font-black text-white mb-12 tracking-tighter">System <span className="text-[#FF3366]">Builds.</span></h2>
