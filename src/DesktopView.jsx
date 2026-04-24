@@ -4,7 +4,7 @@ import { ContactShadows, PerspectiveCamera, Environment } from '@react-three/dre
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- CUSTOM HACKER LOADING PROTOCOL ---
+// --- CUSTOM AESTHETIC LOADING PROTOCOL ---
 const LoadingScreen = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
 
@@ -23,12 +23,23 @@ const LoadingScreen = ({ onComplete }) => {
   }, [onComplete]);
 
   return (
-    <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center">
-      <div className="w-full max-w-md space-y-8">
+    <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
+      
+      {/* --- AESTHETIC BACKGROUND ANIMATION --- */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Animated Tech Grid */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,229,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,229,255,0.05)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_40%,transparent_100%)] opacity-40" />
+        
+        {/* Pulsing Ambient Orbs */}
+        <motion.div animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-[#00E5FF] rounded-full blur-[140px]" />
+        <motion.div animate={{ scale: [1, 1.3, 1], rotate: [0, -90, 0], opacity: [0.1, 0.4, 0.1] }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-[#7B61FF] rounded-full blur-[140px]" />
+      </div>
+
+      <div className="w-full max-w-md space-y-8 relative z-10">
         <h2 className="text-[#00E5FF] font-mono text-3xl tracking-[0.2em] font-black uppercase flex items-center justify-center gap-3">
           <span>&lt;/&gt;</span> Shivang Ayar
         </h2>
-        <div className="h-[2px] w-full bg-white/5 rounded-full overflow-hidden">
+        <div className="h-[2px] w-full bg-white/5 rounded-full overflow-hidden shadow-[0_0_20px_rgba(0,229,255,0.2)]">
           <motion.div className="h-full bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" style={{ width: progress + "%" }} />
         </div>
         <p className="text-gray-400 font-black text-sm tracking-widest uppercase leading-relaxed">
@@ -39,7 +50,7 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (Original Dark Colors + Visibility Fix) ---
+// --- MECHANICAL SNAP CORE (FIXED: Massive Desktop Spread) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
@@ -55,7 +66,14 @@ function MechanicalCore({ scrollY }) {
       for (let y = 0; y < gridSize; y++) {
         for (let z = 0; z < gridSize; z++) {
           const targetPos = new THREE.Vector3(x - 1.5, y - 1.5, z - 1.5).multiplyScalar(1.05);
-          const randomPos = new THREE.Vector3((Math.random() - 0.5) * 45, (Math.random() - 0.5) * 35, (Math.random() - 0.5) * 20);
+          
+          // FIX: Massively expanded X and Y to completely fill ultra-wide desktop monitors
+          const randomPos = new THREE.Vector3(
+            (Math.random() - 0.5) * 100, // Massive X spread (Fixes empty right side)
+            (Math.random() - 0.5) * 60,  // Massive Y spread
+            (Math.random() - 0.5) * 60 - 15 // Pushed back slightly so they don't clip the camera
+          );
+          
           const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI);
           temp.push({ targetPos, randomPos, randomRot, index: i++ });
         }
@@ -109,7 +127,7 @@ function MechanicalCore({ scrollY }) {
   );
 }
 
-// --- DESKTOP SLIDER BARS (Hover Reactive) ---
+// --- DESKTOP SLIDER BARS ---
 const CompCard = ({ title, icon, skills }) => {
   const [isHovered, setIsHovered] = useState(false);
   
@@ -348,7 +366,7 @@ export default function DesktopView() {
           </div>
         </section>
 
-        {/* COMPETENCIES (PREMIUM HEADER + HOVER SKILLS) */}
+        {/* COMPETENCIES */}
         <section id="skills" className="max-w-7xl mx-auto px-10 py-32 w-full">
             <div className="flex flex-col items-center mb-20 text-center">
               <h2 className="text-7xl font-black text-white tracking-tighter uppercase">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
@@ -366,7 +384,7 @@ export default function DesktopView() {
             </div>
         </section>
 
-        {/* PROJECTS (PREMIUM HEADER + 6 PROJECTS GRID) */}
+        {/* PROJECTS */}
         <section id="projects" className="max-w-7xl mx-auto px-10 py-40 w-full">
             <div className="flex flex-col items-end mb-20 text-right">
               <h2 className="text-7xl font-black text-white tracking-tighter uppercase">System <span className="text-[#FF8C00]">Builds.</span></h2>
@@ -374,7 +392,7 @@ export default function DesktopView() {
               <div className="h-[3px] w-24 bg-gradient-to-l from-[#FF8C00] to-[#7B61FF] mt-8 rounded-full" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 [perspective:2000px]">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 [perspective:2000px]">
                 {projectsData.map((p, i) => (
                     <motion.div 
                         key={i} 
@@ -406,7 +424,7 @@ export default function DesktopView() {
             </div>
         </section>
 
-        {/* OFFLINE PROTOCOL (PREMIUM HEADER + 6 ITEMS) */}
+        {/* OFFLINE PROTOCOL */}
         <section className="max-w-7xl mx-auto px-10 py-40 flex flex-col items-center w-full">
             <div className="flex flex-col items-center mb-20 text-center">
               <h2 className="text-6xl font-black text-white tracking-tighter uppercase italic">Offline <span className="text-[#FF8C00]">Protocol.</span></h2>
@@ -433,6 +451,7 @@ export default function DesktopView() {
         </section>
 
         <ReactiveFooter />
+
       </div>
     </div>
   );

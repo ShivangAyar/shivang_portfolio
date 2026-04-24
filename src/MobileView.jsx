@@ -4,7 +4,7 @@ import { ContactShadows, PerspectiveCamera, Environment } from '@react-three/dre
 import { motion, AnimatePresence, useInView } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- CUSTOM HACKER LOADING PROTOCOL ---
+// --- CUSTOM AESTHETIC LOADING PROTOCOL ---
 const LoadingScreen = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
 
@@ -23,12 +23,20 @@ const LoadingScreen = ({ onComplete }) => {
   }, [onComplete]);
 
   return (
-    <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center">
-      <div className="w-full max-w-xs space-y-8">
+    <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
+      
+      {/* Animated Background */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,229,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,229,255,0.05)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_40%,transparent_100%)] opacity-40" />
+        <motion.div animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} className="absolute top-[-20%] left-[-10%] w-[80%] h-[60%] bg-[#00E5FF] rounded-full blur-[120px]" />
+        <motion.div animate={{ scale: [1, 1.3, 1], rotate: [0, -90, 0], opacity: [0.1, 0.4, 0.1] }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} className="absolute bottom-[-20%] right-[-10%] w-[80%] h-[60%] bg-[#7B61FF] rounded-full blur-[120px]" />
+      </div>
+
+      <div className="w-full max-w-xs space-y-8 relative z-10">
         <h2 className="text-[#00E5FF] font-mono text-2xl tracking-[0.2em] font-black uppercase flex items-center justify-center gap-2">
           <span>&lt;/&gt;</span> Shivang Ayar
         </h2>
-        <div className="h-[1.5px] w-full bg-white/5 rounded-full overflow-hidden">
+        <div className="h-[1.5px] w-full bg-white/5 rounded-full overflow-hidden shadow-[0_0_20px_rgba(0,229,255,0.2)]">
           <motion.div className="h-full bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" style={{ width: progress + "%" }} />
         </div>
         <p className="text-gray-400 font-black text-[10px] tracking-widest uppercase leading-relaxed">
@@ -39,7 +47,7 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (Original Dark Colors + Visibility Fix) ---
+// --- MECHANICAL SNAP CORE (Original Colors + Visibility Fix) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
@@ -106,7 +114,7 @@ function MechanicalCore({ scrollY }) {
   );
 }
 
-// --- MOBILE SLIDER BARS (Scroll Reactive) ---
+// --- MOBILE SLIDER BARS ---
 const CompCard = ({ title, icon, skills }) => {
   const ref = useRef(null);
   const isInView = useInView(ref, { amount: 0.3, once: false });
@@ -130,7 +138,7 @@ const CompCard = ({ title, icon, skills }) => {
   );
 };
 
-// --- CRAZY TERMINAL FOOTER (Glitch Fixed) ---
+// --- CRAZY TERMINAL FOOTER ---
 const ReactiveFooter = () => {
   const [logs, setLogs] = useState(["> Uplink Established", "> Syncing Ottawa_Node..."]);
   
@@ -211,7 +219,7 @@ const ReactiveFooter = () => {
   );
 };
 
-// --- SIMPLIFIED PROJECTS DATA (All 6 Included) ---
+// --- DATA ---
 const projectsData = [
   { title: "E-Commerce Microservices", desc: "A scalable backend system for an online store, handling secure payments and managing user accounts smoothly.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF", icon: "🛒" },
   { title: "Movie Watchlist App", desc: "A full-stack web platform where users can search, add, and track their favorite movies using a custom database.", tags: ["MongoDB", "Express", "Node"], color: "#7B61FF", icon: "🎬" },
@@ -256,7 +264,7 @@ export default function MobileView() {
       </div>
 
       <div className="relative z-30 w-full flex flex-col">
-        {/* ENHANCED NAVBAR */}
+        {/* PREMIUM NAVBAR */}
         <nav className="fixed top-0 left-0 w-full z-[100] bg-[#010102]/70 backdrop-blur-3xl border-b border-white/5 h-20 flex items-center justify-between px-6">
           <div className="text-xl font-black text-white cursor-pointer flex items-center" onClick={() => window.scrollTo(0,0)}>
             <span className="text-[#00E5FF] font-mono mr-2 tracking-tighter">&lt;/&gt;</span>
@@ -314,7 +322,7 @@ export default function MobileView() {
           )}
         </AnimatePresence>
 
-        {/* PAGE 1: CUBE ONLY (With Scroll Arrow that Fades Out) */}
+        {/* PAGE 1: CUBE ONLY */}
         <section className="h-[90vh] w-full flex flex-col items-center justify-end pb-12 z-20">
           <div style={{ opacity: Math.max(0, 1 - scrollY / 150) }} className="transition-opacity duration-100 pointer-events-auto">
             <motion.button 
@@ -369,7 +377,7 @@ export default function MobileView() {
           ))}
         </section>
 
-        {/* TECHNICAL ARSENAL (PREMIUM HEADER) */}
+        {/* TECHNICAL ARSENAL */}
         <section id="skills" className="px-6 py-32 space-y-8">
           <div className="flex flex-col items-center mb-16 text-center">
             <h2 className="text-6xl font-black text-white tracking-tighter uppercase">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
@@ -384,7 +392,7 @@ export default function MobileView() {
           <CompCard title="DevOps" icon="☁️" skills={[{n:"Git / GitHub",v:"95%"},{n:"AWS",v:"80%"},{n:"Docker",v:"75%"}]} />
         </section>
 
-        {/* SYSTEM BUILDS (PREMIUM HEADER) */}
+        {/* SYSTEM BUILDS */}
         <section id="builds" className="px-6 py-40 space-y-10">
           <div className="flex flex-col items-end mb-16 text-right">
             <h2 className="text-6xl font-black text-white tracking-tighter uppercase">System <span className="text-[#FF8C00]">Builds.</span></h2>
@@ -407,14 +415,15 @@ export default function MobileView() {
           </div>
         ))}</section>
 
-        {/* OFFLINE PROTOCOL (6 ITEMS) */}
+        {/* OFFLINE PROTOCOL */}
         <section id="offline" className="px-6 py-32 space-y-8 text-center">
           <div className="flex flex-col items-center mb-16 text-center">
             <h2 className="text-5xl font-black text-white tracking-tighter uppercase italic">Offline <span className="text-[#FF8C00]">Protocol.</span></h2>
             <p className="text-gray-400 mt-6 max-w-xl text-lg font-light leading-relaxed">Life's about balance! Here are the activities that keep me energized and inspired outside of tech.</p>
             <div className="h-[3px] w-20 bg-gradient-to-r from-[#FF8C00] to-[#00E5FF] mt-8 rounded-full" />
           </div>
-          {[ {i:"🥊",t:"Gym",d:"Strength & discipline. 6-day split focusing on progressive overload."},
+          {[ 
+             {i:"🥊",t:"Gym",d:"Strength & discipline. 6-day split focusing on progressive overload."},
              {i:"💻",t:"Coding",d:"Always building, innovating, & exploring new side quests."},
              {i:"✈️",t:"Travelling",d:"Exploring new terrains, cultures, and resetting the digital buffer."},
              {i:"🏐",t:"Volleyball",d:"Team strategy, agility, and maintaining peak athletic flow."},
@@ -424,7 +433,7 @@ export default function MobileView() {
             <motion.div key={x} initial={{scale:0.9, opacity: 0}} whileInView={{scale:1, opacity: 1}} transition={{duration: 0.6}} viewport={{once: true}} className="bg-[#0A0A15]/80 backdrop-blur-xl p-12 rounded-[3.5rem] border border-white/10 shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
               <div className="text-7xl mb-10">{h.i}</div>
               <h3 className="text-2xl font-black text-white uppercase tracking-widest">{h.t}</h3>
-              <p className="text-gray-400 text-base mt-4 font-light leading-relaxed">{h.d}</p>
+              <p className="text-gray-400 text-lg mt-6 font-light leading-relaxed">{h.d}</p>
             </motion.div>
           ))}</section>
 
