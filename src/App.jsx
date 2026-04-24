@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Float, Text, ContactShadows, Edges, PerspectiveCamera, MeshDistortMaterial } from '@react-three/drei';
+import { Float, Text, ContactShadows, Edges, PerspectiveCamera, Environment } from '@react-three/drei';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 
@@ -8,28 +8,28 @@ import * as THREE from 'three';
 function MechanicalCore({ isHovered }) {
   const meshRef = useRef();
   const groupRef = useRef();
-  const gridSize = 4; // 4x4x4 = 64 cubes
+  const gridSize = 4; // 4x4x4 = 64 high-poly cubes
   const count = gridSize ** 3;
 
-  // Pre-calculate positions
+  // Pre-calculate positions for the snap effect
   const cubeData = useMemo(() => {
     const temp = [];
     let i = 0;
     for (let x = 0; x < gridSize; x++) {
       for (let y = 0; y < gridSize; y++) {
         for (let z = 0; z < gridSize; z++) {
-          // Target Grid Position (Centered)
+          // Precise Target Grid Position
           const targetPos = new THREE.Vector3(
             x - (gridSize - 1) / 2,
             y - (gridSize - 1) / 2,
             z - (gridSize - 1) / 2
-          ).multiplyScalar(1.05); // Tiny gap for light leakage
+          ).multiplyScalar(1.02); // Tighter gap for that "mechanical" look
 
           // Chaotic Start Position
           const randomPos = new THREE.Vector3(
-            (Math.random() - 0.5) * 20,
-            (Math.random() - 0.5) * 20,
-            (Math.random() - 0.5) * 15
+            (Math.random() - 0.5) * 25,
+            (Math.random() - 0.5) * 25,
+            (Math.random() - 0.5) * 20
           );
           
           const randomRot = new THREE.Euler(
@@ -46,28 +46,32 @@ function MechanicalCore({ isHovered }) {
   }, []);
 
   const dummy = new THREE.Object3D();
+  // Using refs for animation state to prevent re-renders (Performance)
   const currentPositions = useMemo(() => cubeData.map(d => d.randomPos.clone()), [cubeData]);
   const currentRotations = useMemo(() => cubeData.map(d => new THREE.Quaternion().setFromEuler(d.randomRot)), [cubeData]);
 
   useFrame((state, delta) => {
     const t = state.clock.getElapsedTime();
-    groupRef.current.rotation.y += delta * (isHovered ? 0.5 : 0.1);
-    groupRef.current.rotation.z += delta * (isHovered ? 0.2 : 0.05);
+    
+    // Slow drift rotation in idle, stable in assembly
+    groupRef.current.rotation.y += delta * (isHovered ? 0.2 : 0.05);
+    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, isHovered ? 0 : Math.sin(t * 0.2) * 0.2, 0.05);
 
     cubeData.forEach((data, i) => {
       const targetP = isHovered ? data.targetPos : data.randomPos;
       const targetR = isHovered ? new THREE.Quaternion().set(0, 0, 0, 1) : new THREE.Quaternion().setFromEuler(data.randomRot);
 
-      // Smooth mechanical snapping animation
-      currentPositions[i].lerp(targetP, isHovered ? 0.12 : 0.03);
-      currentRotations[i].slerp(targetR, isHovered ? 0.12 : 0.03);
+      // HIGH-VELOCITY LERP (The "Snap" feeling)
+      currentPositions[i].lerp(targetP, isHovered ? 0.15 : 0.02);
+      currentRotations[i].slerp(targetR, isHovered ? 0.15 : 0.02);
 
       dummy.position.copy(currentPositions[i]);
-      if (!isHovered) {
-        // Add subtle drifting in idle mode
-        dummy.position.y += Math.sin(t + i) * 0.01;
-      }
       dummy.quaternion.copy(currentRotations[i]);
+      
+      // Scale pulse on assembly
+      const s = isHovered ? 1.0 : 0.8;
+      dummy.scale.set(s, s, s);
+      
       dummy.updateMatrix();
       meshRef.current.setMatrixAt(i, dummy.matrix);
     });
@@ -75,61 +79,59 @@ function MechanicalCore({ isHovered }) {
   });
 
   return (
-    <group ref={groupRef}>
+    <group ref={groupRef} position={[2, 0, 0]}>
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
         <meshStandardMaterial 
-          color={isHovered ? "#050505" : "#11111a"} 
-          roughness={0.1} 
-          metalness={0.8}
+          color="#050505" 
+          roughness={0} 
+          metalness={1} 
         />
       </instancedMesh>
 
-      {/* Internal "Reactor" Light - leaks through the gaps of the cubes */}
+      {/* Internal Power Source - Intense Amber */}
       <mesh scale={isHovered ? 3.5 : 0.1}>
         <sphereGeometry args={[1, 16, 16]} />
         <meshStandardMaterial 
           color="#FF8C00" 
           emissive="#FF8C00" 
-          emissiveIntensity={isHovered ? 15 : 0} 
+          emissiveIntensity={isHovered ? 20 : 0} 
           transparent 
-          opacity={isHovered ? 0.4 : 0}
+          opacity={isHovered ? 0.3 : 0}
         />
       </mesh>
 
-      {/* Floating HUD Labels */}
-      <HudLabel position={[0, 5, 0]} text="ARCHITECTURE" isVisible={isHovered} />
-      <HudLabel position={[5, 0, 0]} text="MERN STACK" isVisible={isHovered} />
-      <HudLabel position={[-5, 0, 0]} text="FULL-STACK" isVisible={isHovered} />
+      {/* HUD ORBIT LABELS */}
+      <HUDText position={[0, 4, 0]} text="ARCHITECTURE" isVisible={isHovered} />
+      <HUDText position={[5, -1, 0]} text="MERN STACK" isVisible={isHovered} />
+      <HUDText position={[-5, -1, 0]} text="FULL-STACK" isVisible={isHovered} />
     </group>
   );
 }
 
-function HudLabel({ position, text, isVisible }) {
+function HUDText({ position, text, isVisible }) {
   const ref = useRef();
   useFrame((state) => {
-    if (ref.current) {
-        ref.current.lookAt(state.camera.position);
-    }
+    if (ref.current) ref.current.lookAt(state.camera.position);
   });
   return (
     <Text
       ref={ref}
       position={position}
-      fontSize={0.5}
+      fontSize={0.4}
       font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf"
       color="#00E5FF"
       emissive="#00E5FF"
-      emissiveIntensity={isVisible ? 2 : 0}
+      emissiveIntensity={isVisible ? 4 : 0}
       transparent
-      opacity={isVisible ? 1 : 0}
+      opacity={isVisible ? 0.8 : 0}
     >
       {text}
     </Text>
   );
 }
 
-// --- FULL COMPONENT LOGIC (Restoring all Sections) ---
+// --- APP SECTIONS ---
 const projects = [
   { title: "E-Commerce Microservices", desc: "Scaleable backend utilizing Docker, Stripe API, and JWT auth.", tags: ["Node.js", "Docker", "Stripe"], color: "#00E5FF" },
   { title: "Movie Watchlist App", desc: "Full-stack media tracker via RESTful APIs and NoSQL architecture.", tags: ["MongoDB", "Express", "Node"], color: "#FF8C00" },
@@ -162,15 +164,16 @@ export default function App() {
       
       {/* 2D LIGHT TRACKER */}
       <div className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-300 hidden md:block"
-        style={{ background: `radial-gradient(700px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.06), transparent 85%)` }} />
+        style={{ background: `radial-gradient(800px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.05), transparent 85%)` }} />
 
       {/* 3D SCENE */}
       <div className="fixed inset-0 z-0 pointer-events-auto">
-        <Canvas>
-          <PerspectiveCamera makeDefault position={[0, 0, 18]} fov={40} />
+        <Canvas dpr={[1, 2]}>
+          <PerspectiveCamera makeDefault position={[0, 0, 16]} fov={40} />
           <color attach="background" args={['#010102']} />
-          <ambientLight intensity={0.4} />
-          <pointLight position={[mousePos.x / 100, -mousePos.y / 100, 10]} intensity={2} color="#00E5FF" />
+          <ambientLight intensity={0.3} />
+          <pointLight position={[10, 10, 10]} intensity={1} color="#00E5FF" />
+          <Environment preset="night" />
           <MechanicalCore isHovered={isHovered} />
           <ContactShadows position={[0, -10, 0]} opacity={0.4} scale={40} blur={2} far={20} color="#00E5FF" />
         </Canvas>
@@ -188,9 +191,7 @@ export default function App() {
             <NavLink href="#projects">Builds</NavLink>
             <NavLink href="#contact">Connect</NavLink>
           </div>
-          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-gray-300 p-2 focus:outline-none">
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}/></svg>
-          </button>
+          <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-gray-300 p-2"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}/></svg></button>
         </nav>
 
         {/* HERO */}
@@ -210,19 +211,18 @@ export default function App() {
           </motion.div>
         </section>
 
-        {/* ABOUT SECTION (Restored) */}
+        {/* ABOUT & JOURNEY */}
         <section id="about" className="max-w-7xl mx-auto px-6 py-40 w-full relative">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-5">
               <h2 className="text-5xl md:text-6xl font-black text-white mb-10 tracking-tighter">About <span className="text-[#00E5FF]">Me.</span></h2>
-              <p className="text-gray-400 mb-8 text-xl font-light leading-relaxed">Born and raised in Zambia, now operating in Ottawa. My approach to engineering is purely objective: Build, Optimize, and Master.</p>
+              <p className="text-gray-400 mb-8 text-xl font-light leading-relaxed">Born and raised in Zambia, now operating in Ottawa. My approach to engineering is objective: Build, Optimize, and Master.</p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-[#0A0A12]/60 border border-white/5 p-8 rounded-2xl text-center"><h3 className="text-4xl font-black text-white">3+</h3><p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2 font-black">Years</p></div>
                 <div className="bg-[#0A0A12]/60 border border-white/5 p-8 rounded-2xl text-center"><h3 className="text-4xl font-black text-white">10+</h3><p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2 font-black">Builds</p></div>
               </div>
             </motion.div>
-            
-            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-7 space-y-12 border-l-2 border-[#00E5FF]/20 ml-4 relative">
+            <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-7 space-y-10 border-l-2 border-[#00E5FF]/20 ml-4 relative">
               {[ {i:"🎓", y:"2024 - Present", t:"Algonquin College", p:"Advanced Diploma in Computer Programming. Enterprise focus.", c:"#00E5FF"},
                  {i:"💻", y:"2021 - 2023", t:"Fraser International College", p:"Computer Science Pathway. specialized expertise in algorithm design.", c:"#A855F7"}
               ].map((step, idx) => (
@@ -239,7 +239,7 @@ export default function App() {
           </div>
         </section>
 
-        {/* SKILLS (Restored) */}
+        {/* CORE COMPETENCIES */}
         <section id="skills" className="max-w-7xl mx-auto px-6 py-20 w-full">
             <h2 className="text-6xl md:text-7xl font-black text-white mb-16 tracking-tighter">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -251,7 +251,7 @@ export default function App() {
                    { t: "Cloud & DevOps", i: "☁️", s: [{n: "Git / GitHub", v: "95%"}, {n: "AWS", v: "80%"}, {n: "Docker", v: "75%"}] }
                 ].map((card, idx) => (
                     <div key={idx} className="bg-[#0A0A12]/40 border border-white/5 p-10 rounded-3xl hover:border-[#00E5FF]/40 transition-all shadow-2xl group flex flex-col">
-                        <h3 className="text-xl font-bold text-white mb-8 tracking-tighter uppercase flex items-center gap-4">
+                        <h3 className="text-xl font-black text-white mb-8 tracking-tighter uppercase flex items-center gap-4">
                             <span className="text-2xl">{card.i}</span> {card.t}
                         </h3>
                         <div className="space-y-6 mt-auto">
@@ -269,7 +269,7 @@ export default function App() {
             </div>
         </section>
 
-        {/* PROJECTS (Restored) */}
+        {/* PROJECTS */}
         <section id="projects" className="max-w-7xl mx-auto px-6 py-40">
             <h2 className="text-7xl font-black text-white mb-20 tracking-tighter text-right">System <span className="text-[#FF8C00]">Builds.</span></h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 [perspective:2000px]">
