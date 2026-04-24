@@ -6,11 +6,11 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    // Detect mobile screens (less than 1024px wide)
-    const checkSize = () => setIsMobile(window.innerWidth < 1024);
-    checkSize();
-    window.addEventListener('resize', checkSize);
-    return () => window.removeEventListener('resize', checkSize);
+    // Standard professional laptop vs mobile breakpoint
+    const checkRes = () => setIsMobile(window.innerWidth < 1024);
+    checkRes();
+    window.addEventListener('resize', checkRes);
+    return () => window.removeEventListener('resize', checkRes);
   }, []);
 
   return isMobile ? <MobileView /> : <DesktopView />;
