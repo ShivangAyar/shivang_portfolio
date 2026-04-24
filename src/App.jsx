@@ -1,106 +1,116 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Float, Text, ContactShadows, Points, PointMaterial, Edges } from '@react-three/drei';
+import { Float, Text, ContactShadows, Points, PointMaterial, Edges, PerspectiveCamera } from '@react-three/drei';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as THREE from 'three';
 
-// --- REACTIVE NEURAL THREADS ---
-function NeuralParticles({ count = 1000 }) {
-  const points = useMemo(() => {
-    const p = new Float32Array(count * 3);
-    for (let i = 0; i < count; i++) {
-      p[i * 3] = (Math.random() - 0.5) * 25;
-      p[i * 3 + 1] = (Math.random() - 0.5) * 25;
-      p[i * 3 + 2] = (Math.random() - 0.5) * 25;
-    }
-    return p;
-  }, [count]);
-
-  const pRef = useRef();
-  useFrame((state) => {
-    pRef.current.rotation.y += 0.0005;
-    pRef.current.rotation.x += 0.0002;
-  });
-
-  return (
-    <Points ref={pRef} positions={points} stride={3} frustumCulled={false}>
-      <PointMaterial transparent color="#00E5FF" size={0.015} sizeAttenuation={true} depthWrite={false} opacity={0.2} />
-    </Points>
-  );
-}
-
-// --- THE CENTRAL DATA LATTICE ---
-function DataLattice() {
-  const meshRef = useRef();
+// --- THE ASSEMBLING BLUEPRINT CORE ---
+function AssemblingBlueprint({ isHovered }) {
   const groupRef = useRef();
-  const { viewport } = useThree();
-  const isMobile = viewport.width < 5;
+  const shardCount = 42;
+  
+  // Generate home positions (forming an icosahedron/sphere shape) and random start positions
+  const shards = useMemo(() => {
+    const temp = [];
+    for (let i = 0; i < shardCount; i++) {
+      // Final target positions (structured)
+      const phi = Math.acos(-1 + (2 * i) / shardCount);
+      const theta = Math.sqrt(shardCount * Math.PI) * phi;
+      const targetPos = new THREE.Vector3().setFromSphericalCoords(3, phi, theta);
+      const targetRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+
+      // Random "floating" positions (chaos)
+      const randomPos = new THREE.Vector3(
+        (Math.random() - 0.5) * 15,
+        (Math.random() - 0.5) * 15,
+        (Math.random() - 0.5) * 15
+      );
+      const randomRot = new THREE.Euler(Math.random() * Math.PI, Math.random() * Math.PI, 0);
+      
+      temp.push({ targetPos, targetRot, randomPos, randomRot, speed: 0.2 + Math.random() * 0.5 });
+    }
+    return temp;
+  }, []);
+
+  const shardRefs = useRef([]);
 
   useFrame((state, delta) => {
-    const mX = state.pointer.x;
-    const mY = state.pointer.y;
-
-    // Slow, deliberate rotation
-    groupRef.current.rotation.y += delta * 0.1;
+    const t = state.clock.getElapsedTime();
     
-    // Smooth tilt toward mouse
-    groupRef.current.rotation.x = THREE.MathUtils.lerp(groupRef.current.rotation.x, -mY * 0.3, 0.05);
-    groupRef.current.rotation.z = THREE.MathUtils.lerp(groupRef.current.rotation.z, mX * 0.3, 0.05);
+    // Rotate the entire group slowly
+    groupRef.current.rotation.y += delta * 0.15;
+    groupRef.current.rotation.x = Math.sin(t * 0.2) * 0.1;
 
-    const scale = isMobile ? 1.5 : 3.2;
-    meshRef.current.scale.lerp(new THREE.Vector3(scale, scale, scale), 0.05);
+    shardRefs.current.forEach((mesh, i) => {
+      if (!mesh) return;
+      
+      const s = shards[i];
+      // Define target based on hover state
+      const destPos = isHovered ? s.targetPos : s.randomPos;
+      const destRot = isHovered ? s.targetRot : s.randomRot;
+
+      // Lerp positions for smooth assembly/disassembly
+      mesh.position.lerp(destPos, 0.04);
+      mesh.quaternion.slerp(new THREE.Quaternion().setFromEuler(destRot), 0.04);
+
+      // Add a tiny bit of "float" to the chaotic state
+      if (!isHovered) {
+        mesh.position.y += Math.sin(t * s.speed) * 0.005;
+      }
+    });
   });
 
   return (
     <group ref={groupRef}>
-      {/* The Core Wireframe */}
-      <mesh ref={meshRef}>
-        <icosahedronGeometry args={[1, 1]} />
-        <meshBasicMaterial color="#020204" transparent opacity={1} />
-        <Edges color="#00E5FF" threshold={15}>
-          <meshBasicMaterial color="#00E5FF" transparent opacity={0.2} />
-        </Edges>
-      </mesh>
-
-      {/* Inner Glowing Core */}
-      <mesh scale={0.4}>
+      {shards.map((_, i) => (
+        <mesh key={i} ref={(el) => (shardRefs.current[i] = el)}>
+          <tetrahedronGeometry args={[0.4, 0]} />
+          <meshStandardMaterial 
+            color={isHovered ? "#00E5FF" : "#11111a"} 
+            emissive={isHovered ? "#00E5FF" : "#FF8C00"}
+            emissiveIntensity={isHovered ? 2 : 0.2}
+            transparent
+            opacity={isHovered ? 0.9 : 0.4}
+          />
+          <Edges color={isHovered ? "#fff" : "#00E5FF"} threshold={15} />
+        </mesh>
+      ))}
+      
+      {/* Inner constant heart */}
+      <mesh scale={isHovered ? 0.8 : 0.2}>
         <sphereGeometry args={[1, 32, 32]} />
-        <meshStandardMaterial color="#FF8C00" emissive="#FF8C00" emissiveIntensity={2} toneMapped={false} />
-      </mesh>
-
-      {/* Outer Connection Shell */}
-      <mesh scale={1.4}>
-        <icosahedronGeometry args={[1, 0]} />
-        <meshBasicMaterial color="#00E5FF" wireframe transparent opacity={0.03} />
+        <meshStandardMaterial 
+            color="#FF8C00" 
+            emissive="#FF8C00" 
+            emissiveIntensity={isHovered ? 3 : 0.5} 
+            toneMapped={false} 
+        />
       </mesh>
     </group>
   );
 }
 
-// --- CURSOR LIGHT ---
-function CursorLight() {
-  const lightRef = useRef();
-  useFrame((state) => {
-    const x = (state.pointer.x * state.viewport.width) / 2;
-    const y = (state.pointer.y * state.viewport.height) / 2;
-    lightRef.current.position.lerp(new THREE.Vector3(x, y, 5), 0.1);
-  });
-  return <pointLight ref={lightRef} intensity={15} color="#00E5FF" distance={30} />;
-}
+// --- AMBIENT NEURAL PARTICLES ---
+function NeuralEnvironment({ count = 800 }) {
+  const points = useMemo(() => {
+    const p = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      p[i * 3] = (Math.random() - 0.5) * 30;
+      p[i * 3 + 1] = (Math.random() - 0.5) * 30;
+      p[i * 3 + 2] = (Math.random() - 0.5) * 30;
+    }
+    return p;
+  }, [count]);
 
-// --- BACKGROUND TEXT (Subtle) ---
-function FloatingWord({ children, position, scale = 1 }) {
+  const pRef = useRef();
+  useFrame(() => {
+    pRef.current.rotation.y += 0.0004;
+  });
+
   return (
-    <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
-      <Text
-        position={position} scale={scale}
-        font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf"
-        letterSpacing={0.1}
-      >
-        {children}
-        <meshStandardMaterial color="#11111a" emissive="#11111a" emissiveIntensity={0.5} transparent opacity={0.5} />
-      </Text>
-    </Float>
+    <Points ref={pRef} positions={points} stride={3}>
+      <PointMaterial transparent color="#00E5FF" size={0.02} sizeAttenuation={true} depthWrite={false} opacity={0.15} />
+    </Points>
   );
 }
 
@@ -116,12 +126,13 @@ const projects = [
 const NavLink = ({ href, children }) => (
   <a href={href} className="group relative py-2 text-[10px] font-black tracking-[0.3em] text-gray-500 uppercase transition-colors hover:text-white">
     {children}
-    <span className="absolute bottom-0 left-0 h-[1.5px] w-full origin-left scale-x-0 bg-gradient-to-r from-[#00E5FF] to-[#FF8C00] transition-transform duration-500 group-hover:scale-x-100" />
+    <span className="absolute bottom-0 left-0 h-[1.5px] w-full origin-left scale-x-0 bg-gradient-to-r from-[#00E5FF] to-[#FF8C00] transition-transform duration-500 group-hover:scale-x-100 shadow-[0_0_10px_#00E5FF]" />
   </a>
 );
 
 export default function App() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -133,23 +144,32 @@ export default function App() {
   return (
     <div className="bg-[#010102] text-gray-200 antialiased selection:bg-[#00E5FF] selection:text-black font-sans scroll-smooth relative min-h-screen overflow-x-hidden">
       
-      {/* SUBTLE DOM SPOTLIGHT */}
+      {/* 2D LIGHT TRACKER */}
       <div className="pointer-events-none fixed inset-0 z-20 transition-opacity duration-300 hidden md:block"
-        style={{ background: `radial-gradient(800px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.04), transparent 85%)` }} />
+        style={{ background: `radial-gradient(800px circle at ${mousePos.x}px ${mousePos.y}px, rgba(0, 229, 255, 0.05), transparent 85%)` }} />
 
-      {/* 3D SCENE */}
+      {/* 3D SCENE (FIXED BACKGROUND) */}
       <div className="fixed inset-0 z-0 pointer-events-auto">
-        <Canvas camera={{ position: [0, 0, 18], fov: 40 }}>
+        <Canvas shadow={false}>
+          <PerspectiveCamera makeDefault position={[0, 0, 18]} fov={40} />
           <color attach="background" args={['#010102']} />
-          <ambientLight intensity={0.2} />
-          <CursorLight />
-          <DataLattice />
-          <NeuralParticles count={2000} />
+          <ambientLight intensity={0.4} />
+          <pointLight position={[10, 10, 10]} intensity={1.5} color="#00E5FF" />
+          <AssemblingBlueprint isHovered={isHovered} />
+          <NeuralEnvironment count={1200} />
           
-          <FloatingWord position={[-12, 10, -15]} scale={1.2}>ARCHITECTURE</FloatingWord>
-          <FloatingWord position={[12, -8, -12]} scale={1}>FULL-STACK</FloatingWord>
-          <FloatingWord position={[-10, -12, -18]} scale={1.5}>MERN STACK</FloatingWord>
-          <FloatingWord position={[0, -20, -25]} scale={4}>SHIVANG</FloatingWord>
+          <Float speed={1.5}>
+            <Text position={[-12, 8, -15]} scale={1.2} font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf">
+              ARCHITECTURE
+              <meshStandardMaterial color="#11111a" emissive="#11111a" emissiveIntensity={0.5} transparent opacity={0.4} />
+            </Text>
+          </Float>
+          <Float speed={1.5}>
+            <Text position={[12, -8, -12]} scale={1} font="https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfMZhrib2Bg-4.ttf">
+              FULL-STACK
+              <meshStandardMaterial color="#11111a" emissive="#11111a" emissiveIntensity={0.5} transparent opacity={0.4} />
+            </Text>
+          </Float>
 
           <ContactShadows position={[0, -12, 0]} opacity={0.4} scale={50} blur={2} far={20} color="#00E5FF" />
         </Canvas>
@@ -171,11 +191,15 @@ export default function App() {
         </nav>
 
         {/* HERO */}
-        <section className="max-w-7xl mx-auto px-6 min-h-screen flex items-center pointer-events-none relative w-full pt-20">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }} className="flex flex-col items-start pointer-events-auto max-w-4xl">
-            <div className="mb-8 px-4 py-1.5 border border-[#00E5FF]/20 bg-[#00E5FF]/5 text-[#00E5FF] text-[10px] font-black tracking-[0.5em] uppercase">Architecture & Systems</div>
+        <section 
+          className="max-w-7xl mx-auto px-6 min-h-screen flex items-center relative w-full pt-20"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1 }} className="flex flex-col items-start max-w-4xl z-40">
+            <div className="mb-8 px-4 py-1.5 border border-[#00E5FF]/20 bg-[#00E5FF]/5 text-[#00E5FF] text-[10px] font-black tracking-[0.5em] uppercase">Architecture & Logic</div>
             <h1 className="text-6xl sm:text-8xl md:text-[9rem] font-black text-white mb-6 tracking-tighter leading-[0.9]">Shivang <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Ayar.</span></h1>
-            <p className="text-lg md:text-2xl text-gray-400 mt-6 mb-12 font-light max-w-2xl border-l border-white/10 pl-8 leading-relaxed">Designing high-performance full-stack architectures and resilient digital ecosystems.</p>
+            <p className="text-lg md:text-2xl text-gray-400 mt-6 mb-12 font-light max-w-2xl border-l border-white/10 pl-8 leading-relaxed">Designing high-performance full-stack architectures and resilient digital systems.</p>
             <div className="flex flex-col sm:flex-row gap-6 w-full sm:w-auto">
               <a href="#projects" className="bg-white text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-[#00E5FF] hover:text-white transition-all duration-500">Execute Builds</a>
               <a href="/resume.pdf" target="_blank" className="border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all duration-500">Resume ↓</a>
@@ -183,23 +207,22 @@ export default function App() {
           </motion.div>
         </section>
 
-        {/* ABOUT & JOURNEY (Refined for Mobile) */}
-        <section id="about" className="max-w-7xl mx-auto px-6 py-40 pointer-events-auto w-full">
+        {/* ABOUT & JOURNEY */}
+        <section id="about" className="max-w-7xl mx-auto px-6 py-40 w-full relative">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 items-center">
             <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-5">
               <h2 className="text-5xl md:text-6xl font-black text-white mb-10 tracking-tighter">The <span className="text-[#00E5FF]">Mindset.</span></h2>
-              <p className="text-gray-400 mb-8 text-xl font-light leading-relaxed">Born and raised in Zambia, now operating in Ottawa. My approach to engineering is purely objective: Build, Optimize, and Master.</p>
+              <p className="text-gray-400 mb-8 text-xl font-light leading-relaxed">Born and raised in Zambia, now operating in Ottawa. My approach to engineering is objective: Build, Optimize, and Master.</p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-[#0A0A12]/40 border border-white/5 p-8 rounded-2xl text-center"><h3 className="text-4xl font-black text-white">3+</h3><p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2 font-black">Years</p></div>
                 <div className="bg-[#0A0A12]/40 border border-white/5 p-8 rounded-2xl text-center"><h3 className="text-4xl font-black text-white">10+</h3><p className="text-[9px] text-gray-500 uppercase tracking-widest mt-2 font-black">Builds</p></div>
               </div>
             </motion.div>
-            
             <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-7 space-y-10">
-              {[ {i:"🎓", y:"2024 - Present", t:"Algonquin College", p:"Computer Programming & Analysis. Enterprise Logic."},
-                 {i:"💻", y:"2021 - 2023", t:"Fraser International College", p:"Computer Science Pathway. Algorithmic foundations."}
+              {[ {y:"2024 - Present", t:"Algonquin College", p:"Computer Programming & Analysis. Enterprise Logic."},
+                 {y:"2021 - 2023", t:"Fraser International College", p:"Computer Science Pathway. Algorithmic foundations."}
               ].map((step, idx) => (
-                <div key={idx} className="bg-[#0A0A12]/40 backdrop-blur-xl border border-white/5 p-10 rounded-3xl relative overflow-hidden group">
+                <div key={idx} className="bg-[#0A0A12]/40 backdrop-blur-xl border border-white/5 p-10 rounded-3xl relative overflow-hidden">
                   <div className="absolute top-0 left-0 h-full w-[2px] bg-gradient-to-b from-[#00E5FF] to-transparent opacity-30" />
                   <span className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-500">{step.y}</span>
                   <h3 className="text-2xl font-bold text-white mt-4 tracking-tight">{step.t}</h3>
@@ -211,10 +234,10 @@ export default function App() {
         </section>
 
         {/* COMPETENCIES */}
-        <section id="skills" className="max-w-7xl mx-auto px-6 py-20 pointer-events-auto w-full">
+        <section id="skills" className="max-w-7xl mx-auto px-6 py-20 w-full">
             <h2 className="text-6xl md:text-7xl font-black text-white mb-16 tracking-tighter">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[ { t: "Languages", i: "💻", s: ["Java", "Python", "JavaScript", "C#"] },
+                {[ { t: "Programming", i: "💻", s: ["Java", "Python", "JavaScript", "C#"] },
                    { t: "Frontend", i: "🖥️", s: ["React.js", "HTML5/CSS3", "Tailwind", "Next.js"] },
                    { t: "Backend", i: "⚙️", s: ["Node.js", "Express.js", "REST APIs", "WebSockets"] },
                    { t: "Databases", i: "🗄️", s: ["MongoDB", "MySQL", "PostgreSQL", "NoSQL"] },
@@ -235,8 +258,8 @@ export default function App() {
             </div>
         </section>
 
-        {/* PROJECTS (Tilt Optimized) */}
-        <section id="projects" className="max-w-7xl mx-auto px-6 py-40 pointer-events-auto">
+        {/* PROJECTS */}
+        <section id="projects" className="max-w-7xl mx-auto px-6 py-40">
             <h2 className="text-7xl font-black text-white mb-20 tracking-tighter text-right">System <span className="text-[#FF8C00]">Builds.</span></h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 [perspective:2000px]">
                 {projects.map((p, i) => (
@@ -263,7 +286,7 @@ export default function App() {
         {/* OFFLINE PROTOCOL */}
         <section className="max-w-7xl mx-auto px-6 py-40 flex flex-col items-center w-full">
             <h2 className="text-5xl font-black text-white mb-16 tracking-tighter text-center">Offline <span className="text-[#FF8C00]">Protocol.</span></h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full pointer-events-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
               {[ {i:"🏋️‍♂️",t:"Discipline",d:"6-day compound split focusing on progressive overload."},
                  {i:"🎮",t:"Logic",d:"Competitive strategy and hardware optimization."},
                  {i:"🌍",t:"Equilibrium",d:"Hiking and trail exploration to maintain technical focus."}
@@ -278,8 +301,8 @@ export default function App() {
         </section>
 
         {/* TERMINAL FOOTER */}
-        <section id="contact" className="w-full py-60 flex items-center justify-center relative z-30">
-          <div className="max-w-5xl mx-auto px-6 pointer-events-auto flex flex-col items-center w-full">
+        <footer id="contact" className="w-full py-60 flex items-center justify-center relative z-30">
+          <div className="max-w-5xl mx-auto px-6 flex flex-col items-center w-full">
             <div className="bg-[#010102]/80 backdrop-blur-3xl border border-white/10 p-16 md:p-24 rounded-[4rem] shadow-[0_0_100px_rgba(0,0,0,1)] text-center relative overflow-hidden group w-full">
               <div className="absolute top-0 left-0 w-full h-[1.5px] bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]" />
               <h2 className="text-6xl md:text-8xl font-black text-white mb-10 tracking-tighter">Terminal <span className="text-[#00E5FF]">Ready.</span></h2>
@@ -295,7 +318,7 @@ export default function App() {
             </div>
             <p className="mt-32 text-center text-[11px] font-black tracking-[0.8em] text-gray-700 uppercase">© 2026 SHIVANG AYAR. CRAFTED WITH INTENT.</p>
           </div>
-        </section>
+        </footer>
 
       </div>
     </div>
