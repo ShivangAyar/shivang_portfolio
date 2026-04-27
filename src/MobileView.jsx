@@ -100,7 +100,7 @@ function MechanicalCore({ scrollY }) {
       <instancedMesh ref={meshRef} args={[null, null, count]}>
         <boxGeometry args={[0.9, 0.9, 0.9]} />
         <meshStandardMaterial 
-          color={isActive ? "#002222" : "#0A0A0A"} 
+          color={isActive ? "#002222" : "#020202"} 
           roughness={0.1} 
           metalness={0.9} 
           emissive={isActive ? "#000000" : "#334444"}
@@ -237,8 +237,8 @@ const achievements = [
 ];
 
 const timelineData = [
-  {i: "🎓", y: "2024 - Present", t: "Adv. Dip. Computer Programming & Analysis", s: "Algonquin College", d: "Architecting enterprise-level APIs, full-stack applications, and object-oriented systems.", c: "#00E5FF"},
-  {i: "💻", y: "2022 - Present", t: "Full-Stack Developer", s: "Freelance", d: "Building scalable web architectures, custom financial trackers, and dynamic UI systems for clients.", c: "#00E5FF"},
+  {i: "🎓", y: "2024 - Present", t: "Advanced Diploma in Computer Programming & Analysis", s: "Algonquin College", d: "Architecting enterprise-level APIs, full-stack applications, and object-oriented systems.", c: "#00E5FF"},
+  {i: "💻", y: "2023 - 2025", t: "Full-Stack Developer", s: "Freelance", d: "Building scalable web architectures, custom financial trackers, and dynamic UI systems for clients.", c: "#00E5FF"},
   {i: "📚", y: "2021 - 2023", t: "Computer Science Pathway", s: "Fraser International College", d: "Established a rigorous foundation in algorithm design, data structures, and computational logic.", c: "#7B61FF"},
   {i: "🚀", y: "2026 Onwards", t: "Systems Architect", s: "The Next Chapter", d: "Building the next generation of resilient digital platforms. The future awaits!", c: "#7B61FF"}
 ];
@@ -265,7 +265,7 @@ export default function MobileView() {
 
       <AnimatePresence>{isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}</AnimatePresence>
       
-      {/* 3D BACKGROUND (Stays fixed) */}
+      {/* 3D BACKGROUND */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <Canvas dpr={[1, 2]}>
           <color attach="background" args={['#010102']} />
@@ -364,7 +364,7 @@ export default function MobileView() {
               HELLO WORLD 👋
             </div>
             <h1 className="text-6xl font-black text-white mb-4 leading-none tracking-tighter uppercase leading-[0.85]">
-              Hey, I'm <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#FF8C00]">Shivang.</span>
+              I'm <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] to-[#FF8C00]">Shivang.</span>
             </h1>
             <h2 className="text-2xl font-bold text-gray-300 mb-6 tracking-tight">Full-Stack Architect</h2>
             
@@ -374,19 +374,23 @@ export default function MobileView() {
             <p className="text-[#00E5FF] font-medium tracking-widest uppercase text-xs mb-10 pl-6">Whatever you imagine, I can build it.</p>
             
             <div className="flex flex-col gap-6 w-full pl-6">
-              {/* FIX: Scroll smooth correctly to #projects */}
               <a href="#projects" onClick={(e) => { e.preventDefault(); document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#00E5FF] text-black px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest shadow-[0_0_20px_rgba(0,229,255,0.4)] rounded-xl cursor-pointer">Explore Builds</a>
-              {/* FIX: Resume Link correctly targets new tab */}
               <a href="/resume.pdf" target="_blank" rel="noopener noreferrer" className="bg-white/5 border border-white/10 text-white px-12 py-5 text-[10px] font-black uppercase text-center tracking-widest rounded-xl">Resume ↓</a>
             </div>
           </motion.div>
         </section>
 
+        {/* DEEP DIVE ARROW */}
+        <div className="w-full flex flex-col items-center justify-center mt-16 mb-8 text-[#00E5FF] opacity-70 z-40 relative">
+           <span className="text-[10px] tracking-[0.4em] font-bold uppercase text-center mb-4">Let's deep dive into this</span>
+           <motion.svg animate={{ y: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3"/></motion.svg>
+        </div>
+
         {/* ABOUT ME & TIMELINE */}
-        <section id="about" className="px-6 py-32 flex flex-col gap-10"><div className="w-full text-left">
+        <section id="about" className="px-6 py-20 flex flex-col gap-10"><div className="w-full text-left">
           <h2 className="text-5xl font-black text-white mb-8 tracking-tighter uppercase">About <span className="text-[#00E5FF]">Me.</span></h2>
           <p className="text-gray-400 text-lg font-light leading-relaxed">
-            Currently pursuing a degree in Computer Programming and translating the skills learned so far into practical, real-world applications. My approach to engineering is purely objective: Build, Optimize, and Master.
+            I am originally from Zambia, Africa, where I was born and raised. I moved to Canada in 2021 to pursue my passion for technology and drive meaningful change. Currently, I am completing my diploma in Computer Programming and actively translating the skills I've learned into practical, real-world applications. My approach to software engineering is purely objective: Build, Optimize, and Master.
           </p>
         </div>
         
@@ -458,7 +462,7 @@ export default function MobileView() {
         <section id="projects" className="px-6 py-40 space-y-10">
           <div className="flex flex-col items-center mb-16 text-center">
             <h2 className="text-6xl font-black text-white tracking-tighter uppercase">My Projects & <span className="text-[#FF8C00]">Works</span></h2>
-            <p className="text-gray-400 mt-6 max-w-xl text-lg font-light leading-relaxed">From enterprise APIs to AI chatbots—here's a showcase of my diverse technical expertise and passion for building resilient systems.</p>
+            <p className="text-gray-400 mt-6 max-w-xl text-lg font-light leading-relaxed">From enterprise microservices to real-time sync engines—here's a showcase of my diverse technical expertise and passion for building resilient systems.</p>
             <div className="h-[3px] w-20 bg-gradient-to-r from-[#FF8C00] to-[#7B61FF] mt-8 rounded-full" />
           </div>
           {projectsData.map((p, i) => (
@@ -486,7 +490,7 @@ export default function MobileView() {
           </div>
           {[ 
              {i:"🥊",t:"Gym",d:"Strength & discipline. 6-day split focusing on progressive overload."},
-             {i:"💻",t:"Coding",d:"Always building, innovating, & exploring new side quests."},
+             {i:"🎮",t:"Gaming",d:"Hardware tuning and competitive tactical shooters."},
              {i:"✈️",t:"Travelling",d:"Exploring new terrains, cultures, and resetting the digital buffer."},
              {i:"🏐",t:"Volleyball",d:"Team strategy, agility, and maintaining peak athletic flow."},
              {i:"⛳",t:"Golf",d:"Precision, patience, and mastering the physical mechanics."},

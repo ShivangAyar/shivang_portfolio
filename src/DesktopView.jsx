@@ -24,7 +24,6 @@ const LoadingScreen = ({ onComplete }) => {
 
   return (
     <motion.div exit={{ opacity: 0 }} transition={{ duration: 1 }} className="fixed inset-0 z-[1000] bg-[#010102] flex flex-col items-center justify-center p-8 text-center overflow-hidden">
-      
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,229,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(0,229,255,0.05)_1px,transparent_1px)] bg-[size:50px_50px] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_50%,#000_40%,transparent_100%)] opacity-40" />
         <motion.div animate={{ scale: [1, 1.2, 1], rotate: [0, 90, 0], opacity: [0.1, 0.3, 0.1] }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-[#00E5FF] rounded-full blur-[140px]" />
@@ -46,7 +45,7 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE ---
+// --- MECHANICAL SNAP CORE (Silver Glow Visibility Fix) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
@@ -107,8 +106,8 @@ function MechanicalCore({ scrollY }) {
           color={isActive ? "#002222" : "#020202"} 
           roughness={0.1} 
           metalness={0.9} 
-          emissive={isActive ? "#000000" : "#2a3a3a"}
-          emissiveIntensity={isActive ? 0 : 0.4}
+          emissive={isActive ? "#000000" : "#334444"}
+          emissiveIntensity={isActive ? 0 : 0.3}
         />
       </instancedMesh>
       {isActive && <pointLight intensity={30} color="#FF8C00" distance={20} />}
@@ -239,15 +238,15 @@ const projectsData = [
 const techStack = ["Java", "Python", "C#", "JavaScript", "HTML5", "CSS3", "React", "Node.js", "MySQL", "PostgreSQL", "MongoDB", "Git", "GitHub", "AWS", "Docker", "Power BI", "REST APIs"];
 
 const achievements = [
-  { icon: "🏆", title: "Tech Hackathon Competitor", desc: "Demonstrated rapid problem-solving and flawless full-stack MVP execution under strict 24-hour time constraints." },
+  { icon: "🏆", title: "3rd Place in Tech Hackathon", desc: "Demonstrated rapid problem-solving and flawless full-stack MVP execution under strict 24-hour time constraints." },
   { icon: "💼", title: "Full-Stack Dev Experience", desc: "Architecting, developing, and deploying resilient end-to-end web applications using modern, scalable tech stacks." },
-  { icon: "🔧", title: "Warehouse Ops Supervisor", desc: "Supervised a team of 5+, modernized tracking with Excel, and increased order processing efficiency by 20%." },
-  { icon: "🎓", title: "Academic Progression", desc: "Transitioning from a foundational Computer Science Pathway directly into advanced enterprise-grade application engineering." }
+  { icon: "🔧", title: "IT Support Specialist", desc: "Optimized technical operations, diagnosed system criticalities, and elevated end-user digital experiences." },
+  { icon: "🎓", title: "Academic Excellence", desc: "Maintaining top-tier academic performance while architecting enterprise-grade applications." }
 ];
 
 const timelineData = [
-  {i: "🎓", y: "2024 - Present", t: "Adv. Dip. Computer Programming & Analysis", s: "Algonquin College", d: "Architecting enterprise-level APIs, full-stack applications, and object-oriented systems.", c: "#00E5FF"},
-  {i: "💻", y: "2022 - Present", t: "Full-Stack Developer", s: "Freelance", d: "Building scalable web architectures, custom financial trackers, and dynamic UI systems for clients.", c: "#00E5FF"},
+  {i: "🎓", y: "2024 - Present", t: "Advanced Diploma in Computer Programming & Analysis", s: "Algonquin College", d: "Architecting enterprise-level APIs, full-stack applications, and object-oriented systems.", c: "#00E5FF"},
+  {i: "💻", y: "2023 - 2025", t: "Full-Stack Developer", s: "Freelance", d: "Building scalable web architectures, custom financial trackers, and dynamic UI systems for clients.", c: "#00E5FF"},
   {i: "📚", y: "2021 - 2023", t: "Computer Science Pathway", s: "Fraser International College", d: "Established a rigorous foundation in algorithm design, data structures, and computational logic.", c: "#7B61FF"},
   {i: "🚀", y: "2026 Onwards", t: "Systems Architect", s: "The Next Chapter", d: "Building the next generation of resilient digital platforms. The future awaits!", c: "#7B61FF"}
 ];
@@ -296,10 +295,10 @@ export default function DesktopView() {
           </div>
           <div className="hidden md:flex gap-10 items-center">
             <NavLink href="#about">Journey</NavLink>
-            <NavLink href="#skills">Skills</NavLink>
+            <NavLink href="#skills">Competencies</NavLink>
             <NavLink href="#achievements">Milestones</NavLink>
             <NavLink href="#projects">Builds</NavLink>
-            <NavLink href="#contact">Connect</NavLink>
+            <NavLink href="#connect">Connect</NavLink>
           </div>
         </nav>
 
@@ -307,7 +306,7 @@ export default function DesktopView() {
         <section className="h-[100vh] w-full flex flex-col items-center justify-end pb-16 z-20 pointer-events-none">
           <div style={{ opacity: Math.max(0, 1 - scrollY / 200) }} className="transition-opacity duration-100 pointer-events-auto">
             <motion.button 
-              onClick={(e) => { e.preventDefault(); document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' }); }}
+              onClick={() => document.getElementById('hero')?.scrollIntoView({ behavior: 'smooth' })}
               animate={{ y: [0, 10, 0], opacity: [0.4, 1, 0.4] }} 
               transition={{ repeat: Infinity, duration: 2 }}
               className="flex flex-col items-center gap-3 text-[#00E5FF] mix-blend-screen cursor-pointer hover:text-white transition-colors"
@@ -331,7 +330,7 @@ export default function DesktopView() {
               HELLO WORLD 👋
             </div>
             <h1 className="text-8xl md:text-[9rem] font-black text-white mb-6 tracking-tighter uppercase leading-[0.85]">
-              Hey, I'm <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Shivang.</span>
+              I'm <br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-[#00E5FF] via-white to-[#FF8C00]">Shivang.</span>
             </h1>
             <h2 className="text-4xl font-bold text-gray-300 mb-8 tracking-tight">Full-Stack Architect</h2>
             
@@ -341,26 +340,33 @@ export default function DesktopView() {
             <p className="text-[#00E5FF] font-medium tracking-widest uppercase text-sm mb-12 pl-8">Whatever you imagine, I can build it.</p>
 
             <div className="flex gap-6 pl-8">
-              {/* FIX: Scroll smooth correctly to #projects */}
               <a href="#projects" onClick={(e) => { e.preventDefault(); document.getElementById('projects')?.scrollIntoView({ behavior: 'smooth' }); }} className="bg-[#00E5FF] text-black px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black transition-all shadow-[0_0_20px_rgba(0,229,255,0.4)] rounded-xl cursor-pointer">Explore Builds</a>
-              {/* FIX: Resume Link correctly targets new tab */}
               <a href="/resume.pdf" target="_blank" rel="noopener noreferrer" className="bg-white/5 border border-white/10 text-white px-12 py-5 text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white/10 hover:text-white transition-all rounded-xl">Resume ↓</a>
             </div>
           </motion.div>
         </section>
 
+        {/* DEEP DIVE ARROW */}
+        <div className="w-full flex flex-col items-center justify-center mt-20 mb-10 text-[#00E5FF] opacity-70 z-40 relative">
+           <span className="text-[10px] tracking-[0.4em] font-bold uppercase text-center mb-4">Let's deep dive into this</span>
+           <motion.svg animate={{ y: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3"/></motion.svg>
+        </div>
+
         {/* ABOUT & JOURNEY TIMELINE */}
-        <section id="about" className="max-w-7xl mx-auto px-10 py-40 w-full relative">
+        <section id="about" className="max-w-7xl mx-auto px-10 py-20 w-full relative">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
             <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="lg:col-span-5 sticky top-40">
               <h2 className="text-6xl font-black text-white mb-10 tracking-tighter uppercase">About <span className="text-[#00E5FF]">Me.</span></h2>
               <p className="text-gray-400 mb-10 text-xl font-light leading-relaxed">
-                Currently pursuing a degree in Computer Programming and translating the skills learned so far into practical, real-world applications. My approach to engineering is purely objective: Build, Optimize, and Master.
+                I am originally from Zambia, Africa, where I was born and raised. I moved to Canada in 2021 to pursue my passion for technology and drive meaningful change. Currently, I am completing my diploma in Computer Programming and actively translating the skills I've learned into practical, real-world applications. My approach to software engineering is purely objective: Build, Optimize, and Master.
               </p>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-10 rounded-3xl text-center shadow-xl"><h3 className="text-5xl font-black text-white">3+</h3><p className="text-xs text-gray-500 uppercase tracking-widest mt-3 font-black">Years</p></div>
+                <div className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-10 rounded-3xl text-center shadow-xl"><h3 className="text-5xl font-black text-white">10+</h3><p className="text-xs text-gray-500 uppercase tracking-widest mt-3 font-black">Builds</p></div>
+              </div>
             </motion.div>
             
             <div className="lg:col-span-7 relative mt-16">
-              {/* Vertical Line */}
               <div className="absolute left-[31px] top-6 bottom-6 w-[2px] bg-gradient-to-b from-[#00E5FF] via-[#7B61FF] to-transparent opacity-40" />
               
               <div className="space-y-12 pl-20">
@@ -387,7 +393,7 @@ export default function DesktopView() {
         {/* COMPETENCIES */}
         <section id="skills" className="max-w-7xl mx-auto px-10 py-32 w-full">
             <div className="flex flex-col items-center mb-20 text-center">
-              <h2 className="text-7xl font-black text-white tracking-tighter uppercase">My Skills & <span className="text-[#00E5FF]">Expertise</span></h2>
+              <h2 className="text-7xl font-black text-white tracking-tighter uppercase">Core <span className="text-[#00E5FF]">Stacks.</span></h2>
               <p className="text-gray-400 mt-6 max-w-2xl text-xl font-light">A comprehensive overview of my technical skills, tools, and technologies I work with to bring ideas to life.</p>
               <div className="h-[3px] w-24 bg-gradient-to-r from-[#00E5FF] to-[#7B61FF] mt-8 rounded-full" />
             </div>
@@ -431,21 +437,21 @@ export default function DesktopView() {
 
         {/* PROJECTS */}
         <section id="projects" className="max-w-7xl mx-auto px-10 py-40 w-full">
-            <div className="flex flex-col items-center mb-20 text-center">
-              <h2 className="text-7xl font-black text-white tracking-tighter uppercase">My Projects & <span className="text-[#FF8C00]">Works</span></h2>
-              <p className="text-gray-400 mt-6 max-w-2xl text-xl font-light">From enterprise APIs to AI chatbots—here's a showcase of my diverse technical expertise and passion for building resilient systems.</p>
-              <div className="h-[3px] w-24 bg-gradient-to-r from-[#FF8C00] to-[#7B61FF] mt-8 rounded-full" />
+            <div className="flex flex-col items-end mb-20 text-right">
+              <h2 className="text-7xl font-black text-white tracking-tighter uppercase">System <span className="text-[#FF8C00]">Builds.</span></h2>
+              <p className="text-gray-400 mt-6 max-w-2xl text-xl font-light">From enterprise microservices to real-time sync engines—here's a showcase of my diverse technical expertise and passion for building resilient systems.</p>
+              <div className="h-[3px] w-24 bg-gradient-to-l from-[#FF8C00] to-[#7B61FF] mt-8 rounded-full" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 [perspective:2000px]">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 [perspective:2000px]">
                 {projectsData.map((p, i) => (
                     <motion.div 
                         key={i} 
-                        className="bg-[#0A0A15]/80 backdrop-blur-xl p-10 rounded-[2.5rem] border border-white/10 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col group cursor-pointer min-h-[420px]"
+                        className="bg-[#0A0A15]/80 backdrop-blur-xl p-12 rounded-[2.5rem] border border-white/10 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col group cursor-pointer min-h-[420px]"
                         whileHover={{ y: -15, rotateX: -4, rotateY: 4, borderColor: `${p.color}50`, boxShadow: `0 30px 60px ${p.color}20` }}
                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
-                        <div className="absolute top-0 right-0 w-40 h-40 rounded-bl-full opacity-5 group-hover:opacity-20 transition-all duration-700" style={{ background: p.color }}></div>
+                        <div className="absolute top-0 right-0 w-48 h-48 rounded-bl-full opacity-5 group-hover:opacity-20 transition-all duration-700" style={{ background: p.color }}></div>
                         
                         <div className="flex items-center gap-4 mb-6">
                             <span className="text-3xl relative z-10">{p.icon}</span>
@@ -469,7 +475,7 @@ export default function DesktopView() {
             </div>
         </section>
 
-        {/* OFFLINE PROTOCOL (HOBBIES) */}
+        {/* OFFLINE PROTOCOL */}
         <section className="max-w-7xl mx-auto px-10 py-40 flex flex-col items-center w-full">
             <div className="flex flex-col items-center mb-20 text-center">
               <h2 className="text-6xl font-black text-white tracking-tighter uppercase italic">When I'm Not <span className="text-[#FF8C00]">Coding</span></h2>
@@ -480,7 +486,7 @@ export default function DesktopView() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full pointer-events-auto">
               {[ 
                  {i:"🥊",t:"Gym",d:"Strength & discipline. 6-day split focusing on progressive overload."},
-                 {i:"💻",t:"Coding",d:"Always building, innovating, & exploring new side quests."},
+                 {i:"🎮",t:"Gaming",d:"Hardware tuning and competitive tactical shooters."},
                  {i:"✈️",t:"Travelling",d:"Exploring new terrains, cultures, and resetting the digital buffer."},
                  {i:"🏐",t:"Volleyball",d:"Team strategy, agility, and maintaining peak athletic flow."},
                  {i:"⛳",t:"Golf",d:"Precision, patience, and mastering the physical mechanics."},
@@ -488,7 +494,7 @@ export default function DesktopView() {
               ].map((h,x)=>(
                 <div key={x} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-14 rounded-[3rem] text-center hover:border-white/30 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] group">
                   <div className="text-7xl mb-10 grayscale opacity-30 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110">{h.i}</div>
-                  <h3 className="text-2xl font-black text-white mb-5 uppercase tracking-[0.2em]">{h.t}</h3>
+                  <h3 className="text-2xl font-black text-white mb-5 uppercase tracking-[0.3em]">{h.t}</h3>
                   <p className="text-gray-400 font-light leading-relaxed text-lg">{h.d}</p>
                 </div>
               ))}
