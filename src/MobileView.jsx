@@ -45,7 +45,7 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (Silver Glow Visibility Fix) ---
+// --- MECHANICAL SNAP CORE (Dark Base + Faint Cool-Gray Glow) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
@@ -103,7 +103,7 @@ function MechanicalCore({ scrollY }) {
           color={isActive ? "#002222" : "#020202"} 
           roughness={0.1} 
           metalness={0.9} 
-          emissive={isActive ? "#000000" : "#334444"}
+          emissive={isActive ? "#000000" : "#2a3a3a"}
           emissiveIntensity={isActive ? 0 : 0.4}
         />
       </instancedMesh>
@@ -119,9 +119,9 @@ const CompCard = ({ title, icon, skills }) => {
   return (
     <div ref={ref} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-8 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex flex-col h-[400px]">
       <h3 className="text-xl font-bold text-white mb-8 tracking-tighter uppercase flex items-center gap-4"><span className="text-2xl">{icon}</span> {title}</h3>
-      <div className="space-y-10 mt-auto">{skills.map((skill, i) => (
+      <div className="space-y-8 mt-auto">{skills.map((skill, i) => (
         <div key={i}>
-          <div className="flex justify-between text-[11px] font-bold text-gray-400 uppercase mb-3 transition-colors" style={{ color: isInView ? 'white' : '' }}><span>{skill.n}</span><span style={{ color: isInView ? "#00E5FF" : "" }}>{skill.v}</span></div>
+          <div className="flex justify-between text-[11px] font-bold text-gray-400 uppercase mb-2 transition-colors" style={{ color: isInView ? 'white' : '' }}><span>{skill.n}</span><span style={{ color: isInView ? "#00E5FF" : "" }}>{skill.v}</span></div>
           <div className="w-full bg-white/5 rounded-full h-[2px] overflow-hidden">
             <motion.div 
               initial={{ width: "0%" }} 
@@ -217,7 +217,7 @@ const ReactiveFooter = () => {
   );
 };
 
-// --- DATA FROM RESUME ---
+// --- DATA ---
 const projectsData = [
   { title: "Movie Watchlist App", desc: "A full-stack web platform built for searching, adding, and tracking favorite movies. Features RESTful APIs to handle HTTP requests and secure CRUD operations.", tags: ["Node.js", "Express", "MongoDB", "HTML/CSS"], color: "#FF8C00", icon: "🎬" },
   { title: "Voice AI Chatbot", desc: "Developed during a 24-hr hackathon. An emotion-aware chatbot integrating Voice APIs with a Node.js backend to parse audio with <200ms latency.", tags: ["React", "Node.js", "JavaScript"], color: "#00E5FF", icon: "🤖" },
@@ -230,17 +230,18 @@ const projectsData = [
 const techStack = ["Java", "Python", "C#", "JavaScript", "HTML5", "CSS3", "React", "Node.js", "MySQL", "PostgreSQL", "MongoDB", "Git", "GitHub", "AWS", "Docker", "Power BI", "REST APIs"];
 
 const achievements = [
-  { icon: "🏆", title: "Tech Hackathon Competitor", desc: "Demonstrated rapid problem-solving and flawless full-stack MVP execution under strict 24-hour time constraints." },
+  { icon: "🏆", title: "3rd Place in Tech Hackathon", desc: "Demonstrated rapid problem-solving and flawless full-stack MVP execution under strict 24-hour time constraints." },
   { icon: "💼", title: "Full-Stack Dev Experience", desc: "Architecting, developing, and deploying resilient end-to-end web applications using modern, scalable tech stacks." },
-  { icon: "🔧", title: "Warehouse Ops Supervisor", desc: "Supervised a team of 5+, modernized tracking with Excel, and increased order processing efficiency by 20%." },
-  { icon: "🎓", title: "Academic Progression", desc: "Transitioning from a foundational Computer Science Pathway directly into advanced enterprise-grade application engineering." }
+  { icon: "🔧", title: "IT Support Specialist", desc: "Optimized technical operations, diagnosed system criticalities, and elevated end-user digital experiences." },
+  { icon: "🎓", title: "Academic Excellence", desc: "Maintaining top-tier academic performance while architecting enterprise-grade applications." }
 ];
 
+// CHRONOLOGICAL TIMELINE
 const timelineData = [
-  {i: "🎓", y: "2024 - Present", t: "Advanced Diploma in Computer Programming & Analysis", s: "Algonquin College", d: "Architecting enterprise-level APIs, full-stack applications, and object-oriented systems.", c: "#00E5FF"},
+  {i: "🚀", y: "2026 Onwards", t: "Systems Architect", s: "The Next Chapter", d: "Building the next generation of resilient digital platforms. The future awaits!", c: "#7B61FF"},
+  {i: "🎓", y: "2024 - Present", t: "Advanced Diploma in Computer Programming", s: "Algonquin College", d: "Architecting enterprise-level APIs, full-stack applications, and object-oriented systems.", c: "#00E5FF"},
   {i: "💻", y: "2023 - 2025", t: "Full-Stack Developer", s: "Freelance", d: "Building scalable web architectures, custom financial trackers, and dynamic UI systems for clients.", c: "#00E5FF"},
-  {i: "📚", y: "2021 - 2023", t: "Computer Science Pathway", s: "Fraser International College", d: "Established a rigorous foundation in algorithm design, data structures, and computational logic.", c: "#7B61FF"},
-  {i: "🚀", y: "2026 Onwards", t: "Systems Architect", s: "The Next Chapter", d: "Building the next generation of resilient digital platforms. The future awaits!", c: "#7B61FF"}
+  {i: "📚", y: "2021 - 2023", t: "Computer Science Pathway", s: "Fraser International College", d: "Established a rigorous foundation in algorithm design, data structures, and computational logic.", c: "#7B61FF"}
 ];
 
 export default function MobileView() {
@@ -380,10 +381,23 @@ export default function MobileView() {
           </motion.div>
         </section>
 
-        {/* DEEP DIVE ARROW */}
-        <div className="w-full flex flex-col items-center justify-center mt-16 mb-8 text-[#00E5FF] opacity-70 z-40 relative">
-           <span className="text-[10px] tracking-[0.4em] font-bold uppercase text-center mb-4">Let's deep dive into this</span>
-           <motion.svg animate={{ y: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3"/></motion.svg>
+        {/* REACTIVE DEEP DIVE ARROW */}
+        <div 
+          onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
+          className="w-full flex flex-col items-center justify-center mt-20 mb-10 text-[#00E5FF] z-40 relative group cursor-pointer"
+        >
+           <span className="text-xs tracking-[0.5em] font-black uppercase text-center mb-4 group-hover:text-white transition-colors duration-300">
+             Let's Deep Dive Into
+           </span>
+           <motion.div 
+              animate={{ y: [0, 12, 0] }} 
+              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }} 
+              className="p-3 rounded-full bg-white/[0.03] border border-[#00E5FF]/30 group-hover:bg-[#00E5FF]/20 group-hover:border-[#00E5FF] transition-all duration-300 shadow-[0_0_15px_rgba(0,229,255,0.2)] group-hover:shadow-[0_0_30px_rgba(0,229,255,0.6)]"
+           >
+              <svg className="w-6 h-6 text-[#00E5FF] group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+              </svg>
+           </motion.div>
         </div>
 
         {/* ABOUT ME & TIMELINE */}
@@ -423,12 +437,12 @@ export default function MobileView() {
             <p className="text-gray-400 mt-6 max-w-xl text-lg font-light leading-relaxed">A comprehensive overview of my technical skills, tools, and technologies I work with to bring ideas to life.</p>
             <div className="h-[3px] w-20 bg-gradient-to-r from-[#00E5FF] to-[#7B61FF] mt-8 rounded-full" />
           </div>
-          <CompCard title="Languages" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"}]} />
-          <CompCard title="Frontend Dev" icon="🖥️" skills={[{n:"React.js",v:"90%"},{n:"HTML5/CSS3",v:"95%"},{n:"Tailwind",v:"85%"}]} />
-          <CompCard title="Backend & APIs" icon="⚙️" skills={[{n:"Node.js",v:"85%"},{n:"Express.js",v:"85%"},{n:"REST APIs",v:"90%"}]} />
-          <CompCard title="Databases" icon="🗄️" skills={[{n:"MongoDB",v:"85%"},{n:"MySQL",v:"90%"},{n:"PostgreSQL",v:"75%"}]} />
-          <CompCard title="Analytics" icon="📊" skills={[{n:"Power BI",v:"90%"},{n:"DAX",v:"85%"},{n:"Star Schema",v:"85%"}]} />
-          <CompCard title="DevOps" icon="☁️" skills={[{n:"Git / GitHub",v:"95%"},{n:"AWS",v:"80%"},{n:"Docker",v:"75%"}]} />
+          <CompCard title="Languages" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"},{n:"C#",v:"80%"}]} />
+          <CompCard title="Frontend Dev" icon="🖥️" skills={[{n:"React.js",v:"90%"},{n:"HTML5/CSS3",v:"95%"},{n:"Tailwind",v:"85%"},{n:"Next.js",v:"80%"}]} />
+          <CompCard title="Backend & APIs" icon="⚙️" skills={[{n:"Node.js",v:"85%"},{n:"Express.js",v:"85%"},{n:"REST APIs",v:"90%"},{n:"GraphQL",v:"75%"}]} />
+          <CompCard title="Databases" icon="🗄️" skills={[{n:"MongoDB",v:"85%"},{n:"MySQL",v:"90%"},{n:"PostgreSQL",v:"75%"},{n:"Redis",v:"70%"}]} />
+          <CompCard title="Analytics" icon="📊" skills={[{n:"Power BI",v:"90%"},{n:"DAX",v:"85%"},{n:"Star Schema",v:"85%"},{n:"ETL",v:"80%"}]} />
+          <CompCard title="DevOps" icon="☁️" skills={[{n:"Git / GitHub",v:"95%"},{n:"AWS",v:"80%"},{n:"Docker",v:"75%"},{n:"CI/CD",v:"85%"}]} />
         </section>
 
         {/* TECH STACK & ACHIEVEMENTS */}
@@ -462,7 +476,7 @@ export default function MobileView() {
         <section id="projects" className="px-6 py-40 space-y-10">
           <div className="flex flex-col items-center mb-16 text-center">
             <h2 className="text-6xl font-black text-white tracking-tighter uppercase">My Projects & <span className="text-[#FF8C00]">Works</span></h2>
-            <p className="text-gray-400 mt-6 max-w-xl text-lg font-light leading-relaxed">From enterprise microservices to real-time sync engines—here's a showcase of my diverse technical expertise and passion for building resilient systems.</p>
+            <p className="text-gray-400 mt-6 max-w-xl text-lg font-light leading-relaxed">From enterprise APIs to AI chatbots—here's a showcase of my diverse technical expertise and passion for building resilient systems.</p>
             <div className="h-[3px] w-20 bg-gradient-to-r from-[#FF8C00] to-[#7B61FF] mt-8 rounded-full" />
           </div>
           {projectsData.map((p, i) => (

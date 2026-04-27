@@ -45,7 +45,7 @@ const LoadingScreen = ({ onComplete }) => {
   );
 };
 
-// --- MECHANICAL SNAP CORE (Silver Glow Visibility Fix) ---
+// --- MECHANICAL SNAP CORE (Dark Base + Faint Cool-Gray Glow) ---
 function MechanicalCore({ scrollY }) {
   const meshRef = useRef();
   const groupRef = useRef();
@@ -106,8 +106,8 @@ function MechanicalCore({ scrollY }) {
           color={isActive ? "#002222" : "#020202"} 
           roughness={0.1} 
           metalness={0.9} 
-          emissive={isActive ? "#000000" : "#334444"}
-          emissiveIntensity={isActive ? 0 : 0.3}
+          emissive={isActive ? "#000000" : "#2a3a3a"}
+          emissiveIntensity={isActive ? 0 : 0.4}
         />
       </instancedMesh>
       {isActive && <pointLight intensity={30} color="#FF8C00" distance={20} />}
@@ -126,7 +126,7 @@ const CompCard = ({ title, icon, skills }) => {
       className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-10 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex flex-col h-[400px] hover:border-white/20 transition-all cursor-crosshair"
     >
       <h3 className="text-2xl font-bold text-white mb-10 tracking-tighter uppercase flex items-center gap-4"><span className="text-3xl">{icon}</span> {title}</h3>
-      <div className="space-y-10 mt-auto">{skills.map((skill, i) => (
+      <div className="space-y-8 mt-auto">{skills.map((skill, i) => (
         <div key={i}>
           <div className="flex justify-between text-xs font-bold text-gray-400 uppercase mb-3 transition-colors" style={{ color: isHovered ? 'white' : '' }}><span>{skill.n}</span><span style={{ color: isHovered ? "#00E5FF" : "" }}>{skill.v}</span></div>
           <div className="w-full bg-white/5 rounded-full h-[3px] overflow-hidden">
@@ -238,17 +238,18 @@ const projectsData = [
 const techStack = ["Java", "Python", "C#", "JavaScript", "HTML5", "CSS3", "React", "Node.js", "MySQL", "PostgreSQL", "MongoDB", "Git", "GitHub", "AWS", "Docker", "Power BI", "REST APIs"];
 
 const achievements = [
-  { icon: "🏆", title: "3rd Place in Tech Hackathon", desc: "Demonstrated rapid problem-solving and flawless full-stack MVP execution under strict 24-hour time constraints." },
+  { icon: "🏆", title: "Tech Hackathon Competitor", desc: "Demonstrated rapid problem-solving and flawless full-stack MVP execution under strict 24-hour time constraints." },
   { icon: "💼", title: "Full-Stack Dev Experience", desc: "Architecting, developing, and deploying resilient end-to-end web applications using modern, scalable tech stacks." },
-  { icon: "🔧", title: "IT Support Specialist", desc: "Optimized technical operations, diagnosed system criticalities, and elevated end-user digital experiences." },
-  { icon: "🎓", title: "Academic Excellence", desc: "Maintaining top-tier academic performance while architecting enterprise-grade applications." }
+  { icon: "🔧", title: "Warehouse Ops Supervisor", desc: "Supervised a team of 5+, modernized tracking with Excel, and increased order processing efficiency by 20%." },
+  { icon: "🎓", title: "Academic Progression", desc: "Transitioning from a foundational Computer Science Pathway directly into advanced enterprise-grade application engineering." }
 ];
 
+// CHRONOLOGICAL TIMELINE
 const timelineData = [
-  {i: "🎓", y: "2024 - Present", t: "Advanced Diploma in Computer Programming & Analysis", s: "Algonquin College", d: "Architecting enterprise-level APIs, full-stack applications, and object-oriented systems.", c: "#00E5FF"},
+  {i: "🚀", y: "2026 Onwards", t: "Systems Architect", s: "The Next Chapter", d: "Building the next generation of resilient digital platforms. The future awaits!", c: "#7B61FF"},
+  {i: "🎓", y: "2024 - Present", t: "Advanced Diploma in Computer Programming", s: "Algonquin College", d: "Architecting enterprise-level APIs, full-stack applications, and object-oriented systems.", c: "#00E5FF"},
   {i: "💻", y: "2023 - 2025", t: "Full-Stack Developer", s: "Freelance", d: "Building scalable web architectures, custom financial trackers, and dynamic UI systems for clients.", c: "#00E5FF"},
-  {i: "📚", y: "2021 - 2023", t: "Computer Science Pathway", s: "Fraser International College", d: "Established a rigorous foundation in algorithm design, data structures, and computational logic.", c: "#7B61FF"},
-  {i: "🚀", y: "2026 Onwards", t: "Systems Architect", s: "The Next Chapter", d: "Building the next generation of resilient digital platforms. The future awaits!", c: "#7B61FF"}
+  {i: "📚", y: "2021 - 2023", t: "Computer Science Pathway", s: "Fraser International College", d: "Established a rigorous foundation in algorithm design, data structures, and computational logic.", c: "#7B61FF"}
 ];
 
 export default function DesktopView() {
@@ -346,10 +347,23 @@ export default function DesktopView() {
           </motion.div>
         </section>
 
-        {/* DEEP DIVE ARROW */}
-        <div className="w-full flex flex-col items-center justify-center mt-20 mb-10 text-[#00E5FF] opacity-70 z-40 relative">
-           <span className="text-[10px] tracking-[0.4em] font-bold uppercase text-center mb-4">Let's deep dive into this</span>
-           <motion.svg animate={{ y: [0, 10, 0] }} transition={{ repeat: Infinity, duration: 2 }} className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3"/></motion.svg>
+        {/* REACTIVE DEEP DIVE ARROW */}
+        <div 
+          onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
+          className="w-full flex flex-col items-center justify-center mt-32 mb-16 text-[#00E5FF] z-40 relative group cursor-pointer"
+        >
+           <span className="text-sm md:text-base tracking-[0.5em] font-black uppercase text-center mb-6 group-hover:text-white transition-colors duration-300">
+             Let's Deep Dive Into
+           </span>
+           <motion.div 
+              animate={{ y: [0, 15, 0] }} 
+              transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }} 
+              className="p-4 rounded-full bg-white/[0.03] border border-[#00E5FF]/30 group-hover:bg-[#00E5FF]/20 group-hover:border-[#00E5FF] transition-all duration-300 shadow-[0_0_15px_rgba(0,229,255,0.2)] group-hover:shadow-[0_0_30px_rgba(0,229,255,0.6)]"
+           >
+              <svg className="w-8 h-8 md:w-10 md:h-10 text-[#00E5FF] group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+              </svg>
+           </motion.div>
         </div>
 
         {/* ABOUT & JOURNEY TIMELINE */}
@@ -399,12 +413,12 @@ export default function DesktopView() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <CompCard title="Languages" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"}]} />
-                <CompCard title="Frontend Dev" icon="🖥️" skills={[{n:"React.js",v:"90%"},{n:"HTML5/CSS3",v:"95%"},{n:"Tailwind",v:"85%"}]} />
-                <CompCard title="Backend & APIs" icon="⚙️" skills={[{n:"Node.js",v:"85%"},{n:"Express.js",v:"85%"},{n:"REST APIs",v:"90%"}]} />
-                <CompCard title="Databases" icon="🗄️" skills={[{n:"MongoDB",v:"85%"},{n:"MySQL",v:"90%"},{n:"PostgreSQL",v:"75%"}]} />
-                <CompCard title="Analytics" icon="📊" skills={[{n:"Power BI",v:"90%"},{n:"DAX",v:"85%"},{n:"Star Schema",v:"85%"}]} />
-                <CompCard title="DevOps" icon="☁️" skills={[{n:"Git / GitHub",v:"95%"},{n:"AWS",v:"80%"},{n:"Docker",v:"75%"}]} />
+                <CompCard title="Languages" icon="💻" skills={[{n:"Java",v:"90%"},{n:"Python",v:"85%"},{n:"JS",v:"85%"},{n:"C#",v:"80%"}]} />
+                <CompCard title="Frontend Dev" icon="🖥️" skills={[{n:"React.js",v:"90%"},{n:"HTML5/CSS3",v:"95%"},{n:"Tailwind",v:"85%"},{n:"Next.js",v:"80%"}]} />
+                <CompCard title="Backend & APIs" icon="⚙️" skills={[{n:"Node.js",v:"85%"},{n:"Express.js",v:"85%"},{n:"REST APIs",v:"90%"},{n:"GraphQL",v:"75%"}]} />
+                <CompCard title="Databases" icon="🗄️" skills={[{n:"MongoDB",v:"85%"},{n:"MySQL",v:"90%"},{n:"PostgreSQL",v:"75%"},{n:"Redis",v:"70%"}]} />
+                <CompCard title="Analytics" icon="📊" skills={[{n:"Power BI",v:"90%"},{n:"DAX",v:"85%"},{n:"Star Schema",v:"85%"},{n:"ETL",v:"80%"}]} />
+                <CompCard title="DevOps" icon="☁️" skills={[{n:"Git / GitHub",v:"95%"},{n:"AWS",v:"80%"},{n:"Docker",v:"75%"},{n:"CI/CD",v:"85%"}]} />
             </div>
         </section>
 
@@ -437,21 +451,21 @@ export default function DesktopView() {
 
         {/* PROJECTS */}
         <section id="projects" className="max-w-7xl mx-auto px-10 py-40 w-full">
-            <div className="flex flex-col items-end mb-20 text-right">
-              <h2 className="text-7xl font-black text-white tracking-tighter uppercase">System <span className="text-[#FF8C00]">Builds.</span></h2>
-              <p className="text-gray-400 mt-6 max-w-2xl text-xl font-light">From enterprise microservices to real-time sync engines—here's a showcase of my diverse technical expertise and passion for building resilient systems.</p>
-              <div className="h-[3px] w-24 bg-gradient-to-l from-[#FF8C00] to-[#7B61FF] mt-8 rounded-full" />
+            <div className="flex flex-col items-center mb-20 text-center">
+              <h2 className="text-7xl font-black text-white tracking-tighter uppercase">My Projects & <span className="text-[#FF8C00]">Works</span></h2>
+              <p className="text-gray-400 mt-6 max-w-2xl text-xl font-light">From enterprise APIs to AI chatbots—here's a showcase of my diverse technical expertise and passion for building resilient systems.</p>
+              <div className="h-[3px] w-24 bg-gradient-to-r from-[#FF8C00] to-[#7B61FF] mt-8 rounded-full" />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 [perspective:2000px]">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 [perspective:2000px]">
                 {projectsData.map((p, i) => (
                     <motion.div 
                         key={i} 
-                        className="bg-[#0A0A15]/80 backdrop-blur-xl p-12 rounded-[2.5rem] border border-white/10 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col group cursor-pointer min-h-[420px]"
+                        className="bg-[#0A0A15]/80 backdrop-blur-xl p-10 rounded-[2.5rem] border border-white/10 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col group cursor-pointer min-h-[420px]"
                         whileHover={{ y: -15, rotateX: -4, rotateY: 4, borderColor: `${p.color}50`, boxShadow: `0 30px 60px ${p.color}20` }}
                         transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
-                        <div className="absolute top-0 right-0 w-48 h-48 rounded-bl-full opacity-5 group-hover:opacity-20 transition-all duration-700" style={{ background: p.color }}></div>
+                        <div className="absolute top-0 right-0 w-40 h-40 rounded-bl-full opacity-5 group-hover:opacity-20 transition-all duration-700" style={{ background: p.color }}></div>
                         
                         <div className="flex items-center gap-4 mb-6">
                             <span className="text-3xl relative z-10">{p.icon}</span>
@@ -475,7 +489,7 @@ export default function DesktopView() {
             </div>
         </section>
 
-        {/* OFFLINE PROTOCOL */}
+        {/* OFFLINE PROTOCOL (HOBBIES) */}
         <section className="max-w-7xl mx-auto px-10 py-40 flex flex-col items-center w-full">
             <div className="flex flex-col items-center mb-20 text-center">
               <h2 className="text-6xl font-black text-white tracking-tighter uppercase italic">When I'm Not <span className="text-[#FF8C00]">Coding</span></h2>
@@ -494,7 +508,7 @@ export default function DesktopView() {
               ].map((h,x)=>(
                 <div key={x} className="bg-[#0A0A15]/80 backdrop-blur-xl border border-white/10 p-14 rounded-[3rem] text-center hover:border-white/30 transition-all shadow-[0_10px_40px_rgba(0,0,0,0.8)] group">
                   <div className="text-7xl mb-10 grayscale opacity-30 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110">{h.i}</div>
-                  <h3 className="text-2xl font-black text-white mb-5 uppercase tracking-[0.3em]">{h.t}</h3>
+                  <h3 className="text-2xl font-black text-white mb-5 uppercase tracking-[0.2em]">{h.t}</h3>
                   <p className="text-gray-400 font-light leading-relaxed text-lg">{h.d}</p>
                 </div>
               ))}
